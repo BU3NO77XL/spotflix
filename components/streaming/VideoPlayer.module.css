@@ -1,0 +1,254 @@
+/* Custom scrollbar for settings panel */
+.settingsPanel {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.settingsPanel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.settingsPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settingsPanel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.settingsPanel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Custom range slider styles */
+.volumeSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.volumeSlider::-webkit-slider-track {
+  background: rgba(255, 255, 255, 0.2);
+  height: 4px;
+  border-radius: 2px;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.volumeSlider::-moz-range-track {
+  background: rgba(255, 255, 255, 0.2);
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+}
+
+.volumeSlider::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Progress bar hover effects - mais sutis para o design minimalista */
+.progressBar {
+  transition: height 0.2s ease;
+}
+
+.progressBar:hover {
+  height: 1px;
+}
+
+/* Red gradient progress bar - elegante e minimalista */
+.progressFill {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+}
+
+.progressFill:hover {
+}
+
+/* Fullscreen styles */
+.fullscreenPlayer {
+  background: #000;
+}
+
+.fullscreenPlayer .controls {
+  padding: 1rem;
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loadingPulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.loadingShimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Smooth transitions */
+.fadeTransition {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Custom button hover effects - mais sutis para o design minimalista */
+.controlButton {
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.controlButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.controlButton:active {
+  transform: scale(0.95);
+}
+
+/* Gradient overlays */
+.topGradient {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+}
+
+.bottomGradient {
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+}
+
+/* Settings dropdown animation */
+.settingsDropdown {
+  transform-origin: top right;
+}
+
+/* Volume slider container */
+.volumeContainer {
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Time display */
+.timeDisplay {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+/* Quality badge */
+.qualityBadge {
+  background: rgba(239, 68, 68, 0.9);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Subtitle styles */
+.subtitleButton.active {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+}
+
+/* Mobile responsive adjustments - alinhamento e espaçamento otimizado */
+@media (max-width: 768px) {
+  .controls {
+    padding: 0.75rem;
+  }
+  
+  .controlButton {
+    padding: 0.4rem;
+  }
+  
+  .volumeContainer {
+    display: none;
+  }
+  
+  .settingsDropdown {
+    right: 0;
+    left: auto;
+    min-width: 180px;
+  }
+  
+  /* Ajustes para alinhar melhor os controles em mobile */
+  .bottomControls {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .leftControls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .rightControls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+/* Focus styles for accessibility */
+.controlButton:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.8);
+  outline-offset: 2px;
+}
+
+.progressBar:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.8);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .controlButton {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+  
+  .progressBar {
+    background: rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .fadeTransition,
+  .controlButton,
+  .progressBar,
+  
+  .loadingPulse {
+    animation: none;
+  }
+}

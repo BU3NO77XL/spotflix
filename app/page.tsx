@@ -1,0 +1,266 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/lib/dataClient';
+import { Movie } from '@/types/movie';
+import HeroSection from '@/components/streaming/HeroSection';
+import Carousel from '@/components/streaming/Carousel';
+import BackdropCarousel from '@/components/streaming/BackdropCarousel';
+import Top10Carousel from '@/components/streaming/Top10Carousel';
+import ThematicCarousel from '@/components/streaming/ThematicCarousel';
+import MiniCarousel from '@/components/streaming/MiniCarousels';
+import MovieModal from '@/components/streaming/MovieModal';
+import { TMDBService } from '@/components/streaming/TMDBIntegration';
+import { toast } from 'sonner';
+
+export default function Home() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [continueWatching, setContinueWatching] = useState<Movie[]>([]);
+
+  const [tmdbLoading, setTmdbLoading] = useState(false);
+  const [carouselBackdrops, setCarouselBackdrops] = useState<Record<string, string | null>>({});
+
+  const { data: movies = [], isLoading } = useQuery({
+    queryKey: ['movies'],
+    queryFn: () => base44.entities.Movie.list(),
+  });
+
+  // Fetch TMDB data on component mount if database is empty
+  useEffect(() => {
+    const loadTMDBData = async () => {
+      if (movies.length === 0 && !isLoading) {
+        setTmdbLoading(true);
+        try {
+          const [trending, topRated, upcoming, top10, recommended, action, family, scifi, critics] = await Promise.all([
+            TMDBService.fetchTrending(),
+            TMDBService.fetchTopRatedMovies(),
+            TMDBService.fetchUpcoming(),
+            TMDBService.fetchTop10(),
+            TMDBService.fetchRecommended(),
+            TMDBService.fetchActionMovies(),
+            TMDBService.fetchFamilyMovies(),
+            TMDBService.fetchSciFiMovies(),
+            TMDBService.fetchCriticsMovies()
+          ]);
+
+          const allMovies = [...trending, ...topRated, ...upcoming, ...top10, ...recommended, ...action, ...family, ...scifi, ...critics];
+
+          // Bulk insert into database
+          if (allMovies.length > 0) {
+            await base44.entities.Movie.bulkCreate(allMovies);
+            queryClient.invalidateQueries({ queryKey: ['movies'] });
+          }
+
+          // Fetch backdrop images for carousels
+          const [topRatedBackdrop, upcomingBackdrop] = await Promise.all([
+            TMDBService.getCarouselBackdrop('top_rated'),
+            TMDBService.getCarouselBackdrop('coming_soon')
+          ]);
+
+          setCarouselBackdrops({
+            top_rated: topRatedBackdrop,
+            coming_soon: upcomingBackdrop
+          });
+        } catch (error) {
+          console.error('Error loading TMDB data:', error);
+          toast.error('Failed to load content from TMDB');
+        } finally {
+          setTmdbLoading(false);
+        }
+      }
+    };
+
+    loadTMDBData();
+  }, [movies.length, isLoading, queryClient]);
+
+  const addToListMutation = useMutation({
+    mutationFn: (data: { movie_id: string; list_type: 'favorites' | 'watch_later' }) =>
+      base44.entities.UserList.create(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['userList'] });
+      toast.success(
+        variables.list_type === 'favorites'
+          ? 'Added to Favorites!'
+          : 'Added to Watch Later!'
+      );
+    },
+  });
+
+  const featuredMovies = movies.filter((m: Movie) => m.is_featured);
+  const trendingMovies = movies.filter((m: Movie) => m.category === 'trending');
+  const topRatedMovies = movies.filter((m: Movie) => m.category === 'top_rated');
+  const comingSoonMovies = movies.filter((m: Movie) => m.category === 'coming_soon');
+  const recommendedMovies = movies.filter((m: Movie) => m.category === 'recommended');
+  const top10Movies = movies.filter((m: Movie) => m.category === 'top_10');
+  const actionMovies = movies.filter((m: Movie) => m.category === 'action');
+  const familyMovies = movies.filter((m: Movie) => m.category === 'family');
+  const sciFiMovies = movies.filter((m: Movie) => m.category === 'scifi');
+  const criticsMovies = movies.filter((m: Movie) => m.category === 'critics');
+
+  const handleWatch = (movie: Movie) => {
+    setModalOpen(false);
+    router.push(`/watch?id=${movie.id}`);
+  };
+
+  const handleMoreInfo = (movie: Movie) => {
+    setSelectedMovie(movie);
+    setModalOpen(true);
+  };
+
+  const handleAddToList = (movie: Movie, listType: 'favorites' | 'watch_later') => {
+    addToListMutation.mutate({
+      movie_id: movie.id,
+      list_type: listType,
+    });
+
+    if (listType === 'watch_later') {
+      setContinueWatching(prev => {
+        const exists = prev.find(m => m.id === movie.id);
+        if (!exists) {
+          return [...prev, movie];
+        }
+        return prev;
+      });
+    }
+  };
+
+  if (isLoading || tmdbLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#1DB954] border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400">
+            {tmdbLoading ? 'Loading content from TMDB...' : 'Loading SpotFlix...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Hero */}
+      <HeroSection
+        featuredMovies={featuredMovies.length > 0 ? featuredMovies : movies.slice(0, 3)}
+        onWatch={handleWatch}
+        onMoreInfo={handleMoreInfo}
+      />
+
+      {/* Carousels */}
+      <div className="-mt-20 relative z-10 pb-16 space-y-2">
+        {continueWatching.length > 0 && (
+          <Carousel
+            title="Continue Assistindo"
+            movies={continueWatching}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {trendingMovies.length > 0 && (
+          <Carousel
+            title="Trending Today"
+            movies={trendingMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {top10Movies.length > 0 && (
+          <Top10Carousel
+            movies={top10Movies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {topRatedMovies.length > 0 && (
+          <BackdropCarousel
+            title="Best Rated Movies"
+            movies={topRatedMovies}
+            onMovieClick={handleMoreInfo}
+            backdropUrl={carouselBackdrops.top_rated}
+          />
+        )}
+
+        {comingSoonMovies.length > 0 && (
+          <BackdropCarousel
+            title="Coming Soon to Theaters"
+            movies={comingSoonMovies}
+            onMovieClick={handleMoreInfo}
+            backdropUrl={carouselBackdrops.coming_soon}
+          />
+        )}
+
+        {/* Mini Carousels - Thematic */}
+        {actionMovies.length > 0 && (
+          <MiniCarousel
+            title="Action & Adventure"
+            movies={actionMovies}
+            onMovieClick={handleMoreInfo}
+            variant="landscape"
+            accentColor="#E74C3C"
+          />
+        )}
+
+        {familyMovies.length > 0 && (
+          <MiniCarousel
+            title="Family Favorites"
+            movies={familyMovies}
+            onMovieClick={handleMoreInfo}
+            variant="spotlight"
+            accentColor="#3498DB"
+          />
+        )}
+
+        {sciFiMovies.length > 0 && (
+          <MiniCarousel
+            title="Sci-Fi Universe"
+            movies={sciFiMovies}
+            onMovieClick={handleMoreInfo}
+            variant="spotlight"
+            accentColor="#9B59B6"
+          />
+        )}
+
+        {criticsMovies.length > 0 && (
+          <MiniCarousel
+            title="Critics' Choice"
+            movies={criticsMovies}
+            onMovieClick={handleMoreInfo}
+            variant="animated"
+            accentColor="#F39C12"
+          />
+        )}
+
+        {recommendedMovies.length > 0 && (
+          <Carousel
+            title="Recommended For You"
+            movies={recommendedMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {/* Show all movies if no categories */}
+        {trendingMovies.length === 0 && topRatedMovies.length === 0 && movies.length > 0 && (
+          <Carousel
+            title="All Movies & Series"
+            movies={movies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+      </div>
+
+      {/* Movie Modal */}
+      <MovieModal
+        movie={selectedMovie}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onWatch={handleWatch}
+        onAddToList={handleAddToList}
+      />
+    </div>
+  );
+}
