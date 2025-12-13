@@ -207,8 +207,6 @@ function WatchContent() {
     // Estado para controle de áudio do backdrop animado
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
     const backdropVideoRef = useRef<HTMLVideoElement>(null);
-    const backdropContainerRef = useRef<HTMLDivElement>(null);
-    const [videoLoadStarted, setVideoLoadStarted] = useState(false);
 
     const episodesScrollRef = useRef<HTMLDivElement>(null);
     const collectionScrollRef = useRef<HTMLDivElement>(null);
@@ -641,51 +639,16 @@ function WatchContent() {
     const animatedBackdropUrl = animatedBackdrop?.url || null;
     const hasBackdropAudio = animatedBackdrop?.hasAudio || false;
 
-    // Lazy-load do vídeo em dispositivos móveis: só iniciar carregamento quando o hero estiver visível
-    useEffect(() => {
-        if (!animatedBackdropUrl) return;
-        setVideoLoadStarted(false);
-        if (typeof window === 'undefined') return;
-
-        const isMobile = typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || /Mobi|Android/i.test(navigator.userAgent));
-
-        if (!isMobile) {
-            // Desktop: carregar imediatamente
-            setVideoLoadStarted(true);
-            return;
-        }
-
-        const el = backdropContainerRef.current;
-        if (!el || !('IntersectionObserver' in window)) {
-            setVideoLoadStarted(true);
-            return;
-        }
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    setVideoLoadStarted(true);
-                    observer.disconnect();
-                }
-            });
-        }, { threshold: 0.1 });
-
-        observer.observe(el);
-
-        return () => observer.disconnect();
-    }, [animatedBackdropUrl]);
-
     return (
         <div className="min-h-screen bg-[#0a0a0a]">
             {/* Hero Section - Similar to MovieModal */}
             <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh]">
                 {/* Backdrop - Video animado ou Imagem */}
-                <div className="absolute inset-0" ref={backdropContainerRef}>
+                <div className="absolute inset-0">
                     {animatedBackdropUrl ? (
                         <video
                             ref={backdropVideoRef}
-                            src={videoLoadStarted ? animatedBackdropUrl : undefined}
-                            poster={movie.poster_url || movie.backdrop_url || undefined}
+                            src={animatedBackdropUrl}
                             autoPlay
                             loop
                             muted={isBackdropMuted}
@@ -694,10 +657,6 @@ function WatchContent() {
                             className="w-full h-full object-cover"
                             onError={(e) => {
                                 console.error('Erro ao carregar vídeo de backdrop:', animatedBackdropUrl, e);
-                            }}
-                            onLoadedData={() => {
-                                /* opcional: log para debug em mobile */
-                                // console.debug('Backdrop video loaded', animatedBackdropUrl);
                             }}
                         />
                     ) : (movie.backdrop_url || movie.poster_url) ? (
