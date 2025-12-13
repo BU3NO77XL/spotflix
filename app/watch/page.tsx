@@ -653,7 +653,11 @@ function WatchContent() {
                             loop
                             muted={isBackdropMuted}
                             playsInline
+                            preload="metadata"
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                                console.error('Erro ao carregar vídeo de backdrop:', animatedBackdropUrl, e);
+                            }}
                         />
                     ) : (movie.backdrop_url || movie.poster_url) ? (
                         <img

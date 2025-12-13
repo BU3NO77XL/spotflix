@@ -21,3 +21,11 @@ export function convertScoreToFivePoint(score: number): string {
     // Always show one decimal place
     return converted.toFixed(1);
 }
+// Helper para garantir que URLs de vídeo sejam carregadas corretamente em produção
+export function getAnimatedBackdropUrl(relativePath: string): string {
+    // Garantir que o caminho comece com /
+    const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+    
+    // Em desenvolvimento e produção, usar caminho relativo para o arquivo público
+    return path;
+}
