@@ -7,6 +7,7 @@ import { base44 } from '@/lib/dataClient';
 import { Movie } from '@/types/movie';
 import { Heart, Clock, Trash2, Play, Star, Film } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import MyListHero from '@/components/streaming/MyListHero';
 import { toast } from 'sonner';
 import MovieModal from '@/components/streaming/MovieModal';
 
@@ -68,24 +69,25 @@ export default function MyList() {
     const currentList = activeTab === 'favorites' ? favorites : watchLater;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] pt-20 lg:pt-24">
-            <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-8"
-                >
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-2">
-                        My List
-                    </h1>
-                    <p className="text-gray-400">Your saved movies and series</p>
-                </motion.div>
+        <div className="min-h-screen bg-[#0a0a0a]">
+            <MyListHero
+                title="Minha Lista"
+                description={
+                    `Aqui estão seus conteúdos salvos — ${favorites.length} favoritos e ${watchLater.length} para assistir depois.`
+                }
+                backdrops={(() => {
+                    const b = currentList.map((m) => m.backdrop_url).filter(Boolean) as string[];
+                    if (b.length) return b;
+                    return movies.map((m) => m.backdrop_url).filter(Boolean).slice(0, 8) as string[];
+                })()}
+            />
 
-                {/* Tabs */}
-                <div className="bg-white/5 border border-white/10 rounded-lg p-1 mb-8 inline-flex">
+            <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8 lg:pt-12 pb-8">
+                {/* Tabs - levantadas sobre o hero */}
+                <div className="bg-white/5 border border-white/10 rounded-lg p-1 mb-6 inline-flex -mt-12 sm:-mt-16 lg:-mt-20 relative z-30">
                     <button
                         onClick={() => setActiveTab('favorites')}
-                        className={`rounded-lg px-6 py-2.5 font-medium transition-all flex items-center ${activeTab === 'favorites'
+                        className={`rounded-lg px-6 py-2.5 font-medium transition-all flex items-center whitespace-nowrap ${activeTab === 'favorites'
                                 ? 'bg-[#1DB954] text-black'
                                 : 'text-gray-300 hover:text-white'
                             }`}
@@ -95,7 +97,7 @@ export default function MyList() {
                     </button>
                     <button
                         onClick={() => setActiveTab('watch_later')}
-                        className={`rounded-lg px-6 py-2.5 font-medium transition-all flex items-center ${activeTab === 'watch_later'
+                        className={`rounded-lg px-6 py-2.5 font-medium transition-all flex items-center whitespace-nowrap ${activeTab === 'watch_later'
                                 ? 'bg-[#1DB954] text-black'
                                 : 'text-gray-300 hover:text-white'
                             }`}
@@ -108,7 +110,8 @@ export default function MyList() {
                 {/* Content */}
                 <AnimatePresence mode="popLayout">
                     {currentList.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-6">
+                        <div className="bg-[#141414] rounded-lg p-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-6">
                             {currentList.map((movie) => (
                                 <motion.div
                                     key={movie.listItemId}
@@ -193,6 +196,7 @@ export default function MyList() {
                                     </div>
                                 </motion.div>
                             ))}
+                            </div>
                         </div>
                     ) : (
                         <motion.div

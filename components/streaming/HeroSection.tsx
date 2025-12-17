@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Play, Info, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ProgressiveImage from './ProgressiveImage';
+import Illumination from './Illumination';
 import { Movie } from '@/types/movie';
 import { convertScoreToFivePoint } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
@@ -160,14 +162,10 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                     exit="exit"
                     className="absolute inset-0"
                 >
-                    <motion.img
-                        src={currentImageUrl}
-                        alt={featured.title}
-                        className="w-full h-full object-cover object-center"
-                        initial={{ scale: 1 }}
-                        animate={{ scale: 1.05 }}
-                        transition={{ duration: 10, ease: 'linear' }}
-                    />
+                    <motion.div initial={{ scale: 1 }} animate={{ scale: 1.05 }} transition={{ duration: 10, ease: 'linear' }} className="w-full h-full">
+                        <ProgressiveImage src={currentImageUrl} alt={featured.title} className="w-full h-full object-cover object-center" />
+                        <Illumination intensity={0.24} />
+                    </motion.div>
                     {/* Vignette cinematográfico */}
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
                 </motion.div>
@@ -180,8 +178,8 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent" />
 
             {/* Content */}
-            <div className="absolute inset-0 flex items-center z-20">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full">
+            <div className="absolute inset-0 flex items-center sm:items-end z-20">
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-6 sm:pb-16 lg:pb-24">
                     <AnimatePresence mode="wait" initial={false}>
                         <motion.div
                             key={featured.id}
@@ -290,11 +288,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                         : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
                                 }`}
                             >
-                                <img
-                                    src={movie.backdrop_url || movie.poster_url}
-                                    alt={movie.title}
-                                    className="w-full h-full object-cover"
-                                />
+                                <ProgressiveImage src={movie.backdrop_url || movie.poster_url} alt={movie.title} className="w-full h-full object-cover" />
                                 {index === currentIndex && (
                                     <div className="absolute inset-0 bg-white/20" />
                                 )}

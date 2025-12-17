@@ -172,6 +172,21 @@ function WatchContent() {
     const tmdbId = searchParams.get('ref');
     const mediaType = searchParams.get('type') || 'movie'; // 'movie' ou 'series'
 
+    // Quando o id da mídia mudar (navegação para outro filme/série),
+    // em dispositivos móveis queremos garantir que a página comece no topo.
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const isMobile = window.innerWidth <= 768; // breakpoint para 'sm'
+            if (isMobile) {
+                window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+            }
+        } catch (e) {
+            // fallback silencioso
+            window.scrollTo(0, 0);
+        }
+    }, [movieId, tmdbId]);
+
     const [isPlaying, setIsPlaying] = useState(false);
     const [comment, setComment] = useState('');
     const [movieDetails, setMovieDetails] = useState<{ overview?: string; budget?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null>(null);
@@ -697,7 +712,7 @@ function WatchContent() {
                 </motion.div>
 
                 {/* Hero Content - Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-8 sm:pb-12">
+                <div className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-0 sm:pb-2 lg:pb-4">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1295,7 +1310,7 @@ function WatchContent() {
                             initial="hidden"
                             whileInView="visible"
                             viewport={{ margin: "-50px" }}
-                            className="py-8 border-b border-white/10"
+                            className="py-8"
                         >
                             <div className="relative rounded-lg overflow-hidden">
                                 {/* Backdrop Dinâmico com transição suave */}
@@ -1441,14 +1456,32 @@ function WatchContent() {
                         </motion.section>
                     )}
 
-                    {/* Trailers Section */}
+                    
+
+                    {/* Cast */}
+                    {isLoadingDetails ? (
+                        <CastSkeleton />
+                    ) : cast.length > 0 && (
+                        <motion.section
+                            variants={fadeInUp}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ margin: "-50px" }}
+                            className="py-8"
+                            aria-label="Elenco principal do filme"
+                        >
+                            <CastSlider cast={cast} />
+                        </motion.section>
+                    )}
+
+                    {/* Trailers Section (movida para depois do elenco) */}
                     {trailers.length > 0 && (
                         <motion.section
                             variants={fadeInUp}
                             initial="hidden"
                             whileInView="visible"
                             viewport={{ margin: "-50px" }}
-                            className="py-8 border-b border-white/10 bg-[#141414] rounded-lg p-6"
+                            className="py-8 bg-[#141414] rounded-lg p-6"
                             aria-labelledby="trailers-heading"
                         >
                             <h2 id="trailers-heading" className="text-white text-lg font-semibold mb-4">Trailers & Teasers</h2>
@@ -1528,29 +1561,13 @@ function WatchContent() {
                         </motion.section>
                     )}
 
-                    {/* Cast */}
-                    {isLoadingDetails ? (
-                        <CastSkeleton />
-                    ) : cast.length > 0 && (
-                        <motion.section
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ margin: "-50px" }}
-                            className="py-8"
-                            aria-label="Elenco principal do filme"
-                        >
-                            <CastSlider cast={cast} />
-                        </motion.section>
-                    )}
-
                     {/* Discussions */}
                     <motion.section
                         variants={fadeInUp}
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ margin: "-50px" }}
-                        className="py-8 border-b border-white/10 bg-[#141414] rounded-lg p-6"
+                        className="py-8 mt-6 border-b border-white/10 bg-[#141414] rounded-lg p-6"
                         aria-labelledby="discussions-heading"
                     >
                         <h2 id="discussions-heading" className="text-white text-lg font-semibold mb-6">Discussões</h2>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, User, Menu, X, Play, Star, Film, Tv } from 'lucide-react';
+import { Search, User, Menu, X, Play, Star, Film, Tv, Settings, CreditCard, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TMDBService } from './TMDBIntegration';
@@ -127,15 +127,49 @@ export default function Header() {
         setSelectedMovie(null);
     }, []);
 
+    // Retorna ícone correspondente ao rótulo (minimalista, cinza)
+    const renderIcon = (label: string) => {
+        switch (label) {
+            case 'Lar':
+                return <Play className="w-5 h-5 text-gray-400" />;
+            case 'Série':
+                return <Tv className="w-5 h-5 text-gray-400" />;
+            case 'Filmes':
+                return <Film className="w-5 h-5 text-gray-400" />;
+            case 'Minha lista':
+                return <Star className="w-5 h-5 text-gray-400" />;
+            default:
+                return <Play className="w-5 h-5 text-gray-400" />;
+        }
+    };
+
+    const renderUserIcon = (label: string) => {
+        switch (label) {
+            case 'Perfil':
+                return <User className="w-4 h-4 text-gray-400" />;
+            case 'Configurações':
+                return <Settings className="w-4 h-4 text-gray-400" />;
+            case 'Planos':
+                return <CreditCard className="w-4 h-4 text-gray-400" />;
+            case 'Sair':
+                return <LogOut className="w-4 h-4 text-red-400" />;
+            default:
+                return <User className="w-4 h-4 text-gray-400" />;
+        }
+    };
+
     return (
         <>
             <header
                 className={cn(
                     "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-                    scrolled
-                        ? "bg-[#0a0a0a]/90 backdrop-blur-md"
-                        : "bg-gradient-to-b from-[#0a0a0a]/80 via-[#0a0a0a]/40 to-transparent"
+                    mobileMenuOpen
+                        ? "bg-[#0a0a0a]"
+                        : scrolled
+                            ? "bg-[#0a0a0a]/80 backdrop-blur-md"
+                            : "bg-gradient-to-b from-[#0a0a0a]/80 via-[#0a0a0a]/40 to-transparent"
                 )}
+                style={{ WebkitBackdropFilter: scrolled ? 'blur(8px)' : undefined, backdropFilter: scrolled ? 'blur(8px)' : undefined }}
             >
                 <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
                     <div className="flex items-center justify-between h-16 lg:h-20">
@@ -182,7 +216,11 @@ export default function Header() {
                         {/* Right Section */}
                         <div className="flex items-center gap-2 sm:gap-3">
                             <button
-                                onClick={() => setSearchOpen(true)}
+                                onClick={() => {
+                                    setSearchOpen(true);
+                                    setMobileMenuOpen(false);
+                                    setUserDropdownOpen(false);
+                                }}
                                 className="p-2 text-gray-300 hover:text-white transition-colors duration-200 hover:bg-white/10 rounded-full"
                             >
                                 <Search className="w-5 h-5" />
@@ -191,7 +229,11 @@ export default function Header() {
                             {/* User Dropdown */}
                             <div className="relative">
                                 <button
-                                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                                    onClick={() => {
+                                        setUserDropdownOpen(!userDropdownOpen);
+                                        setMobileMenuOpen(false);
+                                        setSearchOpen(false);
+                                    }}
                                     className="p-2 text-gray-300 hover:text-white transition-colors duration-200 hover:bg-white/10 rounded-full"
                                 >
                                     <User className="w-5 h-5" />
@@ -209,19 +251,23 @@ export default function Header() {
                                                 <p className="text-gray-400 text-sm">usuario@email.com</p>
                                             </div>
                                             <div className="py-2">
-                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
-                                                    Perfil
+                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                    <span aria-hidden>{renderUserIcon('Perfil')}</span>
+                                                    <span>Perfil</span>
                                                 </button>
-                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
-                                                    Configurações
+                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                    <span aria-hidden>{renderUserIcon('Configurações')}</span>
+                                                    <span>Configurações</span>
                                                 </button>
-                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
-                                                    Planos
+                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                    <span aria-hidden>{renderUserIcon('Planos')}</span>
+                                                    <span>Planos</span>
                                                 </button>
                                             </div>
                                             <div className="border-t border-white/10 py-2">
-                                                <button className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors">
-                                                    Sair
+                                                <button className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                    <span aria-hidden>{renderUserIcon('Sair')}</span>
+                                                    <span>Sair</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -245,6 +291,48 @@ export default function Header() {
                 </div>
 
             </header>
+
+            {/* Mobile Menu Dropdown (desce do header) */}
+            <AnimatePresence>
+                {mobileMenuOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.18 }}
+                            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setMobileMenuOpen(false)}
+                        />
+
+                        <motion.div
+                            initial={{ y: -10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: -10, opacity: 0 }}
+                            transition={{ duration: 0.18 }}
+                            className="fixed top-16 lg:top-20 left-0 right-0 z-60"
+                        >
+                            <div className="bg-[#0a0a0a] border-b border-white/10 shadow-sm">
+                                <nav className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
+                                    <div className="flex flex-col py-2">
+                                        {HEADER_ITEMS.map((link) => (
+                                            <Link
+                                                key={link.label}
+                                                href={link.href}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/5 transition-colors font-medium"
+                                            >
+                                                <span aria-hidden>{renderIcon(link.label)}</span>
+                                                <span>{link.label}</span>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </nav>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Search Overlay */}
             <AnimatePresence>

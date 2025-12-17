@@ -11,6 +11,8 @@ import {
     Minimize
 } from 'lucide-react';
 import styles from './VideoPlayer.module.css';
+import ProgressiveImage from './ProgressiveImage';
+import Illumination from './Illumination';
 
 interface VideoPlayerProps {
     title: string;
@@ -133,11 +135,8 @@ export default function VideoPlayer({
         >
             {/* Video Background */}
             <div className="absolute inset-0">
-                <img
-                    src={backdropUrl || posterUrl || '/placeholder-video.jpg'}
-                    alt={title}
-                    className="w-full h-full object-cover"
-                />
+                <ProgressiveImage src={backdropUrl || posterUrl || '/placeholder-video.jpg'} alt={title} className="w-full h-full object-cover" />
+                <Illumination intensity={0.12} />
                 {!isPlaying && (
                     <div className="absolute inset-0 bg-black/20" />
                 )}
