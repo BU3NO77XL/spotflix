@@ -115,7 +115,7 @@ function Top10Card({ movie, rank, onClick, index }: Top10CardProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.05 }}
             onClick={() => onClick(movie)}
-            className="group relative flex-shrink-0 w-[160px] sm:w-[180px] lg:w-[220px] cursor-pointer"
+            className="group relative flex-shrink-0 w-[130px] sm:w-[150px] lg:w-[180px] cursor-pointer"
         >
             <div className="relative flex items-end">
                 {/* Ranking Number - Refined outlined number with thinner elegant white stroke */}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Play, Info, Star } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ProgressiveImage from './ProgressiveImage';
 import Illumination from './Illumination';
 import { Movie } from '@/types/movie';
@@ -21,9 +21,9 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
     const [isReady, setIsReady] = useState(false);
     const [seriesDetails, setSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
-    
+
     const featured = featuredMovies?.[currentIndex];
-    
+
     // Extract dependencies to avoid issues with optional chaining in useEffect deps
     const featuredId = featured?.id;
     const featuredType = featured?.type;
@@ -56,7 +56,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     // Preload images
     const preloadImage = useCallback((index: number) => {
         if (!featuredMovies?.[index] || loadedImages.has(index)) return Promise.resolve();
-        
+
         return new Promise<void>((resolve) => {
             const img = new Image();
             const src = featuredMovies[index].backdrop_url || featuredMovies[index].poster_url;
@@ -101,16 +101,16 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     if (!featured) return null;
 
     const currentImageUrl = featured.backdrop_url || featured.poster_url;
-    
+
     // Get display values - use fetched details for series, fallback to existing data
-    const displayDuration = featured.type === 'series' && seriesDetails[featured.id] 
-        ? seriesDetails[featured.id].runtime 
+    const displayDuration = featured.type === 'series' && seriesDetails[featured.id]
+        ? seriesDetails[featured.id].runtime
         : featured.duration;
-    
+
     const displayYear = seriesDetails[featured.id]?.year || featured.year;
 
     // Variantes cinematográficas
-    const imageVariants = {
+    const imageVariants: Variants = {
         enter: (dir: number) => ({
             opacity: 0,
             scale: 1.1,
@@ -124,7 +124,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             filter: 'brightness(1)',
             transition: {
                 duration: 1.2,
-                ease: 'easeOut' as const,
+                ease: 'easeOut',
             }
         },
         exit: (dir: number) => ({
@@ -134,19 +134,27 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             filter: 'brightness(0.3)',
             transition: {
                 duration: 0.8,
-                ease: 'easeIn' as const,
+                ease: 'easeIn',
             }
         })
     };
 
-    const contentVariants = {
-        enter: { opacity: 0, y: 30 },
+    const containerVariants: Variants = {
+        enter: { opacity: 0 },
         center: {
             opacity: 1,
-            y: 0,
-            transition: { duration: 0.6, delay: 0.2, ease: 'easeOut' as const }
+            transition: {
+                staggerChildren: 0.12,
+                delayChildren: 0.3
+            }
         },
-        exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
+        exit: { opacity: 0, transition: { duration: 0.2 } }
+    };
+
+    const itemVariants: Variants = {
+        enter: { opacity: 0 },
+        center: { opacity: 1, transition: { duration: 0.5, ease: "easeOut" } },
+        exit: { opacity: 0, transition: { duration: 0.3 } }
     };
 
     return (
@@ -172,36 +180,35 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             </AnimatePresence>
 
             {/* Gradient Overlays */}
-            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent z-10" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/50 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#0a0a0a]/40 via-[#0a0a0a]/10 to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/80 via-[#0a0a0a]/30 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
 
             {/* Content */}
             <div className="absolute inset-0 flex items-center sm:items-end z-20">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-6 sm:pb-16 lg:pb-24">
-                    <AnimatePresence mode="wait" initial={false}>
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-12 sm:pb-24 lg:pb-32">
+                    <AnimatePresence mode="wait">
                         <motion.div
                             key={featured.id}
-                            variants={contentVariants}
+                            variants={containerVariants}
                             initial="enter"
                             animate="center"
                             exit="exit"
                             className="max-w-2xl"
                         >
                             {/* Title - tamanho dinâmico baseado no comprimento */}
-                            <h1 className={`font-black text-white mb-4 lg:mb-6 leading-tight tracking-tight ${
-                                featured.title.length > 40 
-                                    ? 'text-2xl sm:text-3xl lg:text-4xl' 
-                                    : featured.title.length > 25 
-                                        ? 'text-3xl sm:text-4xl lg:text-5xl'
-                                        : 'text-4xl sm:text-5xl lg:text-7xl'
-                            }`}>
+                            <motion.h1 variants={itemVariants} className={`font-black text-white mb-4 lg:mb-6 leading-tight tracking-tight ${featured.title.length > 40
+                                ? 'text-2xl sm:text-3xl lg:text-4xl'
+                                : featured.title.length > 25
+                                    ? 'text-3xl sm:text-4xl lg:text-5xl'
+                                    : 'text-4xl sm:text-5xl lg:text-7xl'
+                                }`}>
                                 {featured.title.length > 50 ? `${featured.title.slice(0, 50)}...` : featured.title}
-                            </h1>
+                            </motion.h1>
 
                             {/* Metadata */}
-                            <div className="flex flex-wrap items-center gap-3 mb-4 lg:mb-6">
+                            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3 mb-4 lg:mb-6">
                                 {featured.score && (
                                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full">
                                         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
@@ -218,15 +225,15 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                 {featured.genre?.slice(0, 2).map((g, i) => (
                                     <span key={i} className="text-gray-400 text-sm">• {g}</span>
                                 ))}
-                            </div>
+                            </motion.div>
 
                             {/* Synopsis */}
-                            <p className="text-gray-300 text-base lg:text-lg leading-relaxed mb-6 lg:mb-8 line-clamp-3 max-w-xl">
+                            <motion.p variants={itemVariants} className="text-gray-300 text-base lg:text-lg leading-relaxed mb-6 lg:mb-8 line-clamp-3 max-w-xl">
                                 {featured.synopsis}
-                            </p>
+                            </motion.p>
 
                             {/* Buttons */}
-                            <div className="flex flex-wrap gap-3 sm:gap-4">
+                            <motion.div variants={itemVariants} className="flex flex-wrap gap-3 sm:gap-4">
                                 <button
                                     onClick={() => onWatch(featured)}
                                     className="bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-lg transition-all duration-200 hover:translate-y-[-2px] flex items-center"
@@ -241,7 +248,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                     <Info className="w-5 h-5 mr-2" />
                                     More Info
                                 </button>
-                            </div>
+                            </motion.div>
                         </motion.div>
                     </AnimatePresence>
                 </div>
@@ -282,11 +289,10 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                             <button
                                 key={movie.id}
                                 onClick={() => goToSlide(index)}
-                                className={`relative overflow-hidden rounded-lg transition-all duration-500 ${
-                                    index === currentIndex 
-                                        ? 'w-24 h-14 ring-2 ring-white ring-offset-2 ring-offset-[#0a0a0a]' 
-                                        : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
-                                }`}
+                                className={`relative overflow-hidden rounded-lg transition-all duration-500 ${index === currentIndex
+                                    ? 'w-24 h-14 ring-2 ring-white ring-offset-2 ring-offset-[#0a0a0a]'
+                                    : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
+                                    }`}
                             >
                                 <ProgressiveImage src={movie.backdrop_url || movie.poster_url} alt={movie.title} className="w-full h-full object-cover" />
                                 {index === currentIndex && (

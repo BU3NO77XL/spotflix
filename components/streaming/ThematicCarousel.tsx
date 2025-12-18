@@ -123,7 +123,7 @@ function ThematicCard({ movie, onClick, index }: ThematicCardProps) {
             viewport={{ margin: "-50px" }}
             transition={{ duration: 0.4, delay: index * 0.05 }}
             onClick={() => onClick(movie)}
-            className="group relative flex-shrink-0 w-[140px] sm:w-[160px] lg:w-[200px] cursor-pointer"
+            className="group relative flex-shrink-0 w-[110px] sm:w-[130px] lg:w-[160px] cursor-pointer"
         >
             {/* Poster Container */}
             <motion.div

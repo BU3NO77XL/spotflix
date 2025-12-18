@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-interface ProgressiveImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface ProgressiveImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
     src: string | undefined | null;
     alt?: string;
     className?: string;

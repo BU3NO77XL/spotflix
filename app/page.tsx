@@ -11,6 +11,7 @@ import BackdropCarousel from '@/components/streaming/BackdropCarousel';
 import Top10Carousel from '@/components/streaming/Top10Carousel';
 import ThematicCarousel from '@/components/streaming/ThematicCarousel';
 import MiniCarousel from '@/components/streaming/MiniCarousels';
+import AutoPlaySlider from '@/components/streaming/AutoPlaySlider';
 import MovieModal from '@/components/streaming/MovieModal';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import { toast } from 'sonner';
@@ -36,7 +37,7 @@ export default function Home() {
       if (movies.length === 0 && !isLoading) {
         setTmdbLoading(true);
         try {
-          const [trending, topRated, upcoming, top10, recommended, action, family, scifi, critics] = await Promise.all([
+          const [trending, topRated, upcoming, top10, recommended, action, family, scifi] = await Promise.all([
             TMDBService.fetchTrending(),
             TMDBService.fetchTopRatedMovies(),
             TMDBService.fetchUpcoming(),
@@ -44,11 +45,10 @@ export default function Home() {
             TMDBService.fetchRecommended(),
             TMDBService.fetchActionMovies(),
             TMDBService.fetchFamilyMovies(),
-            TMDBService.fetchSciFiMovies(),
-            TMDBService.fetchCriticsMovies()
+            TMDBService.fetchSciFiMovies()
           ]);
 
-          const allMovies = [...trending, ...topRated, ...upcoming, ...top10, ...recommended, ...action, ...family, ...scifi, ...critics];
+          const allMovies = [...trending, ...topRated, ...upcoming, ...top10, ...recommended, ...action, ...family, ...scifi];
 
           // Bulk insert into database
           if (allMovies.length > 0) {
@@ -100,7 +100,6 @@ export default function Home() {
   const actionMovies = movies.filter((m: Movie) => m.category === 'action');
   const familyMovies = movies.filter((m: Movie) => m.category === 'family');
   const sciFiMovies = movies.filter((m: Movie) => m.category === 'scifi');
-  const criticsMovies = movies.filter((m: Movie) => m.category === 'critics');
 
   const handleWatch = (movie: Movie) => {
     setModalOpen(false);
@@ -176,14 +175,7 @@ export default function Home() {
           />
         )}
 
-        {topRatedMovies.length > 0 && (
-          <BackdropCarousel
-            title="Best Rated Movies"
-            movies={topRatedMovies}
-            onMovieClick={handleMoreInfo}
-            backdropUrl={carouselBackdrops.top_rated}
-          />
-        )}
+
 
         {comingSoonMovies.length > 0 && (
           <BackdropCarousel
@@ -195,7 +187,7 @@ export default function Home() {
         )}
 
         {/* Mini Carousels - Thematic */}
-        {actionMovies.length > 0 && (
+        {/*{actionMovies.length > 0 && (
           <MiniCarousel
             title="Action & Adventure"
             movies={actionMovies}
@@ -203,35 +195,21 @@ export default function Home() {
             variant="landscape"
             accentColor="#E74C3C"
           />
-        )}
+        )}*/}
 
         {familyMovies.length > 0 && (
-          <MiniCarousel
+          <Carousel
             title="Family Favorites"
             movies={familyMovies}
             onMovieClick={handleMoreInfo}
-            variant="spotlight"
-            accentColor="#3498DB"
           />
         )}
 
         {sciFiMovies.length > 0 && (
-          <MiniCarousel
+          <Carousel
             title="Sci-Fi Universe"
             movies={sciFiMovies}
             onMovieClick={handleMoreInfo}
-            variant="spotlight"
-            accentColor="#9B59B6"
-          />
-        )}
-
-        {criticsMovies.length > 0 && (
-          <MiniCarousel
-            title="Critics' Choice"
-            movies={criticsMovies}
-            onMovieClick={handleMoreInfo}
-            variant="animated"
-            accentColor="#F39C12"
           />
         )}
 
@@ -239,6 +217,14 @@ export default function Home() {
           <Carousel
             title="Recommended For You"
             movies={recommendedMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {topRatedMovies.length > 0 && (
+          <AutoPlaySlider
+            title="Best Rated Movies"
+            movies={topRatedMovies}
             onMovieClick={handleMoreInfo}
           />
         )}
