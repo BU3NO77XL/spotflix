@@ -1,0 +1,250 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, X, Film, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { TMDBService } from './TMDBIntegration';
+import { Movie } from '@/types/movie';
+import Link from 'next/link';
+
+interface SearchOverlayProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+type Tab = 'all' | 'series' | 'movie';
+
+export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<Movie[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [activeTab, setActiveTab] = useState<Tab>('all');
+
+    // Reset state when opening
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            setQuery('');
+            setResults([]);
+            setActiveTab('all');
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isOpen]);
+
+    // Search logic with debounce
+    useEffect(() => {
+        if (!query.trim()) {
+            setResults([]);
+            setIsSearching(false);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const data = await TMDBService.search(query);
+                setResults(data.map((r, i) => ({ ...r, id: `search-${i}` })) as Movie[]);
+            } catch (error) {
+                console.error('Search error:', error);
+                setResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    // Filter results based on active tab
+    const filteredResults = results.filter(item => {
+        if (activeTab === 'all') return true;
+        return item.type === activeTab;
+    });
+
+    const handleClose = useCallback(() => {
+        onClose();
+    }, [onClose]);
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="fixed inset-0 z-[100] bg-[#0a0a0a]/75 backdrop-blur-md flex flex-col overflow-hidden"
+                >
+                    {/* Top Bar with Close Button */}
+                    <div className="flex justify-end p-6 lg:p-10 shrink-0">
+                        <button
+                            onClick={handleClose}
+                            className="p-2 rounded-full hover:bg-white/5 text-gray-400 hover:text-white transition-all duration-300 group"
+                        >
+                            <X className="w-8 h-8 lg:w-10 lg:h-10 stroke-1 group-hover:rotate-90 transition-transform duration-500" />
+                        </button>
+                    </div>
+
+                    {/* Main Content Container */}
+                    <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-20 pb-10">
+                        <div className="max-w-4xl mx-auto h-full flex flex-col">
+
+                            {/* Search Input Section */}
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.1, duration: 0.4 }}
+                                className="w-full relative mb-8 shrink-0"
+                            >
+                                <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 lg:w-8 lg:h-8 text-gray-500 stroke-1" />
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="O que você quer assistir?"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    // Fecha no ESC
+                                    onKeyDown={(e) => e.key === 'Escape' && handleClose()}
+                                    className="w-full bg-transparent border-b border-white/10 focus:border-[#1DB954]/50 text-2xl lg:text-4xl font-light text-white placeholder:text-gray-600 py-4 pl-10 lg:pl-14 pr-4 outline-none transition-all duration-300 placeholder:font-extralight"
+                                />
+                            </motion.div>
+
+                            {/* Tabs / Filters */}
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.2, duration: 0.4 }}
+                                className="flex items-center gap-8 mb-8 shrink-0"
+                            >
+                                <button
+                                    onClick={() => setActiveTab('all')}
+                                    className={cn(
+                                        "text-base lg:text-lg font-light transition-all duration-300 relative pb-1 tracking-wide",
+                                        activeTab === 'all' ? "text-[#1DB954]" : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    Todos
+                                    {activeTab === 'all' && (
+                                        <motion.div layoutId="underline" className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#1DB954]" />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('series')}
+                                    className={cn(
+                                        "text-base lg:text-lg font-light transition-all duration-300 relative pb-1 tracking-wide",
+                                        activeTab === 'series' ? "text-[#1DB954]" : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    Séries
+                                    {activeTab === 'series' && (
+                                        <motion.div layoutId="underline" className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#1DB954]" />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('movie')}
+                                    className={cn(
+                                        "text-base lg:text-lg font-light transition-all duration-300 relative pb-1 tracking-wide",
+                                        activeTab === 'movie' ? "text-[#1DB954]" : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    Filmes
+                                    {activeTab === 'movie' && (
+                                        <motion.div layoutId="underline" className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#1DB954]" />
+                                    )}
+                                </button>
+                            </motion.div>
+
+                            {/* Results List Area */}
+                            <div className="flex-1 overflow-y-auto scrollbar-hide">
+                                {isSearching ? (
+                                    <div className="flex items-center justify-center py-20">
+                                        <div className="w-8 h-8 border-2 border-[#1DB954] border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                ) : query ? (
+                                    filteredResults.length > 0 ? (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="flex flex-col space-y-2 lg:space-y-4"
+                                        >
+                                            {filteredResults.map((movie, index) => (
+                                                <Link
+                                                    key={movie.id}
+                                                    href={`/watch?ref=${movie.tmdb_id}&type=${movie.type}`}
+                                                    onClick={handleClose}
+                                                    className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/[0.04] transition-all duration-300 rounded-2xl"
+                                                >
+                                                    {/* Poster thumbnail */}
+                                                    <div className="w-14 h-20 lg:w-20 lg:h-28 shrink-0 relative rounded-xl overflow-hidden bg-white/5 ring-1 ring-white/10 group-hover:ring-white/20 transition-all">
+                                                        {movie.poster_url ? (
+                                                            <img
+                                                                src={movie.poster_url}
+                                                                alt={movie.title}
+                                                                className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <Film className="w-6 h-6 text-gray-700 stroke-1" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Info Section */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <h3 className="text-lg lg:text-2xl font-light text-white truncate group-hover:text-[#1DB954] transition-colors">
+                                                                {movie.title}
+                                                            </h3>
+                                                            <ChevronRight className="w-5 h-5 text-gray-700 group-hover:text-white group-hover:translate-x-1 transition-all stroke-1 shrink-0" />
+                                                        </div>
+                                                        <div className="flex items-center gap-3 mt-1.5 text-xs lg:text-sm text-gray-500 font-light">
+                                                            <span className="text-[#46d369] font-medium">
+                                                                {(movie.score ?? 0) > 0 ? `${((movie.score || 0) * 10).toFixed(0)}% Relevância` : 'Novo'}
+                                                            </span>
+                                                            <span className="w-1 h-1 rounded-full bg-gray-700" />
+                                                            <span>{movie.year}</span>
+                                                            <span className="w-1 h-1 rounded-full bg-gray-700" />
+                                                            <span className="uppercase text-[10px] tracking-wider border border-gray-700 px-1 rounded-sm">HD</span>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="text-center py-20"
+                                        >
+                                            <p className="text-xl text-white font-light mb-2">
+                                                Nenhum resultado para "{query}"
+                                            </p>
+                                            <p className="text-gray-600 font-extralight">
+                                                Tente buscar por outro termo.
+                                            </p>
+                                        </motion.div>
+                                    )
+                                ) : (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="flex flex-col items-center justify-center py-20 opacity-30"
+                                    >
+                                        <Search className="w-16 h-16 text-gray-600 mb-6 stroke-1" />
+                                        <p className="text-gray-500 font-light tracking-wide">
+                                            Filmes, Séries e mais
+                                        </p>
+                                    </motion.div>
+                                )}
+                            </div>
+
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}

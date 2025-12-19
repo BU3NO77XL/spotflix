@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 
 export default function Footer() {
+    const pathname = usePathname();
+    if (pathname === '/login') return null;
     const footerLinks = [
         {
             title: 'Navigation',
@@ -73,7 +76,7 @@ export default function Footer() {
 
                     {/* Links Sections */}
                     {footerLinks.map((section) => (
-                        <div 
+                        <div
                             key={section.title}
                             className={
                                 section.title === 'Navigation' || section.title === 'Account'

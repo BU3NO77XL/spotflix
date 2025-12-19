@@ -7,10 +7,8 @@ import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/dataClient';
 import { Movie, CastMember } from '@/types/movie';
-import {
-    Play, Plus, ThumbsUp, ChevronLeft, ChevronRight
-} from 'lucide-react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { Play, Plus, ThumbsUp, ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { toast } from 'sonner';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import CastSlider from '@/components/streaming/CastSlider';
@@ -59,7 +57,7 @@ const CastSkeleton = memo(() => (
 ));
 CastSkeleton.displayName = 'CastSkeleton';
 
-// Optimized Image Component with lazy loading
+// optimized Image Component with lazy loading
 const OptimizedImage = memo(({
     src,
     alt,
@@ -115,29 +113,6 @@ const OptimizedImage = memo(({
 });
 OptimizedImage.displayName = 'OptimizedImage';
 
-// Animation variants
-const fadeInUp: Variants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
-};
-
-const staggerContainer: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.1, delayChildren: 0.2 }
-    }
-};
-
-const scaleIn: Variants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.4 } }
-};
-
-const slideInLeft: Variants = {
-    hidden: { opacity: 0, x: -30 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.5 } }
-};
 
 export default function Watch() {
     return (
@@ -149,20 +124,12 @@ export default function Watch() {
 
 function WatchLoading() {
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="min-h-screen bg-[#0a0a0a] flex items-center justify-center"
-        >
-            <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full"
-            />
-        </motion.div>
+        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+            <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
     );
 }
+
 
 function WatchContent() {
     const queryClient = useQueryClient();
@@ -192,8 +159,10 @@ function WatchContent() {
     const [movieDetails, setMovieDetails] = useState<{ overview?: string; budget?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null>(null);
     const [seriesDetails, setSeriesDetails] = useState<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null>(null);
     const [seasonDetails, setSeasonDetails] = useState<{ episodes: { id: number; episode_number: number; name: string; overview: string; air_date: string; runtime: number; still_path: string; vote_average: number }[] } | null>(null);
-    
+
     const [selectedSeason, setSelectedSeason] = useState<number>(1);
+    const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
+    const [selectedSource, setSelectedSource] = useState<'vidsrc.me' | 'megaembed'>('vidsrc.me');
     const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
     const [trailers, setTrailers] = useState<{ key: string; name: string; type: string }[]>([]);
     const [keywords, setKeywords] = useState<{ id: number; name: string }[]>([]);
@@ -215,10 +184,10 @@ function WatchContent() {
     const [showLeftTrailersArrow, setShowLeftTrailersArrow] = useState(false);
     const [showRightTrailersArrow, setShowRightTrailersArrow] = useState(false);
     const [selectedModalMovie, setSelectedModalMovie] = useState<Movie | null>(null);
-    
+
     // Estado para armazenar detalhes atualizados da série (como no HeroSection)
     const [updatedSeriesDetails, setUpdatedSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
-    
+
     // Estado para controle de áudio do backdrop animado
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
     const backdropVideoRef = useRef<HTMLVideoElement>(null);
@@ -423,7 +392,7 @@ function WatchContent() {
             const response = await fetch(`https://api.themoviedb.org/3/${endpoint}/${tmdbIdNum}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
             if (!response.ok) return {} as any; // Retorna objeto vazio em vez de null para evitar erro do React Query
             const tmdbData = await response.json();
-            
+
             // Verificar se temos dados válidos
             if (!tmdbData || Object.keys(tmdbData).length === 0) {
                 return {} as any;
@@ -522,6 +491,7 @@ function WatchContent() {
                                     const seasonData = await TMDBService.fetchSeasonDetails(movie.tmdb_id, firstSeason.season_number);
                                     setSeasonDetails(seasonData);
                                     setSelectedSeason(firstSeason.season_number);
+                                    setSelectedEpisode(1);
                                 }
                             }
                         }
@@ -593,6 +563,7 @@ function WatchContent() {
                 const seasonData = await TMDBService.fetchSeasonDetails(movie.tmdb_id, seasonNumber);
                 setSeasonDetails(seasonData);
                 setSelectedSeason(seasonNumber);
+                setSelectedEpisode(1);
             } finally {
                 setIsLoadingDetails(false);
             }
@@ -630,14 +601,14 @@ function WatchContent() {
     const isSeries = movie && movie.type === 'series';
     const cast = isSeries ? seriesDetails?.cast || [] : movieDetails?.cast || [];
     const synopsis = isSeries ? seriesDetails?.overview || movie.synopsis || '' : movieDetails?.overview || movie.synopsis || '';
-    
+
     // Obter valores atualizados para exibição (como no HeroSection)
-    const displayDuration = isSeries && updatedSeriesDetails[movie.id] 
-        ? updatedSeriesDetails[movie.id].runtime 
+    const displayDuration = isSeries && updatedSeriesDetails[movie.id]
+        ? updatedSeriesDetails[movie.id].runtime
         : movie.duration;
-    
-    const displayYear = isSeries && updatedSeriesDetails[movie.id]?.year 
-        ? updatedSeriesDetails[movie.id].year 
+
+    const displayYear = isSeries && updatedSeriesDetails[movie.id]?.year
+        ? updatedSeriesDetails[movie.id].year
         : (isSeries ? seriesDetails?.first_air_date?.substring(0, 4) : movie.year);
 
     // Mapa de backdrops animados disponíveis (futuro: migrar para banco de dados)
@@ -647,7 +618,7 @@ function WatchContent() {
         'movie-1010581': { url: '/animated-backdrops/myfault-movie.mp4', hasAudio: false },     // My Fault (sem áudio)
         'movie-1156593': { url: '/animated-backdrops/sua-culpa-movie.mp4', hasAudio: false },   // Sua Culpa (sem áudio)
     };
-    
+
     // Verificar se tem backdrop animado disponível
     const backdropKey = `${mediaType}-${movie.tmdb_id}`;
     const animatedBackdrop = animatedBackdrops[backdropKey] || null;
@@ -690,18 +661,7 @@ function WatchContent() {
                 </div>
 
                 {/* Back Button */}
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{
-                        opacity: 1,
-                        x: 0
-                    }}
-                    transition={{
-                        delay: scrollY === 0 ? 0.3 : 0,
-                        duration: 0.4
-                    }}
-                    className="absolute top-20 left-4 sm:left-8 lg:left-12 z-20"
-                >
+                <div className="absolute top-20 left-4 sm:left-8 lg:left-12 z-20">
                     <Link
                         href="/"
                         className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
@@ -709,15 +669,13 @@ function WatchContent() {
                         <ChevronLeft className="w-5 h-5" />
                         <span className="text-sm">Voltar</span>
                     </Link>
-                </motion.div>
+                </div>
+
 
                 {/* Hero Content - Bottom */}
                 <div className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-0 sm:pb-2 lg:pb-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="max-w-4xl"
-                    >
+                    <div className="max-w-4xl">
+
                         {/* Title */}
                         <h1 className={`font-black text-white leading-tight ${movie.title.length > 50
                             ? 'text-2xl sm:text-3xl lg:text-4xl'
@@ -738,18 +696,12 @@ function WatchContent() {
                         {!seriesDetails?.tagline && !movieDetails?.tagline && <div className="mb-4" />}
 
                         {/* Action Buttons - Netflix Style */}
-                        <motion.div
-                            variants={staggerContainer}
-                            initial="hidden"
-                            animate="visible"
+                        <div
                             className="flex items-center gap-2 mb-6"
                             role="group"
                             aria-label="Ações do filme"
                         >
-                            <motion.button
-                                variants={scaleIn}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
+                            <button
                                 onClick={() => {
                                     const playerSection = document.getElementById('player-section');
                                     playerSection?.scrollIntoView({ behavior: 'smooth' });
@@ -761,11 +713,8 @@ function WatchContent() {
                             >
                                 <Play className="w-5 h-5 sm:w-6 sm:h-6 mr-2 fill-current" aria-hidden="true" />
                                 Assistir
-                            </motion.button>
-                            <motion.button
-                                variants={scaleIn}
-                                whileHover={{ scale: 1.1, rotate: 90 }}
-                                whileTap={{ scale: 0.9 }}
+                            </button>
+                            <button
                                 onClick={handleAddToList}
                                 className="bg-[#333333]/60 hover:bg-[#444444] border border-[#ffffff]/70 text-white p-2
                                     rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10
@@ -773,25 +722,19 @@ function WatchContent() {
                                 aria-label="Adicionar à minha lista"
                             >
                                 <Plus className="w-5 h-5" aria-hidden="true" />
-                            </motion.button>
-                            <motion.button
-                                variants={scaleIn}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
+                            </button>
+                            <button
                                 className="bg-[#333333]/60 hover:bg-[#444444] border border-[#ffffff]/70 text-white p-2
                                     rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10
                                     focus:outline-none focus:ring-0"
                                 aria-label="Gostei deste filme"
                             >
                                 <ThumbsUp className="w-5 h-5" aria-hidden="true" />
-                            </motion.button>
-                            
+                            </button>
+
                             {/* Botão de Volume - Mobile (ao lado do botão gostei) - só aparece se tiver áudio */}
                             {animatedBackdropUrl && hasBackdropAudio && (
-                                <motion.button
-                                    variants={scaleIn}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
+                                <button
                                     onClick={() => {
                                         setIsBackdropMuted(!isBackdropMuted);
                                         if (backdropVideoRef.current) {
@@ -812,9 +755,10 @@ function WatchContent() {
                                             <path fillRule="evenodd" clipRule="evenodd" d="M24 12C24 8.28699 22.525 4.72603 19.8995 2.10052L18.4853 3.51474C20.7357 5.76517 22 8.81742 22 12C22 15.1826 20.7357 18.2349 18.4853 20.4853L19.8995 21.8995C22.525 19.274 24 15.7131 24 12ZM11 4.00001C11 3.59555 10.7564 3.23092 10.3827 3.07613C10.009 2.92135 9.57889 3.00691 9.29289 3.29291L4.58579 8.00001H1C0.447715 8.00001 0 8.44773 0 9.00001V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00001ZM5.70711 9.70712L9 6.41423V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70712ZM16.0001 12C16.0001 10.4087 15.368 8.8826 14.2428 7.75739L12.8285 9.1716C13.5787 9.92174 14.0001 10.9392 14.0001 12C14.0001 13.0609 13.5787 14.0783 12.8285 14.8285L14.2428 16.2427C15.368 15.1174 16.0001 13.5913 16.0001 12ZM17.0709 4.92896C18.9462 6.80432 19.9998 9.34786 19.9998 12C19.9998 14.6522 18.9462 17.1957 17.0709 19.0711L15.6567 17.6569C17.157 16.1566 17.9998 14.1218 17.9998 12C17.9998 9.87829 17.157 7.84346 15.6567 6.34317L17.0709 4.92896Z" fill="currentColor"></path>
                                         </svg>
                                     )}
-                                </motion.button>
+                                </button>
                             )}
-                        </motion.div>
+                        </div>
+
 
                         {/* Movie/Series Info */}
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-base">
@@ -864,8 +808,9 @@ function WatchContent() {
                             })()}
 
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
+
 
                 {/* Botão de Volume - Desktop (canto direito), escondido em mobile - só aparece se tiver áudio */}
                 {animatedBackdropUrl && hasBackdropAudio && (
@@ -900,42 +845,25 @@ function WatchContent() {
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
 
                     {/* Synopsis */}
-                    <motion.section
-                        variants={fadeInUp}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ margin: "-50px" }}
-                        className="py-8 border-b border-white/10"
-                    >
-                        <AnimatePresence mode="wait">
-                            <motion.p
-                                key={isSynopsisExpanded ? 'expanded' : 'collapsed'}
-                                initial={{ opacity: 0, height: 'auto' }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="text-gray-200 text-sm sm:text-base leading-relaxed max-w-4xl"
-                            >
-                                {!isSynopsisExpanded && synopsis.length > SYNOPSIS_LIMIT
-                                    ? `${synopsis.slice(0, SYNOPSIS_LIMIT)}...`
-                                    : synopsis}
-                            </motion.p>
-                        </AnimatePresence>
+                    <section className="py-8 border-b border-white/10">
+                        <p className="text-gray-200 text-sm sm:text-base leading-relaxed max-w-4xl">
+                            {!isSynopsisExpanded && synopsis.length > SYNOPSIS_LIMIT
+                                ? `${synopsis.slice(0, SYNOPSIS_LIMIT)}...`
+                                : synopsis}
+                        </p>
                         {synopsis.length > SYNOPSIS_LIMIT && (
-                            <motion.button
-                                whileHover={{ x: 5 }}
+                            <button
                                 onClick={() => setIsSynopsisExpanded(!isSynopsisExpanded)}
                                 className="text-white hover:text-gray-300 text-sm font-medium mt-2 transition-colors"
                             >
                                 {isSynopsisExpanded ? 'Ler menos' : 'Ler mais'}
-                            </motion.button>
+                            </button>
                         )}
 
+
                         {/* Quick Info */}
-                        <motion.div
-                            variants={slideInLeft}
-                            className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-sm text-gray-500"
-                        >
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-sm text-gray-500">
+
                             {(isSeries ? seriesDetails?.director : movieDetails?.director) && (
                                 <span>{isSeries ? 'Criação' : 'Direção'}: <span className="text-gray-300">{(isSeries ? seriesDetails?.director : movieDetails?.director)}</span></span>
                             )}
@@ -981,14 +909,13 @@ function WatchContent() {
                                     <span>Última data: <span className="text-gray-300">{seriesDetails.last_air_date}</span></span>
                                 </>
                             )}
-                        </motion.div>
+                        </div>
+
 
                         {/* Keywords/Tags */}
                         {keywords.length > 0 && (
-                            <motion.div
-                                variants={slideInLeft}
-                                className="flex flex-wrap gap-2 mt-4"
-                            >
+                            <div className="flex flex-wrap gap-2 mt-4">
+
                                 {keywords.map((keyword) => (
                                     <span
                                         key={keyword.id}
@@ -998,20 +925,16 @@ function WatchContent() {
                                         {keyword.name}
                                     </span>
                                 ))}
-                            </motion.div>
+                            </div>
                         )}
-                    </motion.section>
+                    </section>
+
 
 
                     {/* Seletor de temporadas e carrossel de episódios para séries */}
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
-                        <motion.section
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ margin: "-50px" }}
-                            className="py-8 border-b border-white/10"
-                        >
+                        <section className="py-8 border-b border-white/10">
+
                             {/* Cabeçalho da seção */}
                             <div className="mb-6">
                                 <h2 className="text-white text-xl font-semibold mb-2">Episódios</h2>
@@ -1091,7 +1014,7 @@ function WatchContent() {
                                 <div
                                     ref={episodesScrollRef}
                                     onScroll={handleEpisodeScroll}
-                                    className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide px-2"
+                                    className="flex gap-4 overflow-x-auto py-4 scrollbar-hide px-2"
                                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                                 >
                                     {isLoadingDetails ? (
@@ -1107,10 +1030,23 @@ function WatchContent() {
                                     ) : seasonDetails?.episodes && seasonDetails.episodes.length > 0 ? (
                                         <>
                                             {seasonDetails.episodes.map((episode) => (
-                                                <motion.div
+                                                <div
                                                     key={episode.id}
-                                                    whileHover={{ scale: 1.05 }}
-                                                    className="flex-shrink-0 w-64 bg-[#1a1a1a] rounded-lg overflow-hidden"
+                                                    onClick={() => {
+                                                        setSelectedEpisode(episode.episode_number);
+                                                        const playerSection = document.getElementById('player-section');
+                                                        if (playerSection) {
+                                                            const headerOffset = 100;
+                                                            const elementPosition = playerSection.getBoundingClientRect().top;
+                                                            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                                                            window.scrollTo({
+                                                                top: offsetPosition,
+                                                                behavior: "smooth"
+                                                            });
+                                                        }
+                                                    }}
+                                                    className={`flex-shrink-0 w-64 bg-[#1a1a1a] rounded-lg overflow-hidden hover:scale-105 transition-all duration-200 cursor-pointer
+                                                        ${selectedEpisode === episode.episode_number ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#141414]' : ''}`}
                                                 >
                                                     <div className="relative">
                                                         {episode.still_path ? (
@@ -1141,26 +1077,23 @@ function WatchContent() {
                                                             </p>
                                                         )}
                                                     </div>
-                                                </motion.div>
+                                                </div>
                                             ))}
+
                                         </>
                                     ) : (
                                         <p className="text-gray-400">Nenhum episódio encontrado para esta temporada.</p>
                                     )}
                                 </div>
                             </div>
-                        </motion.section>
+                        </section>
+
                     )}
 
                     {/* Collection/Franchise */}
                     {collection && collection.parts.length > 1 && (
-                        <motion.section
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ margin: "-50px" }}
-                            className="py-8 border-b border-white/10"
-                        >
+                        <section className="py-8 border-b border-white/10">
+
                             <div className="relative rounded-lg overflow-hidden">
                                 {/* Backdrop */}
                                 {collection.backdrop_path && (
@@ -1209,12 +1142,12 @@ function WatchContent() {
                                             {collection.parts.map((part) => {
                                                 const isCurrentMovie = part.id === movie.tmdb_id;
                                                 return (
-                                                    <motion.div
+                                                    <div
                                                         key={part.id}
-                                                        whileHover={{ scale: isCurrentMovie ? 1 : 1.03, y: isCurrentMovie ? 0 : -5 }}
                                                         onClick={() => !isCurrentMovie && router.push(`/watch?ref=${part.id}`)}
-                                                        className={`shrink-0 group ${isCurrentMovie ? 'cursor-default' : 'cursor-pointer'}`}
+                                                        className={`shrink-0 group ${isCurrentMovie ? 'cursor-default' : 'cursor-pointer'} hover:scale-103 hover:-translate-y-1 transition-all duration-200`}
                                                     >
+
                                                         <div
                                                             className={`relative w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg overflow-hidden bg-[#1a1a1a] transition-all duration-300
                                                     ${isCurrentMovie ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#141414]' : 'hover:ring-1 hover:ring-white/30'}`}
@@ -1255,33 +1188,32 @@ function WatchContent() {
                                                                 {new Date(part.release_date).getFullYear()}
                                                             </p>
                                                         )}
-                                                    </motion.div>
+                                                    </div>
                                                 );
                                             })}
+
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </motion.section>
+                        </section>
+
                     )}
 
                     {/* Video Player */}
-                    <motion.section
+                    <section
                         id="player-section"
-                        variants={scaleIn}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ margin: "-50px" }}
                         className="relative py-12 border-b border-white/10"
                         aria-labelledby="player-heading"
                     >
+
                         {/* Backdrop Cinematográfico Artístico - Full Width */}
                         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
                             <img
-                                src={(movie.backdrop_url && movie.backdrop_url !== '') 
-                                    ? movie.backdrop_url 
-                                    : (movie.poster_url && movie.poster_url !== '') 
-                                        ? movie.poster_url 
+                                src={(movie.backdrop_url && movie.backdrop_url !== '')
+                                    ? movie.backdrop_url
+                                    : (movie.poster_url && movie.poster_url !== '')
+                                        ? movie.poster_url
                                         : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=1920&h=1080&fit=crop'}
                                 alt=""
                                 className="w-full h-full object-cover grayscale brightness-50"
@@ -1291,8 +1223,60 @@ function WatchContent() {
                             <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
                         </div>
 
-                        <h2 id="player-heading" className="text-white text-lg font-semibold mb-6 text-center drop-shadow-lg">Assistir</h2>
-                        
+                        <h2 id="player-heading" className="text-white text-lg font-semibold mb-6 text-center drop-shadow-lg">
+                            {isSeries
+                                ? `Temporada ${selectedSeason} • Episódio ${selectedEpisode}`
+                                : `Assistir: ${movie.title}`
+                            }
+                        </h2>
+
+                        {/* Player Container */}
+                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-5xl mx-auto">
+                            <iframe
+                                src={
+                                    selectedSource === 'vidsrc.me'
+                                        ? isSeries
+                                            ? `https://vidsrc.me/embed/tv?tmdb=${movie.tmdb_id}&s=${selectedSeason}&e=${selectedEpisode}`
+                                            : `https://vidsrc.me/embed/movie?tmdb=${movie.tmdb_id}`
+                                        : isSeries
+                                            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                                            : `https://megaembed.com/embed/${movie.tmdb_id}`
+                                }
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                allowFullScreen
+                                className="w-full h-full"
+                            />
+                        </div>
+
+                        {/* Seletor de Servidores */}
+                        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 relative z-10">
+                            <p className="text-gray-400 text-xs font-medium uppercase tracking-wider w-full text-center mb-1">
+                                Selecionar Servidor
+                            </p>
+                            {[
+                                { id: 'vidsrc.me', label: 'Vidsrc.me', icon: '🚀' },
+                                { id: 'megaembed', label: 'MegaEmbed', icon: '💎' }
+                            ].map((source) => (
+                                <button
+                                    key={source.id}
+                                    onClick={() => setSelectedSource(source.id as any)}
+                                    className={cn(
+                                        "px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2",
+                                        "border border-white/10 hover:border-white/30",
+                                        selectedSource === source.id
+                                            ? "bg-white text-black shadow-lg shadow-white/10 scale-105"
+                                            : "bg-[#141414] text-gray-400 hover:text-white"
+                                    )}
+                                >
+                                    <span className="text-xs">{source.icon}</span>
+                                    {source.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Player Original (Comentado)
                         <VideoPlayer
                             title={movie.title}
                             posterUrl={movie.poster_url}
@@ -1301,36 +1285,28 @@ function WatchContent() {
                             onPlay={() => setIsPlaying(true)}
                             onPause={() => setIsPlaying(false)}
                         />
-                    </motion.section>
+                        */}
+                    </section>
+
 
                     {/* Do Mesmo Criador - Para Séries (Slider estilo Collection com backdrop dinâmico) */}
                     {isSeries && creatorSeries.length > 0 && creatorInfo && (
-                        <motion.section
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ margin: "-50px" }}
-                            className="py-8"
-                        >
+                        <section className="py-8">
+
                             <div className="relative rounded-lg overflow-hidden">
                                 {/* Backdrop Dinâmico com transição suave */}
                                 <div className="absolute inset-0">
-                                    <AnimatePresence mode="wait">
-                                        <motion.img
-                                            key={`creator-backdrop-${activeCreatorBackdrop}-${movie.tmdb_id}`}
-                                            src={(creatorSeries[activeCreatorBackdrop]?.backdrop_url && creatorSeries[activeCreatorBackdrop].backdrop_url !== '') 
-                                                ? creatorSeries[activeCreatorBackdrop].backdrop_url 
-                                                : (creatorSeries[0]?.backdrop_url && creatorSeries[0].backdrop_url !== '') 
-                                                    ? creatorSeries[0].backdrop_url 
-                                                    : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop'}
-                                            alt=""
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ duration: 0.5 }}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </AnimatePresence>
+                                    <img
+                                        key={`creator-backdrop-${activeCreatorBackdrop}-${movie.tmdb_id}`}
+                                        src={(creatorSeries[activeCreatorBackdrop]?.backdrop_url && creatorSeries[activeCreatorBackdrop].backdrop_url !== '')
+                                            ? creatorSeries[activeCreatorBackdrop].backdrop_url
+                                            : (creatorSeries[0]?.backdrop_url && creatorSeries[0].backdrop_url !== '')
+                                                ? creatorSeries[0].backdrop_url
+                                                : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop'}
+                                        alt=""
+                                        className="w-full h-full object-cover transition-opacity duration-500"
+                                    />
+
                                     <div className="absolute inset-0 bg-black/50" />
                                     <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/90 via-transparent to-transparent" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
@@ -1360,41 +1336,22 @@ function WatchContent() {
                                                 <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                                             </button>
                                         )}
-                                        <motion.div
+                                        <div
                                             ref={creatorScrollRef}
                                             onScroll={handleCreatorScroll}
                                             className="flex gap-4 overflow-x-auto py-3 px-1 -mx-1 scrollbar-hide"
-                                            initial="hidden"
-                                            animate="visible"
-                                            variants={{
-                                                hidden: { opacity: 0 },
-                                                visible: {
-                                                    opacity: 1,
-                                                    transition: {
-                                                        staggerChildren: 0.08,
-                                                        delayChildren: 0.1
-                                                    }
-                                                }
-                                            }}
                                         >
+
                                             {creatorSeries.map((series, index) => (
-                                                <motion.div
+                                                <div
                                                     key={series.id}
-                                                    variants={{
-                                                        hidden: { opacity: 0, y: 20 },
-                                                        visible: {
-                                                            opacity: 1,
-                                                            y: 0,
-                                                            transition: { duration: 0.4 }
-                                                        }
-                                                    }}
-                                                    whileHover={{ scale: 1.03, y: -5 }}
                                                     onClick={() => {
                                                         handleCreatorUserInteraction(index);
                                                         handleSimilarMovieClick(series);
                                                     }}
-                                                    className="shrink-0 group cursor-pointer"
+                                                    className="shrink-0 group cursor-pointer hover:scale-103 hover:-translate-y-1 transition-all duration-200"
                                                 >
+
                                                     <div
                                                         className={`relative w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg overflow-hidden bg-[#1a1a1a] transition-all duration-300
                                                             ${index === selectedCreatorIndex ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-transparent' : 'hover:ring-1 hover:ring-white/30'}`}
@@ -1425,18 +1382,17 @@ function WatchContent() {
                                                         {/* Barra de progresso - igual ao CastSlider */}
                                                         {!isCreatorPaused && creatorSeries.length > 1 && index === selectedCreatorIndex && (
                                                             <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/60">
-                                                                <motion.div
+                                                                <div
                                                                     key={`progress-${selectedCreatorIndex}`}
                                                                     className="h-full bg-[#46d369]"
-                                                                    initial={{ width: '0%' }}
-                                                                    animate={{ width: '100%' }}
-                                                                    transition={{
-                                                                        duration: CREATOR_AUTO_PLAY_INTERVAL / 1000,
-                                                                        ease: 'linear'
+                                                                    style={{
+                                                                        width: '0%',
+                                                                        animation: `creatorProgress ${CREATOR_AUTO_PLAY_INTERVAL / 1000}s linear forwards`
                                                                     }}
                                                                 />
                                                             </div>
                                                         )}
+
                                                     </div>
                                                     <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors
                                                         ${index === selectedCreatorIndex ? 'text-white font-medium' : 'text-gray-400 group-hover:text-white'}`}>
@@ -1447,44 +1403,41 @@ function WatchContent() {
                                                             {series.year}
                                                         </p>
                                                     )}
-                                                </motion.div>
+                                                </div>
+
                                             ))}
-                                        </motion.div>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
-                        </motion.section>
+                        </section>
+
                     )}
 
-                    
+
 
                     {/* Cast */}
                     {isLoadingDetails ? (
                         <CastSkeleton />
                     ) : cast.length > 0 && (
-                        <motion.section
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ margin: "-50px" }}
+                        <section
                             className="py-8"
                             aria-label="Elenco principal do filme"
                         >
                             <CastSlider cast={cast} />
-                        </motion.section>
+                        </section>
                     )}
+
 
                     {/* Trailers Section (movida para depois do elenco) */}
                     {trailers.length > 0 && (
-                        <motion.section
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ margin: "-50px" }}
+                        <section
                             className="py-8 bg-[#141414] rounded-lg p-6"
                             aria-labelledby="trailers-heading"
                         >
                             <h2 id="trailers-heading" className="text-white text-lg font-semibold mb-4">Trailers & Teasers</h2>
+
                             <div className="relative">
                                 {/* Left Arrow */}
                                 {showLeftTrailersArrow && (
@@ -1504,30 +1457,26 @@ function WatchContent() {
                                         <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                                     </button>
                                 )}
-                                <motion.div
+                                <div
                                     ref={trailersScrollRef}
                                     onScroll={handleTrailersScroll}
-                                    variants={staggerContainer}
-                                    initial="hidden"
-                                    whileInView="visible"
-                                    viewport={{}}
                                     className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
                                     role="list"
                                     aria-label="Lista de trailers"
                                 >
+
                                     {trailers.map((trailer, i) => (
-                                        <motion.a
+                                        <a
                                             key={i}
-                                            variants={scaleIn}
-                                            whileHover={{ scale: 1.03, y: -5 }}
                                             href={`https://www.youtube.com/watch?v=${trailer.key}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="shrink-0 group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded-md"
+                                            className="shrink-0 group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded-md hover:scale-103 hover:-translate-y-1 transition-all duration-200"
                                             role="listitem"
                                             aria-label={`Assistir ${trailer.type}: ${trailer.name} no YouTube`}
                                         >
                                             <div className="relative w-48 sm:w-56 aspect-video rounded-md overflow-hidden bg-[#1a1a1a]">
+
                                                 <img
                                                     src={`https://img.youtube.com/vi/${trailer.key}/mqdefault.jpg`}
                                                     alt=""
@@ -1535,16 +1484,15 @@ function WatchContent() {
                                                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-300 group-hover:scale-105"
                                                 />
                                                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" aria-hidden="true" />
-                                                <motion.div
-                                                    initial={{ opacity: 0, scale: 0.5 }}
-                                                    whileHover={{ opacity: 1, scale: 1 }}
-                                                    className="absolute inset-0 flex items-center justify-center"
+                                                <div
+                                                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                                     aria-hidden="true"
                                                 >
-                                                    <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
+                                                    <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center scale-50 group-hover:scale-100 transition-transform">
                                                         <Play className="w-4 h-4 text-black ml-0.5" />
                                                     </div>
-                                                </motion.div>
+                                                </div>
+
                                                 <div className="absolute bottom-2 left-2">
                                                     <span className="text-white/90 text-[10px] font-medium uppercase tracking-wide">
                                                         {trailer.type}
@@ -1554,27 +1502,24 @@ function WatchContent() {
                                             <p className="text-gray-400 text-xs mt-2 truncate w-48 sm:w-56 group-hover:text-white transition-colors">
                                                 {trailer.name}
                                             </p>
-                                        </motion.a>
+                                        </a>
                                     ))}
-                                </motion.div>
+
+                                </div>
+
                             </div>
-                        </motion.section>
+                        </section>
+
                     )}
 
-                    {/* Discussions */}
-                    <motion.section
-                        variants={fadeInUp}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ margin: "-50px" }}
+                    {/* Discussões - Desativado temporariamente
+                    <section
                         className="py-8 mt-6 border-b border-white/10 bg-[#141414] rounded-lg p-6"
                         aria-labelledby="discussions-heading"
                     >
                         <h2 id="discussions-heading" className="text-white text-lg font-semibold mb-6">Discussões</h2>
 
-                        {/* Comment Input */}
-                        <motion.div
-                            variants={slideInLeft}
+                        <div
                             className="flex gap-3 mb-8 max-w-3xl"
                         >
                             <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center shrink-0" aria-hidden="true">
@@ -1592,42 +1537,28 @@ function WatchContent() {
                                         focus:ring-1 focus:ring-white/30"
                                     rows={1}
                                 />
-                                <AnimatePresence>
-                                    {comment.trim() && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="flex justify-end mt-2 gap-2"
+                                {comment.trim() && (
+                                    <div
+                                        className="flex justify-end mt-2 gap-2"
+                                    >
+                                        <button
+                                            onClick={() => setComment('')}
+                                            className="text-gray-400 hover:text-white text-sm px-3 py-1.5 rounded transition-colors"
                                         >
-                                            <motion.button
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                onClick={() => setComment('')}
-                                                className="text-gray-400 hover:text-white text-sm px-3 py-1.5 rounded transition-colors"
-                                            >
-                                                Cancelar
-                                            </motion.button>
-                                            <motion.button
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="bg-[#3ea6ff] hover:bg-[#65b8ff] text-black font-medium text-sm rounded-full px-4 py-1.5
-                                                    transition-colors"
-                                            >
-                                                Comentar
-                                            </motion.button>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            className="bg-[#3ea6ff] hover:bg-[#65b8ff] text-black font-medium text-sm rounded-full px-4 py-1.5
+                                                transition-colors"
+                                        >
+                                            Comentar
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        </motion.div>
+                        </div>
 
-                        {/* Sample Comments */}
-                        <motion.div
-                            variants={staggerContainer}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{}}
+                        <div
                             className="space-y-6 max-w-3xl"
                         >
                             {[
@@ -1635,9 +1566,8 @@ function WatchContent() {
                                 { user: 'João P.', text: 'Um dos melhores que vi esse ano. Super recomendo!', time: '5 horas atrás', likes: 18 },
                                 { user: 'Ana L.', text: 'A atuação do elenco principal é impecável.', time: '1 dia atrás', likes: 42 },
                             ].map((c, i) => (
-                                <motion.div
+                                <div
                                     key={i}
-                                    variants={fadeInUp}
                                     className="flex gap-3"
                                 >
                                     <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
@@ -1650,36 +1580,31 @@ function WatchContent() {
                                         </div>
                                         <p className="text-gray-300 text-sm">{c.text}</p>
                                         <div className="flex items-center gap-4 mt-2">
-                                            <motion.button
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
+                                            <button
                                                 className="flex items-center gap-1 text-gray-500 hover:text-white text-xs transition-colors"
                                             >
                                                 <ThumbsUp className="w-3.5 h-3.5" />
                                                 <span>{c.likes}</span>
-                                            </motion.button>
-                                            <motion.button
-                                                whileHover={{ scale: 1.05 }}
+                                            </button>
+                                            <button
                                                 className="text-gray-500 hover:text-white text-xs transition-colors"
                                             >
                                                 Responder
-                                            </motion.button>
+                                            </button>
                                         </div>
                                     </div>
-                                </motion.div>
+                                </div>
                             ))}
-                        </motion.div>
-                    </motion.section>
+                        </div>
+                    </section>
+                    */}
+
 
                     {/* Similar Movies */}
                     {isLoadingDetails ? (
                         <SectionSkeleton />
                     ) : similarMovies.length > 0 && (
-                        <motion.section
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ margin: "-50px" }}
+                        <section
                             className="py-8 -mx-4 sm:-mx-8 lg:-mx-12"
                             aria-label="Títulos semelhantes a este filme"
                         >
@@ -1688,8 +1613,9 @@ function WatchContent() {
                                 movies={similarMovies}
                                 onMovieClick={handleSimilarMovieClick}
                             />
-                        </motion.section>
+                        </section>
                     )}
+
                 </div>
             </div>
             {/* Movie Modal */}
@@ -1706,4 +1632,5 @@ function WatchContent() {
         </div>
     );
 }
+
 

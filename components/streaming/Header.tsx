@@ -6,9 +6,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Search, User, Menu, X, Play, Star, Film, Tv, Settings, CreditCard, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import NetflixAvatar from '../NetflixAvatar';
 import { TMDBService } from './TMDBIntegration';
 import { Movie } from '@/types/movie';
 import MovieModal from './MovieModal';
+import SearchOverlay from './SearchOverlay';
 
 const HEADER_ITEMS = [
     { label: 'Lar', href: '/' },
@@ -20,6 +22,8 @@ const HEADER_ITEMS = [
 export default function Header() {
     const router = useRouter();
     const pathname = usePathname();
+
+    if (pathname === '/login') return null;
     const [scrolled, setScrolled] = useState(false);
     const [activeFilter, setActiveFilter] = useState('');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -29,6 +33,14 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+    const [demoName, setDemoName] = useState("User");
+
+    // Efeito para gerar nome aleatório apenas no cliente (evita erro de hidratação)
+    useEffect(() => {
+        const names = ["Daniel", "Maria", "João", "Ana", "Lucas", "Beatriz", "Pedro", "Sofia", "Carlos", "Julia"];
+        const randomName = names[Math.floor(Math.random() * names.length)] + Math.random().toString();
+        setDemoName(randomName);
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -56,20 +68,20 @@ export default function Header() {
             // Usar requestAnimationFrame para evitar atualizações durante renderização
             requestAnimationFrame(updateFilter);
         };
-        
+
         window.addEventListener('popstate', handlePopState);
-        
+
         // Monkey patch pushState e replaceState para detectar mudanças programáticas
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
-        
-        history.pushState = function() {
+
+        history.pushState = function () {
             // @ts-ignore
             originalPushState.apply(this, arguments);
             requestAnimationFrame(updateFilter);
         };
-        
-        history.replaceState = function() {
+
+        history.replaceState = function () {
             // @ts-ignore
             originalReplaceState.apply(this, arguments);
             requestAnimationFrame(updateFilter);
@@ -167,7 +179,7 @@ export default function Header() {
                         ? "bg-[#0a0a0a]"
                         : scrolled
                             ? "bg-[#0a0a0a]/80 backdrop-blur-md"
-                            : "bg-gradient-to-b from-[#0a0a0a]/80 via-[#0a0a0a]/40 to-transparent"
+                            : "bg-transparent"
                 )}
                 style={{ WebkitBackdropFilter: scrolled ? 'blur(8px)' : undefined, backdropFilter: scrolled ? 'blur(8px)' : undefined }}
             >
@@ -190,19 +202,19 @@ export default function Header() {
                         <nav className="hidden md:flex items-center gap-1 lg:gap-2">
                             {HEADER_ITEMS?.map((link) => {
                                 // Determinar se o link está ativo
-                                const isActive = 
+                                const isActive =
                                     (link.href === '/' && pathname === '/' && !activeFilter) ||
                                     (link.href.includes('?filter=series') && activeFilter === 'series') ||
                                     (link.href.includes('?filter=movie') && activeFilter === 'movie') ||
                                     (link.href === '/my-list' && pathname === '/my-list');
-                                
+
                                 return (
                                     <Link
                                         key={link.label}
                                         href={link.href}
                                         className={cn(
                                             "px-3 lg:px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg",
-                                            isActive 
+                                            isActive
                                                 ? "text-white bg-white/10" // Estilo ativo (sem hover)
                                                 : "text-gray-300 hover:scale-105" // Estilo normal com efeito de escala no hover
                                         )}
@@ -234,9 +246,18 @@ export default function Header() {
                                         setMobileMenuOpen(false);
                                         setSearchOpen(false);
                                     }}
-                                    className="p-2 text-gray-300 hover:text-white transition-colors duration-200 hover:bg-white/10 rounded-full"
+                                    className={cn(
+                                        "transition-colors duration-200",
+                                        "flex items-center justify-center",
+                                        true ? "rounded-md" : "p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full"
+                                    )}
                                 >
-                                    <User className="w-5 h-5" />
+                                    {/* SIMULAÇÃO: Usuário logado (true) com Nome Aleatório para Teste */}
+                                    {true ? (
+                                        <NetflixAvatar name={demoName} size={32} />
+                                    ) : (
+                                        <User className="w-5 h-5" />
+                                    )}
                                 </button>
 
                                 {userDropdownOpen && (
@@ -265,7 +286,13 @@ export default function Header() {
                                                 </button>
                                             </div>
                                             <div className="border-t border-white/10 py-2">
-                                                <button className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                <button
+                                                    className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors flex items-center gap-3"
+                                                    onClick={() => {
+                                                        setUserDropdownOpen(false);
+                                                        router.push('/login');
+                                                    }}
+                                                >
                                                     <span aria-hidden>{renderUserIcon('Sair')}</span>
                                                     <span>Sair</span>
                                                 </button>
@@ -275,7 +302,10 @@ export default function Header() {
                                 )}
                             </div>
 
-                            <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 text-black font-semibold text-sm rounded-full transition-colors">
+                            <button
+                                onClick={() => router.push('/login')}
+                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 text-black font-semibold text-sm rounded-full transition-colors"
+                            >
                                 Entrar
                             </button>
 
@@ -334,128 +364,11 @@ export default function Header() {
                 )}
             </AnimatePresence>
 
-            {/* Search Overlay */}
-            <AnimatePresence>
-                {searchOpen && (
-                    <div className="fixed inset-0 z-[60] flex items-start justify-center pt-20 sm:pt-24 px-4">
-                        {/* Backdrop */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-                            onClick={() => setSearchOpen(false)}
-                        />
-
-                        {/* Search Container */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh]"
-                        >
-                            {/* Input Area */}
-                            <div className="flex items-center px-4 py-4 border-b border-white/5 gap-3">
-                                <Search className="w-5 h-5 text-gray-400 shrink-0" />
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    placeholder="O que você quer assistir?"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
-                                    className="flex-1 bg-transparent text-lg text-white placeholder:text-gray-500 outline-none border-none focus:ring-0 p-0"
-                                />
-                                <button
-                                    onClick={() => {
-                                        setSearchOpen(false);
-                                        setSearchQuery('');
-                                    }}
-                                    className="p-1 hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-white"
-                                >
-                                    <span className="text-xs font-medium px-1.5 py-0.5 border border-white/10 rounded hidden sm:inline-block mr-2">ESC</span>
-                                    <X className="w-5 h-5 inline-block" />
-                                </button>
-                            </div>
-
-                            {/* Results Area */}
-                            <div className="flex-1 overflow-y-auto">
-                                {isSearching ? (
-                                    <div className="p-8 flex items-center justify-center gap-3 text-gray-400">
-                                        <div className="w-5 h-5 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
-                                        <span>Buscando...</span>
-                                    </div>
-                                ) : searchQuery ? (
-                                    searchResults.length > 0 ? (
-                                        <div className="py-2">
-                                            {searchResults.map((movie) => (
-                                                <button
-                                                    key={movie.id}
-                                                    onClick={() => handleResultClick(movie)}
-                                                    className="w-full flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors text-left group"
-                                                >
-                                                    <div className="w-12 h-16 rounded overflow-hidden bg-[#2a2a2a] shrink-0 shadow-lg group-hover:shadow-xl transition-all">
-                                                        {movie.poster_url ? (
-                                                            <img
-                                                                src={movie.poster_url}
-                                                                alt={movie.title}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                <Film className="w-5 h-5 text-gray-600" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="text-gray-200 group-hover:text-white font-medium truncate transition-colors">
-                                                            {movie.title}
-                                                        </h4>
-                                                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 group-hover:text-gray-400 transition-colors">
-                                                            <span className="capitalize">{movie.type === 'series' ? 'Série' : 'Filme'}</span>
-                                                            {movie.year && (
-                                                                <>
-                                                                    <span>•</span>
-                                                                    <span>{movie.year}</span>
-                                                                </>
-                                                            )}
-                                                            {movie.score && (
-                                                                <>
-                                                                    <span>•</span>
-                                                                    <span className="flex items-center gap-1 text-yellow-500/80">
-                                                                        <Star className="w-3 h-3 fill-current" />
-                                                                        {movie.score}
-                                                                    </span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="p-12 text-center">
-                                            <p className="text-gray-500">
-                                                Nenhum resultado para "{searchQuery}"
-                                            </p>
-                                        </div>
-                                    )
-                                ) : (
-                                    <div className="p-12 text-center">
-                                        <Film className="w-12 h-12 text-white/5 mx-auto mb-4" />
-                                        <p className="text-gray-600 text-sm">
-                                            Digite para buscar filmes e séries
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            {/* Search Overlay (New) */}
+            <SearchOverlay
+                isOpen={searchOpen}
+                onClose={() => setSearchOpen(false)}
+            />
 
             {/* Movie Modal */}
             <MovieModal
