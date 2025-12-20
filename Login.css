@@ -1,0 +1,289 @@
+/* Estilos para a página de Login */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Cores primárias e secundárias para os links */
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.text-primary:hover {
+  color: var(--primary-color) !important;
+  opacity: 0.8;
+}
+
+.text-secondary {
+  color: var(--primary-color) !important;
+}
+
+.hover\:text-secondary:hover {
+  color: var(--primary-color) !important;
+  opacity: 0.8;
+}
+
+/* Estilos específicos para os links do rodapé */
+.login-container a.text-gray-500:hover {
+  color: var(--primary-color) !important;
+  transition: color 0.3s ease;
+}
+
+/* Estilo específico para os links do rodapé */
+.footer-link {
+  transition: color 0.3s ease;
+  color: #888 !important;
+}
+
+.footer-link:hover {
+  color: #888 !important;
+  text-decoration: underline;
+}
+
+/* Permitir seleção apenas nos campos de entrada */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Container principal */
+.login-container {
+  position: relative;
+  z-index: 1;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, 
+    rgba(13, 12, 15, 0.5), 
+    rgba(13, 12, 15, 0.85)
+  );
+  z-index: -1;
+}
+
+.login-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  opacity: 0.6;
+}
+
+/* Formulário de login */
+.login-form {
+  backdrop-filter: blur(10px);
+  background: rgba(13, 12, 15, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Botões */
+.primary-btn {
+  background: var(--primary-color);
+  border-radius: 10px 12px;
+  font-size: 16px;
+  padding: 11px;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.primary-btn:hover {
+  background: var(--primary-color);
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.primary-btn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.outlined-btn {
+  background: transparent;
+  padding: 9px 12px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 2px solid white;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.outlined-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Campos de entrada */
+.input-field {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Correção para autopreenchimento */
+@keyframes autofill-fix {
+  from { }
+  to { }
+}
+
+input:-webkit-autofill {
+  animation-name: autofill-fix;
+  animation-duration: 1s;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px rgba(13, 12, 15, 0) inset !important;
+  -webkit-text-fill-color: white !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: white;
+}
+
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.05) inset !important;
+  box-shadow: 0 0 0 2px var(--primary-color), 0 0 0 1000px rgba(0, 0, 0, 0.05) inset !important;
+}
+
+/* Firefox e outros navegadores */
+input:autofill {
+  -webkit-text-fill-color: white !important;
+  color: white !important;
+  background-image: none !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+}
+
+/* Foco nos inputs */
+.input-field:focus,
+.input-field:-webkit-autofill:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--primary-color);
+  background: rgba(0, 0, 0, 0.2);
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Checkbox personalizado */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  position: relative;
+  outline: none;
+}
+
+input[type="checkbox"]:checked {
+  background: var(--primary-color);
+  border-color: transparent;
+}
+
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  color: white;
+  font-size: 14px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Removendo o contorno verde do checkbox quando em foco */
+input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Efeito de gradiente para títulos */
+.title-gradient {
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-color));
+  opacity: 0.9;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Efeito no logo */
+.logo {
+  filter: drop-shadow(0 0 15px rgba(0, 162, 104, 0.7));
+}
+
+/* Animação de shake para campos com erro */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake-animation {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Estilo para campos com erro */
+.input-field.border-red-500 {
+  border-color: rgb(239, 68, 68) !important;
+  box-shadow: 0 0 0 1px rgb(239, 68, 68) !important;
+}
+
+/* Estilo para link da área administrativa */
+.admin-login-link {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+}
+
+.admin-link {
+  color: #888;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.admin-link:hover {
+  color: #888;
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.account-question {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.account-toggle {
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.account-toggle:hover {
+  text-decoration: underline;
+}

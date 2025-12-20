@@ -45,28 +45,34 @@ export default function NetflixAvatar({
     return (
         <div
             className={cn(
-                "relative rounded-md overflow-hidden transition-all duration-200 shadow-md",
-                "group-hover:ring-2 group-hover:ring-white", // Ring aparece quando o pai (botão) tiver hover
+                "relative rounded-md overflow-hidden transition-all duration-200 shadow-md bg-gray-800",
+                "group-hover:ring-2 group-hover:ring-white",
                 className
             )}
-            style={{ width: size, height: size }}
+            style={{ 
+                width: className?.includes('w-full') ? '100%' : size, 
+                height: className?.includes('h-full') ? '100%' : size 
+            }}
         >
             <img
                 src={avatarUrl}
                 alt={`Avatar de ${name}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
                 draggable={false}
                 onError={(e) => {
                     // Fallback para uma cor sólida com inicial caso a imagem falhe
                     e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.style.backgroundColor = '#E50914';
-                    e.currentTarget.parentElement!.innerText = name.charAt(0).toUpperCase();
-                    e.currentTarget.parentElement!.style.display = 'flex';
-                    e.currentTarget.parentElement!.style.alignItems = 'center';
-                    e.currentTarget.parentElement!.style.justifyContent = 'center';
-                    e.currentTarget.parentElement!.style.color = 'white';
-                    e.currentTarget.parentElement!.style.fontWeight = 'bold';
-                    e.currentTarget.parentElement!.style.fontSize = `${size * 0.5}px`;
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                        parent.style.backgroundColor = '#E50914';
+                        parent.innerText = name.charAt(0).toUpperCase();
+                        parent.style.display = 'flex';
+                        parent.style.alignItems = 'center';
+                        parent.style.justifyContent = 'center';
+                        parent.style.color = 'white';
+                        parent.style.fontWeight = 'bold';
+                        parent.style.fontSize = `${size * 0.5}px`;
+                    }
                 }}
             />
         </div>

@@ -194,7 +194,7 @@ export default function Header() {
                                 <span className="text-white">
                                     Spot
                                 </span>
-                                <span className="text-[#1DB954]">Flix</span>
+                                <span className="text-white">Flix</span>
                             </h1>
                         </Link>
 
@@ -356,6 +356,15 @@ export default function Header() {
                                                 <span>{link.label}</span>
                                             </Link>
                                         ))}
+                                        <button
+                                            onClick={() => {
+                                                setMobileMenuOpen(false);
+                                                router.push('/signup');
+                                            }}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/5 transition-colors font-medium w-full text-left"
+                                        >
+                                            <span>Criar conta</span>
+                                        </button>
                                     </div>
                                 </nav>
                             </div>

@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
-import Header from "@/components/streaming/Header";
-import Footer from "@/components/streaming/Footer";
 import { Toaster } from "sonner";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DevErrorHandler from "@/components/DevErrorHandler";
+import ConditionalLayout from "@/components/ConditionalLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,9 +46,7 @@ export default function RootLayout({
       >
         <Providers>
           <ErrorBoundary>
-            <Header />
-            <main>{children}</main>
-            <Footer />
+            <ConditionalLayout>{children}</ConditionalLayout>
           </ErrorBoundary>
           <Toaster
             position="bottom-right"
