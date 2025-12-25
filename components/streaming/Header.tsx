@@ -179,7 +179,7 @@ export default function Header() {
                         ? "bg-[#0a0a0a]"
                         : scrolled
                             ? "bg-[#0a0a0a]/80 backdrop-blur-md"
-                            : "bg-transparent"
+                            : "bg-gradient-to-b from-black/60 via-black/40 to-transparent"
                 )}
                 style={{ WebkitBackdropFilter: scrolled ? 'blur(8px)' : undefined, backdropFilter: scrolled ? 'blur(8px)' : undefined }}
             >
@@ -216,7 +216,7 @@ export default function Header() {
                                             "px-3 lg:px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg",
                                             isActive
                                                 ? "text-white bg-white/10" // Estilo ativo (sem hover)
-                                                : "text-gray-300 hover:scale-105" // Estilo normal com efeito de escala no hover
+                                                : "text-white hover:scale-105" // Estilo normal com efeito de escala no hover
                                         )}
                                     >
                                         {link.label}

@@ -162,7 +162,7 @@ function WatchContent() {
 
     const [selectedSeason, setSelectedSeason] = useState<number>(1);
     const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
-    const [selectedSource, setSelectedSource] = useState<'vidsrc.me' | 'megaembed'>('vidsrc.me');
+    const [selectedSource, setSelectedSource] = useState<'vidsrc.me' | 'megaembed'>('megaembed');
     const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
     const [trailers, setTrailers] = useState<{ key: string; name: string; type: string }[]>([]);
     const [keywords, setKeywords] = useState<{ id: number; name: string }[]>([]);
@@ -656,8 +656,8 @@ function WatchContent() {
                             <span className="text-white/20 text-2xl font-bold">{movie.title}</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-transparent" />
-                    <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-[#0a0a0a]/20 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/60 via-transparent to-transparent" />
                 </div>
 
                 {/* Back Button */}
@@ -1231,7 +1231,7 @@ function WatchContent() {
                         </h2>
 
                         {/* Player Container */}
-                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-5xl mx-auto">
+                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
                             <iframe
                                 src={
                                     selectedSource === 'vidsrc.me'
@@ -1251,26 +1251,21 @@ function WatchContent() {
                         </div>
 
                         {/* Seletor de Servidores */}
-                        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 relative z-10">
-                            <p className="text-gray-400 text-xs font-medium uppercase tracking-wider w-full text-center mb-1">
-                                Selecionar Servidor
-                            </p>
+                        <div className="mt-4 flex items-center justify-center gap-2 relative z-10">
                             {[
-                                { id: 'vidsrc.me', label: 'Vidsrc.me', icon: '🚀' },
-                                { id: 'megaembed', label: 'MegaEmbed', icon: '💎' }
+                                { id: 'vidsrc.me', label: 'Servidor 1' },
+                                { id: 'megaembed', label: 'Servidor 2' }
                             ].map((source) => (
                                 <button
                                     key={source.id}
                                     onClick={() => setSelectedSource(source.id as any)}
                                     className={cn(
-                                        "px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2",
-                                        "border border-white/10 hover:border-white/30",
+                                        "px-3 py-1.5 rounded text-xs font-medium transition-all duration-200",
                                         selectedSource === source.id
-                                            ? "bg-white text-black shadow-lg shadow-white/10 scale-105"
-                                            : "bg-[#141414] text-gray-400 hover:text-white"
+                                            ? "bg-white/10 text-white"
+                                            : "text-gray-500 hover:text-gray-300"
                                     )}
                                 >
-                                    <span className="text-xs">{source.icon}</span>
                                     {source.label}
                                 </button>
                             ))}

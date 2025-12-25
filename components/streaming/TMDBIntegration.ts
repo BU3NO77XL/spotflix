@@ -250,8 +250,8 @@ export const TMDBService = {
         }
     },
 
-    // Fetch movie videos (trailers)
-    async fetchMovieVideos(tmdbId: number, isSeries: boolean = false): Promise<{ key: string; name: string; type: string; site: string }[]> {
+    // Fetch movie videos (trailers) - Prioriza trailers oficiais em HD
+    async fetchMovieVideos(tmdbId: number, isSeries: boolean = false): Promise<{ key: string; name: string; type: string; site: string; official: boolean; size: number }[]> {
         try {
             const endpoint = isSeries
                 ? `${TMDB_BASE_URL}/tv/${tmdbId}/videos?api_key=${TMDB_API_KEY}`
@@ -269,10 +269,47 @@ export const TMDBService = {
             }
 
             const data = await response.json();
+            
             // Filtrar apenas trailers do YouTube
-            return data.results?.filter((v: { site: string; type: string }) =>
+            const youtubeVideos = data.results?.filter((v: { site: string; type: string }) =>
                 v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
-            ).slice(0, 3) || [];
+            ) || [];
+
+            // Ordenar por prioridade: oficial > HD/4K > Trailer (não Teaser)
+            const sortedVideos = youtubeVideos.sort((a: { official: boolean; size: number; type: string; name: string }, b: { official: boolean; size: number; type: string; name: string }) => {
+                // 1. Priorizar vídeos oficiais (TMDB marca como official: true)
+                if (a.official !== b.official) {
+                    return a.official ? -1 : 1;
+                }
+                
+                // 2. Priorizar maior resolução (size: 2160=4K, 1080=HD, 720, 480, 360)
+                if (a.size !== b.size) {
+                    return (b.size || 0) - (a.size || 0);
+                }
+                
+                // 3. Priorizar Trailer sobre Teaser
+                if (a.type !== b.type) {
+                    return a.type === 'Trailer' ? -1 : 1;
+                }
+                
+                // 4. Priorizar nomes com "Official" ou "Oficial"
+                const aHasOfficial = /official|oficial/i.test(a.name);
+                const bHasOfficial = /official|oficial/i.test(b.name);
+                if (aHasOfficial !== bHasOfficial) {
+                    return aHasOfficial ? -1 : 1;
+                }
+                
+                return 0;
+            });
+
+            return sortedVideos.slice(0, 3).map((v: { key: string; name: string; type: string; site: string; official: boolean; size: number }) => ({
+                key: v.key,
+                name: v.name,
+                type: v.type,
+                site: v.site,
+                official: v.official || false,
+                size: v.size || 0
+            }));
         } catch (error) {
             console.error('Error fetching videos:', error);
             return [];
