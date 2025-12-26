@@ -114,6 +114,15 @@ input[type="button"],
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(12deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(12deg);
+  }
+}
+
 .animate-pulse-slow {
   animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -124,6 +133,10 @@ input[type="button"],
 
 .animate-bounce-subtle {
   animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 /* End of styles */

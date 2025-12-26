@@ -7,15 +7,41 @@ import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/dataClient';
 import { Movie, CastMember } from '@/types/movie';
-import { Play, Plus, ThumbsUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import CastSlider from '@/components/streaming/CastSlider';
 import Carousel from '@/components/streaming/Carousel';
 import MovieModal from '@/components/streaming/MovieModal';
+import ProgressiveImage from '@/components/streaming/ProgressiveImage';
 import VideoPlayer from '@/components/streaming/VideoPlayer';
 import { cn } from '@/lib/utils';
+
+// Hook para preload de imagens
+const useImagePreload = (urls: string[]) => {
+    const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+    
+    useEffect(() => {
+        if (urls.length === 0) return;
+        
+        const preloadPromises = urls.map(url => {
+            return new Promise<string>((resolve, reject) => {
+                const img = new window.Image();
+                img.onload = () => {
+                    setLoadedImages(prev => new Set([...prev, url]));
+                    resolve(url);
+                };
+                img.onerror = () => reject(url);
+                img.src = url;
+            });
+        });
+        
+        Promise.allSettled(preloadPromises);
+    }, [urls]);
+    
+    return loadedImages;
+};
 
 // Skeleton Components for Loading States
 const Skeleton = memo(({ className }: { className?: string }) => (
@@ -185,11 +211,18 @@ function WatchContent() {
     const [showRightTrailersArrow, setShowRightTrailersArrow] = useState(false);
     const [selectedModalMovie, setSelectedModalMovie] = useState<Movie | null>(null);
 
+    // Estado para backdrops rotativos
+    const [backdrops, setBackdrops] = useState<string[]>([]);
+    const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
+
     // Estado para armazenar detalhes atualizados da série (como no HeroSection)
     const [updatedSeriesDetails, setUpdatedSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
 
     // Estado para controle de áudio do backdrop animado
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
+    const [localFavorited, setLocalFavorited] = useState(false);
+    const [localLiked, setLocalLiked] = useState(false);
+    const [volume, setVolume] = useState(0);
     const backdropVideoRef = useRef<HTMLVideoElement>(null);
 
     const episodesScrollRef = useRef<HTMLDivElement>(null);
@@ -389,7 +422,7 @@ function WatchContent() {
             const endpoint = isSeries ? 'tv' : 'movie';
 
             // Busca dados básicos do TMDB
-            const response = await fetch(`https://api.themoviedb.org/3/${endpoint}/${tmdbIdNum}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
+            const response = await fetch(`https://api.themoviedb.org/3/${endpoint}/${tmdbIdNum}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR`);
             if (!response.ok) return {} as any; // Retorna objeto vazio em vez de null para evitar erro do React Query
             const tmdbData = await response.json();
 
@@ -434,6 +467,17 @@ function WatchContent() {
 
     const movie = movieById || movieByTmdb;
     const isLoading = isLoadingById || isLoadingByTmdb;
+
+    // Preload das imagens principais para evitar flash de loading
+    const imagesToPreload = movie ? [
+        movie.backdrop_url,
+        movie.poster_url
+    ].filter(Boolean) : [];
+    
+    const preloadedImages = useImagePreload(imagesToPreload);
+    
+    // Preload dos backdrops adicionais
+    const preloadedBackdrops = useImagePreload(backdrops);
 
     // Fetch series details for accurate season count (como no HeroSection)
     useEffect(() => {
@@ -538,6 +582,34 @@ function WatchContent() {
         fetchDetails();
     }, [movie?.tmdb_id, movie?.type]);
 
+    // Efeito para buscar e rotacionar backdrops
+    useEffect(() => {
+        // Resetar backdrops imediatamente quando o filme mudar
+        setBackdrops([]);
+        setCurrentBackdropIndex(0);
+
+        if (!movie?.tmdb_id) return;
+
+        const fetchBackdrops = async () => {
+            const images = await TMDBService.fetchMovieImages(movie.tmdb_id, movie.type === 'series');
+            if (images.length > 0) {
+                setBackdrops(images);
+            }
+        };
+
+        fetchBackdrops();
+    }, [movie?.tmdb_id, movie?.type]);
+
+    useEffect(() => {
+        if (backdrops.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentBackdropIndex((prev) => (prev + 1) % backdrops.length);
+        }, 8000); // 8 segundos
+
+        return () => clearInterval(interval);
+    }, [backdrops]);
+
     // Verificar overflow inicial para Collection e Trailers
     useEffect(() => {
         const checkOverflow = () => {
@@ -628,9 +700,9 @@ function WatchContent() {
     return (
         <div className="min-h-screen bg-[#0a0a0a]">
             {/* Hero Section - Similar to MovieModal */}
-            <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh]">
+            <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh] overflow-hidden">
                 {/* Backdrop - Video animado ou Imagem */}
-                <div className="absolute inset-0">
+                <div className="absolute inset-0 overflow-hidden">
                     {animatedBackdropUrl ? (
                         <video
                             ref={backdropVideoRef}
@@ -646,19 +718,59 @@ function WatchContent() {
                             }}
                         />
                     ) : (movie.backdrop_url || movie.poster_url) ? (
-                        <img
-                            src={movie.backdrop_url || movie.poster_url}
-                            alt={movie.title}
-                            className="w-full h-full object-cover"
-                        />
+                        <div className="absolute inset-0 transition-opacity duration-2000 ease-in-out">
+                            {(backdrops.length > 0 ? backdrops : [movie.backdrop_url || movie.poster_url]).map((bd, index) => (
+                                <div
+                                    key={index}
+                                    className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${
+                                        index === currentBackdropIndex 
+                                            ? 'opacity-100 scale-100 blur-0' 
+                                            : 'opacity-0 scale-105 blur-lg'
+                                    }`}
+                                >
+                                    <ProgressiveImage
+                                        src={bd}
+                                        alt={movie.title}
+                                        className="w-full h-full object-cover"
+                                        preloaded={preloadedImages.has(bd) || preloadedBackdrops.has(bd)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+                        <div className="w-full h-full bg-linear-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
                             <span className="text-white/20 text-2xl font-bold">{movie.title}</span>
                         </div>
                     )}
                     <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-[#0a0a0a]/20 to-transparent" />
                     <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/60 via-transparent to-transparent" />
                 </div>
+
+                {/* Botão de Volume - Canto direito (apenas desktop) */}
+                <button
+                    onClick={() => {
+                        setVolume(volume === 0 ? 1 : 0);
+                        setIsBackdropMuted(!isBackdropMuted);
+                        if (backdropVideoRef.current) {
+                            backdropVideoRef.current.muted = !isBackdropMuted;
+                        }
+                    }}
+                    className="hidden sm:flex absolute bottom-4 sm:bottom-8 lg:bottom-12 right-4 sm:right-8 lg:right-12 z-20
+                        bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70 text-white p-1.5 sm:p-2
+                        rounded-full transition-all duration-200 items-center justify-center w-8 h-8 sm:w-10 sm:h-10
+                        opacity-40 hover:opacity-100 focus:outline-none focus:ring-0"
+                    aria-label={isBackdropMuted ? "Ativar som" : "Desativar som"}
+                >
+                    {isBackdropMuted ? (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M11 4.00003C11 3.59557 10.7564 3.23093 10.3827 3.07615C10.009 2.92137 9.57889 3.00692 9.29289 3.29292L4.58579 8.00003H1C0.447715 8.00003 0 8.44774 0 9.00003V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00003ZM5.70711 9.70714L9 6.41424V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70714ZM15.2929 9.70714L17.5858 12L15.2929 14.2929L16.7071 15.7071L19 13.4142L21.2929 15.7071L22.7071 14.2929L20.4142 12L22.7071 9.70714L21.2929 8.29292L19 10.5858L16.7071 8.29292L15.2929 9.70714Z" fill="currentColor"></path>
+                        </svg>
+                    ) : (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M24 12C24 8.28699 22.525 4.72603 19.8995 2.10052L18.4853 3.51474C20.7357 5.76517 22 8.81742 22 12C22 15.1826 20.7357 18.2349 18.4853 20.4853L19.8995 21.8995C22.525 19.274 24 15.7131 24 12ZM11 4.00001C11 3.59555 10.7564 3.23092 10.3827 3.07613C10.009 2.92135 9.57889 3.00691 9.29289 3.29291L4.58579 8.00001H1C0.447715 8.00001 0 8.44773 0 9.00001V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00001ZM5.70711 9.70712L9 6.41423V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70712ZM16.0001 12C16.0001 10.4087 15.368 8.8826 14.2428 7.75739L12.8285 9.1716C13.5787 9.92174 14.0001 10.9392 14.0001 12C14.0001 13.0609 13.5787 14.0783 12.8285 14.8285L14.2428 16.2427C15.368 15.1174 16.0001 13.5913 16.0001 12ZM17.0709 4.92896C18.9462 6.80432 19.9998 9.34786 19.9998 12C19.9998 14.6522 18.9462 17.1957 17.0709 19.0711L15.6567 17.6569C17.157 16.1566 17.9998 14.1218 17.9998 12C17.9998 9.87829 17.157 7.84346 15.6567 6.34317L17.0709 4.92896Z" fill="currentColor"></path>
+                        </svg>
+                    )}
+                </button>
 
                 {/* Back Button */}
                 <div className="absolute top-20 left-4 sm:left-8 lg:left-12 z-20">
@@ -714,49 +826,35 @@ function WatchContent() {
                                 <Play className="w-5 h-5 sm:w-6 sm:h-6 mr-2 fill-current" aria-hidden="true" />
                                 Assistir
                             </button>
-                            <button
-                                onClick={handleAddToList}
-                                className="bg-[#333333]/60 hover:bg-[#444444] border border-[#ffffff]/70 text-white p-2
-                                    rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10
-                                    focus:outline-none focus:ring-0"
-                                aria-label="Adicionar à minha lista"
-                            >
-                                <Plus className="w-5 h-5" aria-hidden="true" />
-                            </button>
-                            <button
-                                className="bg-[#333333]/60 hover:bg-[#444444] border border-[#ffffff]/70 text-white p-2
-                                    rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10
-                                    focus:outline-none focus:ring-0"
-                                aria-label="Gostei deste filme"
-                            >
-                                <ThumbsUp className="w-5 h-5" aria-hidden="true" />
-                            </button>
-
-                            {/* Botão de Volume - Mobile (ao lado do botão gostei) - só aparece se tiver áudio */}
-                            {animatedBackdropUrl && hasBackdropAudio && (
+                            <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => {
-                                        setIsBackdropMuted(!isBackdropMuted);
-                                        if (backdropVideoRef.current) {
-                                            backdropVideoRef.current.muted = !isBackdropMuted;
-                                        }
+                                        setLocalFavorited(!localFavorited);
+                                        handleAddToList();
                                     }}
-                                    className="sm:hidden bg-[#333333]/60 hover:bg-[#444444] text-white p-2
+                                    className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70 text-white p-2
                                         rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10
-                                        opacity-60 hover:opacity-100 focus:outline-none focus:ring-0"
-                                    aria-label={isBackdropMuted ? "Ativar som" : "Desativar som"}
+                                        focus:outline-none focus:ring-0"
+                                    aria-label="Adicionar à minha lista"
                                 >
-                                    {isBackdropMuted ? (
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M11 4.00003C11 3.59557 10.7564 3.23093 10.3827 3.07615C10.009 2.92137 9.57889 3.00692 9.29289 3.29292L4.58579 8.00003H1C0.447715 8.00003 0 8.44774 0 9.00003V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00003ZM5.70711 9.70714L9 6.41424V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70714ZM15.2929 9.70714L17.5858 12L15.2929 14.2929L16.7071 15.7071L19 13.4142L21.2929 15.7071L22.7071 14.2929L20.4142 12L22.7071 9.70714L21.2929 8.29292L19 10.5858L16.7071 8.29292L15.2929 9.70714Z" fill="currentColor"></path>
-                                        </svg>
-                                    ) : (
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M24 12C24 8.28699 22.525 4.72603 19.8995 2.10052L18.4853 3.51474C20.7357 5.76517 22 8.81742 22 12C22 15.1826 20.7357 18.2349 18.4853 20.4853L19.8995 21.8995C22.525 19.274 24 15.7131 24 12ZM11 4.00001C11 3.59555 10.7564 3.23092 10.3827 3.07613C10.009 2.92135 9.57889 3.00691 9.29289 3.29291L4.58579 8.00001H1C0.447715 8.00001 0 8.44773 0 9.00001V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00001ZM5.70711 9.70712L9 6.41423V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70712ZM16.0001 12C16.0001 10.4087 15.368 8.8826 14.2428 7.75739L12.8285 9.1716C13.5787 9.92174 14.0001 10.9392 14.0001 12C14.0001 13.0609 13.5787 14.0783 12.8285 14.8285L14.2428 16.2427C15.368 15.1174 16.0001 13.5913 16.0001 12ZM17.0709 4.92896C18.9462 6.80432 19.9998 9.34786 19.9998 12C19.9998 14.6522 18.9462 17.1957 17.0709 19.0711L15.6567 17.6569C17.157 16.1566 17.9998 14.1218 17.9998 12C17.9998 9.87829 17.157 7.84346 15.6567 6.34317L17.0709 4.92896Z" fill="currentColor"></path>
-                                        </svg>
-                                    )}
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" clipRule="evenodd" d="M11 2V11H2V13H11V22H13V13H22V11H13V2H11Z" fill="currentColor" />
+                                    </svg>
                                 </button>
-                            )}
+                                <button
+                                    onClick={() => setLocalLiked(!localLiked)}
+                                    className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70 text-white p-2
+                                        rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10
+                                        focus:outline-none focus:ring-0"
+                                    aria-label="Gostei deste filme"
+                                >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" clipRule="evenodd" d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732ZM10.5 2C9.67157 2 9 2.67157 9 3.5V7.7132L7.05942 10.8181C6.92829 11.0279 6.72404 11.1817 6.48614 11.2497L4.45056 11.8313C3.59195 12.0766 3 12.8613 3 13.7543V18.5468C3 19.6255 3.87447 20.5 4.95319 20.5C5.87021 20.5 6.78124 20.6478 7.65121 20.9378L9.14427 21.4355C10.2659 21.8094 11.4405 22 12.6228 22H13H14H16.5C18.2692 22 19.7319 20.6873 19.967 18.9827C20.6039 18.3496 21 17.4709 21 16.5C21 16.4369 20.9983 16.3742 20.995 16.3118C21.3153 15.783 21.5 15.1622 21.5 14.5C21.5 13.8378 21.3153 13.217 20.995 12.6883C20.9983 12.6258 21 12.5631 21 12.5C21 10.567 19.433 9 17.5 9H15.9338C15.9752 8.6755 16 8.33974 16 8C16 6.98865 15.7788 5.80611 15.5539 4.85235C15.1401 3.09702 13.5428 2 11.8377 2H10.5Z" fill="currentColor" />
+                                    </svg>
+                                </button>
+                            </div>
+
+
                         </div>
 
 
@@ -811,33 +909,6 @@ function WatchContent() {
                     </div>
                 </div>
 
-
-                {/* Botão de Volume - Desktop (canto direito), escondido em mobile - só aparece se tiver áudio */}
-                {animatedBackdropUrl && hasBackdropAudio && (
-                    <button
-                        onClick={() => {
-                            setIsBackdropMuted(!isBackdropMuted);
-                            if (backdropVideoRef.current) {
-                                backdropVideoRef.current.muted = !isBackdropMuted;
-                            }
-                        }}
-                        className="hidden sm:flex absolute bottom-12 right-8 lg:right-12 z-20
-                            bg-[#333333]/60 hover:bg-[#444444] text-white p-2
-                            rounded-full transition-all duration-200 items-center justify-center w-10 h-10
-                            opacity-40 hover:opacity-100 focus:outline-none focus:ring-0"
-                        aria-label={isBackdropMuted ? "Ativar som" : "Desativar som"}
-                    >
-                        {isBackdropMuted ? (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M11 4.00003C11 3.59557 10.7564 3.23093 10.3827 3.07615C10.009 2.92137 9.57889 3.00692 9.29289 3.29292L4.58579 8.00003H1C0.447715 8.00003 0 8.44774 0 9.00003V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00003ZM5.70711 9.70714L9 6.41424V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70714ZM15.2929 9.70714L17.5858 12L15.2929 14.2929L16.7071 15.7071L19 13.4142L21.2929 15.7071L22.7071 14.2929L20.4142 12L22.7071 9.70714L21.2929 8.29292L19 10.5858L16.7071 8.29292L15.2929 9.70714Z" fill="currentColor"></path>
-                            </svg>
-                        ) : (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M24 12C24 8.28699 22.525 4.72603 19.8995 2.10052L18.4853 3.51474C20.7357 5.76517 22 8.81742 22 12C22 15.1826 20.7357 18.2349 18.4853 20.4853L19.8995 21.8995C22.525 19.274 24 15.7131 24 12ZM11 4.00001C11 3.59555 10.7564 3.23092 10.3827 3.07613C10.009 2.92135 9.57889 3.00691 9.29289 3.29291L4.58579 8.00001H1C0.447715 8.00001 0 8.44773 0 9.00001V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00001ZM5.70711 9.70712L9 6.41423V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70712ZM16.0001 12C16.0001 10.4087 15.368 8.8826 14.2428 7.75739L12.8285 9.1716C13.5787 9.92174 14.0001 10.9392 14.0001 12C14.0001 13.0609 13.5787 14.0783 12.8285 14.8285L14.2428 16.2427C15.368 15.1174 16.0001 13.5913 16.0001 12ZM17.0709 4.92896C18.9462 6.80432 19.9998 9.34786 19.9998 12C19.9998 14.6522 18.9462 17.1957 17.0709 19.0711L15.6567 17.6569C17.157 16.1566 17.9998 14.1218 17.9998 12C17.9998 9.87829 17.157 7.84346 15.6567 6.34317L17.0709 4.92896Z" fill="currentColor"></path>
-                            </svg>
-                        )}
-                    </button>
-                )}
             </section>
 
             {/* Content */}
@@ -845,7 +916,7 @@ function WatchContent() {
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
 
                     {/* Synopsis */}
-                    <section className="py-8 border-b border-white/10">
+                    <section className="py-8">
                         <p className="text-gray-200 text-sm sm:text-base leading-relaxed max-w-4xl">
                             {!isSynopsisExpanded && synopsis.length > SYNOPSIS_LIMIT
                                 ? `${synopsis.slice(0, SYNOPSIS_LIMIT)}...`
@@ -933,7 +1004,7 @@ function WatchContent() {
 
                     {/* Seletor de temporadas e carrossel de episódios para séries */}
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
-                        <section className="py-8 border-b border-white/10">
+                        <section className="py-8">
 
                             {/* Cabeçalho da seção */}
                             <div className="mb-6">
@@ -1014,13 +1085,13 @@ function WatchContent() {
                                 <div
                                     ref={episodesScrollRef}
                                     onScroll={handleEpisodeScroll}
-                                    className="flex gap-4 overflow-x-auto py-4 scrollbar-hide px-2"
+                                    className="flex gap-4 overflow-x-auto py-4 scrollbar-hide px-6"
                                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                                 >
                                     {isLoadingDetails ? (
                                         <div className="flex gap-4 py-2">
                                             {[...Array(5)].map((_, i) => (
-                                                <div key={i} className="flex-shrink-0 w-64">
+                                                <div key={i} className="shrink-0 w-64">
                                                     <div className="animate-pulse bg-white/10 rounded-lg h-36 mb-2" />
                                                     <div className="animate-pulse bg-white/10 rounded h-4 w-3/4 mb-1" />
                                                     <div className="animate-pulse bg-white/10 rounded h-3 w-1/2" />
@@ -1045,7 +1116,7 @@ function WatchContent() {
                                                             });
                                                         }
                                                     }}
-                                                    className={`flex-shrink-0 w-64 bg-[#1a1a1a] rounded-lg overflow-hidden hover:scale-105 transition-all duration-200 cursor-pointer
+                                                    className={`shrink-0 w-64 bg-[#1a1a1a] rounded-lg overflow-hidden hover:scale-105 transition-all duration-200 cursor-pointer
                                                         ${selectedEpisode === episode.episode_number ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#141414]' : ''}`}
                                                 >
                                                     <div className="relative">
@@ -1092,9 +1163,9 @@ function WatchContent() {
 
                     {/* Collection/Franchise */}
                     {collection && collection.parts.length > 1 && (
-                        <section className="py-8 border-b border-white/10">
+                        <section className="py-8">
 
-                            <div className="relative rounded-lg overflow-hidden">
+                            <div className="relative rounded-3xl overflow-hidden">
                                 {/* Backdrop */}
                                 {collection.backdrop_path && (
                                     <div className="absolute inset-0">
@@ -1169,7 +1240,7 @@ function WatchContent() {
                                                                 ${isCurrentMovie ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`}
                                                                 />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] text-gray-400 text-xs p-3 text-center font-medium">
+                                                                <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-[#2a2a2a] to-[#1a1a1a] text-gray-400 text-xs p-3 text-center font-medium">
                                                                     {part.title}
                                                                 </div>
                                                             )}
@@ -1203,7 +1274,7 @@ function WatchContent() {
                     {/* Video Player */}
                     <section
                         id="player-section"
-                        className="relative py-12 border-b border-white/10"
+                        className="relative py-12"
                         aria-labelledby="player-heading"
                     >
 
@@ -1220,7 +1291,7 @@ function WatchContent() {
                                 aria-hidden="true"
                             />
                             {/* Gradiente suave nas bordas para integrar com o fundo */}
-                            <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+                            <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
                         </div>
 
                         <h2 id="player-heading" className="text-white text-lg font-semibold mb-6 text-center drop-shadow-lg">
@@ -1288,7 +1359,7 @@ function WatchContent() {
                     {isSeries && creatorSeries.length > 0 && creatorInfo && (
                         <section className="py-8">
 
-                            <div className="relative rounded-lg overflow-hidden">
+                            <div className="relative rounded-3xl overflow-hidden">
                                 {/* Backdrop Dinâmico com transição suave */}
                                 <div className="absolute inset-0">
                                     <img
@@ -1303,8 +1374,8 @@ function WatchContent() {
                                     />
 
                                     <div className="absolute inset-0 bg-black/50" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/90 via-transparent to-transparent" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/90 via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
                                 </div>
 
                                 <div className="relative z-10 p-4 sm:p-5">
@@ -1369,7 +1440,7 @@ function WatchContent() {
                                                                     ${index === selectedCreatorIndex ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`}
                                                             />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] text-gray-400 text-xs p-3 text-center font-medium">
+                                                            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-[#2a2a2a] to-[#1a1a1a] text-gray-400 text-xs p-3 text-center font-medium">
                                                                 {series.title}
                                                             </div>
                                                         )}

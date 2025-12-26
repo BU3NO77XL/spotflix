@@ -20,6 +20,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     const [direction, setDirection] = useState(1);
     const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
     const [isReady, setIsReady] = useState(false);
+    const [nextImageReady, setNextImageReady] = useState(false);
     const [seriesDetails, setSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
 
     const featured = featuredMovies?.[currentIndex];
@@ -54,42 +55,50 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     }, [featuredId, featuredType, featuredTmdbId, seriesDetails]);
 
     // Preload images
-    const preloadImage = useCallback((index: number) => {
-        if (!featuredMovies?.[index] || loadedImages.has(index)) return Promise.resolve();
+    const preloadImage = useCallback((index: number): Promise<boolean> => {
+        if (!featuredMovies?.[index]) return Promise.resolve(false);
+        if (loadedImages.has(index)) return Promise.resolve(true);
 
-        return new Promise<void>((resolve) => {
+        return new Promise<boolean>((resolve) => {
             const img = new Image();
             const src = featuredMovies[index].backdrop_url || featuredMovies[index].poster_url;
             img.onload = () => {
                 setLoadedImages(prev => new Set([...prev, index]));
-                resolve();
+                resolve(true);
             };
-            img.onerror = () => resolve();
+            img.onerror = () => resolve(false);
             img.src = src || '';
         });
     }, [featuredMovies, loadedImages]);
 
-    // Preload adjacent images
+    // Preload adjacent images and set next image ready flag
     useEffect(() => {
         if (featuredMovies?.length > 1) {
             const next = (currentIndex + 1) % featuredMovies.length;
             const prev = (currentIndex - 1 + featuredMovies.length) % featuredMovies.length;
-            preloadImage(next);
+
+            // Reset next image ready flag when index changes
+            setNextImageReady(false);
+
+            // Preload next image and set flag when ready
+            preloadImage(next).then((success) => {
+                if (success) setNextImageReady(true);
+            });
             preloadImage(prev);
             setIsReady(true);
         }
     }, [currentIndex, featuredMovies?.length, preloadImage]);
 
-    // Auto-advance
+    // Auto-advance - only when next image is ready (10 seconds interval)
     useEffect(() => {
-        if (featuredMovies?.length > 1 && isReady) {
+        if (featuredMovies?.length > 1 && isReady && nextImageReady) {
             const interval = setInterval(() => {
                 setDirection(1);
                 setCurrentIndex((prev) => (prev + 1) % featuredMovies.length);
-            }, 10000);
+            }, 10000); // 10 seconds
             return () => clearInterval(interval);
         }
-    }, [featuredMovies?.length, isReady]);
+    }, [featuredMovies?.length, isReady, nextImageReady]);
 
     const goToSlide = async (index: number) => {
         if (index === currentIndex) return;
@@ -109,32 +118,32 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
 
     const displayYear = seriesDetails[featured.id]?.year || featured.year;
 
-    // Variantes cinematográficas
+    // Variantes cinematográficas simplificadas - sem blur customizado
     const imageVariants: Variants = {
         enter: (dir: number) => ({
             opacity: 0,
-            scale: 1.1,
-            x: dir > 0 ? '5%' : '-5%',
-            filter: 'brightness(0.3)',
+            scale: 1.05,
+            x: dir > 0 ? '1%' : '-1%',
+            filter: 'blur(8px)',
         }),
         center: {
             opacity: 1,
             scale: 1,
             x: 0,
-            filter: 'brightness(1)',
+            filter: 'blur(0px)',
             transition: {
-                duration: 1.2,
-                ease: 'easeOut',
+                duration: 1.4,
+                ease: [0.25, 0.46, 0.45, 0.94],
             }
         },
         exit: (dir: number) => ({
             opacity: 0,
-            scale: 1.05,
-            x: dir > 0 ? '-5%' : '5%',
-            filter: 'brightness(0.3)',
+            scale: 1.02,
+            x: dir > 0 ? '-1%' : '1%',
+            filter: 'blur(8px)',
             transition: {
-                duration: 0.8,
-                ease: 'easeIn',
+                duration: 1.4,
+                ease: [0.25, 0.46, 0.45, 0.94],
             }
         })
     };
@@ -170,9 +179,18 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                     exit="exit"
                     className="absolute inset-0"
                 >
-                    <motion.div initial={{ scale: 1 }} animate={{ scale: 1.05 }} transition={{ duration: 10, ease: 'linear' }} className="w-full h-full">
-                        <ProgressiveImage src={currentImageUrl} alt={featured.title} className="w-full h-full object-cover object-center" />
-                        <Illumination intensity={0.24} />
+                    <motion.div 
+                        initial={{ scale: 1, filter: 'blur(8px)' }} 
+                        animate={{ scale: 1.05, filter: 'blur(0px)' }} 
+                        transition={{ duration: 10, ease: 'linear' }} 
+                        className="w-full h-full"
+                    >
+                        <ProgressiveImage 
+                            src={currentImageUrl} 
+                            alt={featured.title} 
+                            className="w-full h-full object-cover object-center"
+                            preloaded={loadedImages.has(currentIndex)}
+                        />
                     </motion.div>
                     {/* Vignette cinematográfico */}
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
@@ -180,10 +198,10 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             </AnimatePresence>
 
             {/* Gradient Overlays */}
-            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#0a0a0a]/40 via-[#0a0a0a]/10 to-transparent z-10" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/80 via-[#0a0a0a]/30 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0a0a0a]/40 via-[#0a0a0a]/10 to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/40 via-[#0a0a0a]/20 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
 
             {/* Content */}
             <div className="absolute inset-0 flex items-center sm:items-end z-20">
@@ -294,7 +312,12 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                     : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
                                     }`}
                             >
-                                <ProgressiveImage src={movie.backdrop_url || movie.poster_url} alt={movie.title} className="w-full h-full object-cover" />
+                                <ProgressiveImage 
+                                    src={movie.backdrop_url || movie.poster_url} 
+                                    alt={movie.title} 
+                                    className="w-full h-full object-cover"
+                                    preloaded={loadedImages.has(index)}
+                                />
                                 {index === currentIndex && (
                                     <div className="absolute inset-0 bg-white/20" />
                                 )}

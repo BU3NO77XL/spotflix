@@ -269,7 +269,7 @@ export const TMDBService = {
             }
 
             const data = await response.json();
-            
+
             // Filtrar apenas trailers do YouTube
             const youtubeVideos = data.results?.filter((v: { site: string; type: string }) =>
                 v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
@@ -281,24 +281,24 @@ export const TMDBService = {
                 if (a.official !== b.official) {
                     return a.official ? -1 : 1;
                 }
-                
+
                 // 2. Priorizar maior resolução (size: 2160=4K, 1080=HD, 720, 480, 360)
                 if (a.size !== b.size) {
                     return (b.size || 0) - (a.size || 0);
                 }
-                
+
                 // 3. Priorizar Trailer sobre Teaser
                 if (a.type !== b.type) {
                     return a.type === 'Trailer' ? -1 : 1;
                 }
-                
+
                 // 4. Priorizar nomes com "Official" ou "Oficial"
                 const aHasOfficial = /official|oficial/i.test(a.name);
                 const bHasOfficial = /official|oficial/i.test(b.name);
                 if (aHasOfficial !== bHasOfficial) {
                     return aHasOfficial ? -1 : 1;
                 }
-                
+
                 return 0;
             });
 
@@ -507,7 +507,7 @@ export const TMDBService = {
         try {
             const [movieResponse, creditsResponse, releaseDatesResponse] = await Promise.all([
                 fetch(`${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${TMDB_API_KEY}`),
+                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=pt-BR`),
                 fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/release_dates?api_key=${TMDB_API_KEY}`)
             ]);
 
@@ -561,7 +561,7 @@ export const TMDBService = {
         try {
             const [seriesResponse, creditsResponse, contentRatingsResponse] = await Promise.all([
                 fetch(`${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/credits?api_key=${TMDB_API_KEY}`),
+                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=pt-BR`),
                 fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/content_ratings?api_key=${TMDB_API_KEY}`)
             ]);
 
@@ -655,6 +655,31 @@ export const TMDBService = {
         }
     },
 
+    // Fetch movie images (backdrops)
+    async fetchMovieImages(tmdbId: number, isSeries: boolean = false): Promise<string[]> {
+        try {
+            // Fetch specifically 'xx' (no language/text-less) images
+            const endpoint = isSeries
+                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images?api_key=${TMDB_API_KEY}&include_image_language=xx`
+                : `${TMDB_BASE_URL}/movie/${tmdbId}/images?api_key=${TMDB_API_KEY}&include_image_language=xx`;
+
+            const response = await fetch(endpoint);
+
+            if (!response.ok) {
+                return [];
+            }
+
+            const data = await response.json();
+            const backdrops = data.backdrops || [];
+
+            // Return top 10 without specific language sorting
+            return backdrops.slice(0, 10).map((img: any) => `${TMDB_IMAGE_BASE}/original${img.file_path}`);
+        } catch (error) {
+            console.error('Error fetching images:', error);
+            return [];
+        }
+    },
+
     // Get backdrop URL for carousel
     async getCarouselBackdrop(category: string): Promise<string | null> {
         try {
@@ -735,7 +760,7 @@ export const TMDBService = {
                     ? `${TMDB_IMAGE_BASE}/w500${item.poster_path}`
                     : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&h=750&fit=crop',
                 backdrop_url: item.backdrop_path
-                    ? `${TMDB_IMAGE_BASE}/original${item.backdrop_path}`
+                    ? `${TMDB_IMAGE_BASE}/w1280${item.backdrop_path}`
                     : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop',
                 score: item.vote_average ? parseFloat(item.vote_average.toFixed(1)) : 8.0,
                 is_featured: category === 'trending' && index < 3,
@@ -798,7 +823,7 @@ export const TMDBService = {
                 .sort((a: { vote_average: number }, b: { vote_average: number }) => b.vote_average - a.vote_average)
                 .slice(0, 12);
 
-            // Transformar para o formato Movie
+
             return sortedShows.map((show: { id: number; name: string; poster_path: string; backdrop_path: string; first_air_date: string; vote_average: number; overview: string }) => ({
                 title: show.name || 'Untitled',
                 type: 'series' as const,
