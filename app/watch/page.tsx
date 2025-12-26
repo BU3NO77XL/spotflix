@@ -164,6 +164,7 @@ function WatchContent() {
     const movieId = searchParams.get('id');
     const tmdbId = searchParams.get('ref');
     const mediaType = searchParams.get('type') || 'movie'; // 'movie' ou 'series'
+    const encodedLogos = searchParams.get('logos'); // Obter logos da URL se disponíveis
 
     // Quando o id da mídia mudar (navegação para outro filme/série),
     // em dispositivos móveis queremos garantir que a página comece no topo.
@@ -185,13 +186,19 @@ function WatchContent() {
     const [movieDetails, setMovieDetails] = useState<{ overview?: string; budget?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null>(null);
     const [seriesDetails, setSeriesDetails] = useState<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null>(null);
     const [seasonDetails, setSeasonDetails] = useState<{ episodes: { id: number; episode_number: number; name: string; overview: string; air_date: string; runtime: number; still_path: string; vote_average: number }[] } | null>(null);
-
     const [selectedSeason, setSelectedSeason] = useState<number>(1);
     const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
     const [selectedSource, setSelectedSource] = useState<'vidsrc.me' | 'megaembed'>('megaembed');
     const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
     const [trailers, setTrailers] = useState<{ key: string; name: string; type: string }[]>([]);
     const [keywords, setKeywords] = useState<{ id: number; name: string }[]>([]);
+    const [logos, setLogos] = useState<{
+        file_path: string;
+        file_type: string;
+        width: number;
+        height: number;
+        iso_639_1: string | null;
+    }[]>([]);
     const [collection, setCollection] = useState<{ id: number; name: string; overview: string; backdrop_path: string; parts: { id: number; title: string; poster_path: string; release_date: string }[] } | null>(null);
     const [creatorSeries, setCreatorSeries] = useState<Movie[]>([]);
     const [creatorInfo, setCreatorInfo] = useState<{ id: number; name: string } | null>(null);
@@ -210,21 +217,17 @@ function WatchContent() {
     const [showLeftTrailersArrow, setShowLeftTrailersArrow] = useState(false);
     const [showRightTrailersArrow, setShowRightTrailersArrow] = useState(false);
     const [selectedModalMovie, setSelectedModalMovie] = useState<Movie | null>(null);
-
     // Estado para backdrops rotativos
     const [backdrops, setBackdrops] = useState<string[]>([]);
     const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
-
     // Estado para armazenar detalhes atualizados da série (como no HeroSection)
     const [updatedSeriesDetails, setUpdatedSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
-
     // Estado para controle de áudio do backdrop animado
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
     const [localFavorited, setLocalFavorited] = useState(false);
     const [localLiked, setLocalLiked] = useState(false);
     const [volume, setVolume] = useState(0);
     const backdropVideoRef = useRef<HTMLVideoElement>(null);
-
     const episodesScrollRef = useRef<HTMLDivElement>(null);
     const collectionScrollRef = useRef<HTMLDivElement>(null);
     const trailersScrollRef = useRef<HTMLDivElement>(null);
@@ -465,6 +468,18 @@ function WatchContent() {
         enabled: !!tmdbId,
     });
 
+    // Efeito para carregar os logos pré-carregados da URL
+    useEffect(() => {
+        if (encodedLogos) {
+            try {
+                const decodedLogos = JSON.parse(decodeURIComponent(encodedLogos));
+                setLogos(decodedLogos);
+            } catch (error) {
+                console.error('Erro ao decodificar logos da URL:', error);
+            }
+        }
+    }, [encodedLogos]);
+
     const movie = movieById || movieByTmdb;
     const isLoading = isLoadingById || isLoadingByTmdb;
 
@@ -511,18 +526,20 @@ function WatchContent() {
                 setIsLoadingDetails(true);
                 setCollection(null); // Resetar collection ao mudar de filme
                 setCreatorSeries([]); // Resetar séries do criador
+                setLogos([]); // Resetar logos
                 try {
                     // Verificar se é uma série ou filme
                     const isSeries = movie.type === 'series';
 
                     if (isSeries) {
                         // Buscar detalhes da série
-                        const [seriesData, similar, videos, keywordsData, fullDetails] = await Promise.all([
+                        const [seriesData, similar, videos, keywordsData, fullDetails, logosData] = await Promise.all([
                             TMDBService.fetchSeriesDetails(movie.tmdb_id),
                             TMDBService.fetchSimilar(movie.tmdb_id, true),
                             TMDBService.fetchMovieVideos(movie.tmdb_id, true),
                             TMDBService.fetchMovieKeywords(movie.tmdb_id, true),
-                            TMDBService.fetchSeriesFullDetails(movie.tmdb_id)
+                            TMDBService.fetchSeriesFullDetails(movie.tmdb_id),
+                            TMDBService.fetchMovieLogos(movie.tmdb_id, true)
                         ]);
 
                         if (seriesData) {
@@ -545,19 +562,22 @@ function WatchContent() {
                             const mainCreator = fullDetails.created_by[0];
                             setCreatorInfo(mainCreator);
                             const creatorSeriesData = await TMDBService.fetchSeriesByCreator(mainCreator.id, movie.tmdb_id);
-                            setCreatorSeries(creatorSeriesData.map((s, i) => ({ ...s, id: `creator-${i}` })) as Movie[]);
+                            const newCreatorSeries = creatorSeriesData.map((s, i) => ({ ...s, id: `creator-${i}` })) as Movie[];
+                            setCreatorSeries(newCreatorSeries);
                         }
 
                         setSimilarMovies(similar.map((s, i) => ({ ...s, id: `similar-${i}` })) as Movie[]);
                         setTrailers(videos);
                         setKeywords(keywordsData);
+                        setLogos(logosData);
                     } else {
                         // Comportamento original para filmes
-                        const [details, similar, videos, keywordsData] = await Promise.all([
+                        const [details, similar, videos, keywordsData, logosData] = await Promise.all([
                             TMDBService.fetchMovieDetails(movie.tmdb_id),
                             TMDBService.fetchSimilar(movie.tmdb_id, false), // Passar false para filmes
                             TMDBService.fetchMovieVideos(movie.tmdb_id, false), // Passar false para filmes
-                            TMDBService.fetchMovieKeywords(movie.tmdb_id, false) // Passar false para filmes
+                            TMDBService.fetchMovieKeywords(movie.tmdb_id, false), // Passar false para filmes
+                            TMDBService.fetchMovieLogos(movie.tmdb_id, false) // Buscar logos para filmes
                         ]);
 
                         if (details) {
@@ -573,6 +593,7 @@ function WatchContent() {
                         setSimilarMovies(similar.map((s, i) => ({ ...s, id: `similar-${i}` })) as Movie[]);
                         setTrailers(videos);
                         setKeywords(keywordsData);
+                        setLogos(logosData);
                     }
                 } finally {
                     setIsLoadingDetails(false);
@@ -789,14 +810,60 @@ function WatchContent() {
                     <div className="max-w-4xl">
 
                         {/* Title */}
-                        <h1 className={`font-black text-white leading-tight ${movie.title.length > 50
-                            ? 'text-2xl sm:text-3xl lg:text-4xl'
-                            : movie.title.length > 30
-                                ? 'text-3xl sm:text-4xl lg:text-5xl'
-                                : 'text-3xl sm:text-5xl lg:text-6xl'
-                            }`}>
-                            {movie.title}
-                        </h1>
+                        <div className="mb-4">
+                            {isLoadingDetails ? (
+                                <h1 className={`font-black text-white leading-tight ${movie.title.length > 50
+                                    ? 'text-2xl sm:text-3xl lg:text-4xl'
+                                    : movie.title.length > 30
+                                        ? 'text-3xl sm:text-4xl lg:text-5xl'
+                                        : 'text-3xl sm:text-5xl lg:text-6xl'
+                                    }`}>
+                                    {movie.title}
+                                </h1>
+                            ) : logos.length > 0 ? (
+                                <div className="flex items-center">
+                                    <img
+                                        src={`https://image.tmdb.org/t/p/original${logos[0]?.file_path || ''}`}
+                                        alt={movie.title}
+                                        className={`max-h-20 sm:max-h-24 lg:max-h-28 w-auto object-contain ${logos[0]?.file_path ? '' : 'hidden'}`}
+                                        style={{
+                                            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))',
+                                            maxWidth: '90%'
+                                        }}
+                                        onError={(e) => {
+                                            // Fallback para texto se a imagem falhar
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const textFallback = target.nextElementSibling as HTMLElement;
+                                            if (textFallback) {
+                                                textFallback.style.display = 'block';
+                                            }
+                                        }}
+                                    />
+                                    {/* Fallback de texto (inicialmente oculto) */}
+                                    <h1
+                                        className={`font-black text-white leading-tight ${movie.title.length > 50
+                                            ? 'text-2xl sm:text-3xl lg:text-4xl'
+                                            : movie.title.length > 30
+                                                ? 'text-3xl sm:text-4xl lg:text-5xl'
+                                                : 'text-3xl sm:text-5xl lg:text-6xl'
+                                            }`}
+                                        style={{ display: logos[0]?.file_path ? 'none' : 'block' }}
+                                    >
+                                        {movie.title}
+                                    </h1>
+                                </div>
+                            ) : (
+                                <h1 className={`font-black text-white leading-tight ${movie.title.length > 50
+                                    ? 'text-2xl sm:text-3xl lg:text-4xl'
+                                    : movie.title.length > 30
+                                        ? 'text-3xl sm:text-4xl lg:text-5xl'
+                                        : 'text-3xl sm:text-5xl lg:text-6xl'
+                                    }`}>
+                                    {movie.title}
+                                </h1>
+                            )}
+                        </div>
 
                         {/* Tagline */}
                         {(isSeries ? seriesDetails?.tagline : movieDetails?.tagline) && (
@@ -1360,19 +1427,31 @@ function WatchContent() {
                         <section className="py-8">
 
                             <div className="relative rounded-3xl overflow-hidden">
-                                {/* Backdrop Dinâmico com transição suave */}
+                                {/* Backdrop Dinâmico com transição suave e efeito de blur - usando mesma abordagem do Hero */}
                                 <div className="absolute inset-0">
-                                    <img
-                                        key={`creator-backdrop-${activeCreatorBackdrop}-${movie.tmdb_id}`}
-                                        src={(creatorSeries[activeCreatorBackdrop]?.backdrop_url && creatorSeries[activeCreatorBackdrop].backdrop_url !== '')
-                                            ? creatorSeries[activeCreatorBackdrop].backdrop_url
-                                            : (creatorSeries[0]?.backdrop_url && creatorSeries[0].backdrop_url !== '')
-                                                ? creatorSeries[0].backdrop_url
-                                                : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop'}
-                                        alt=""
-                                        className="w-full h-full object-cover transition-opacity duration-500"
-                                    />
-
+                                    {creatorSeries.map((series, index) => (
+                                        <div
+                                            key={`creator-backdrop-${index}-${movie.tmdb_id}`}
+                                            className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${
+                                                index === activeCreatorBackdrop
+                                                    ? 'opacity-100 scale-100 blur-0' 
+                                                    : 'opacity-0 scale-105 blur-lg'
+                                            }`}
+                                        >
+                                            <img
+                                                src={(series.backdrop_url && series.backdrop_url !== '')
+                                                    ? series.backdrop_url
+                                                    : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop'}
+                                                alt=""
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    // Garantir fallback para não ter fundo vazio
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.src = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop';
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
                                     <div className="absolute inset-0 bg-black/50" />
                                     <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/90 via-transparent to-transparent" />
                                     <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
@@ -1689,9 +1768,11 @@ function WatchContent() {
                 movie={selectedModalMovie}
                 isOpen={!!selectedModalMovie}
                 onClose={() => setSelectedModalMovie(null)}
-                onWatch={(movie) => {
+                onWatch={(movie: Movie) => {
                     setSelectedModalMovie(null);
-                    router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}`);
+                    // Codificar os logos em base64 para passar na URL
+                    const encodedLogos = logos.length > 0 ? encodeURIComponent(JSON.stringify(logos)) : '';
+                    router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}${encodedLogos ? `&logos=${encodedLogos}` : ''}`);
                 }}
                 onAddToList={() => { }}
             />

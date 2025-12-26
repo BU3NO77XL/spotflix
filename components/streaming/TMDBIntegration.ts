@@ -680,6 +680,73 @@ export const TMDBService = {
         }
     },
 
+    // Fetch movie/TV logos with language priority (pt > en > neutral > others)
+    async fetchMovieLogos(tmdbId: number, isSeries: boolean = false): Promise<{
+        file_path: string;
+        file_type: string;
+        width: number;
+        height: number;
+        iso_639_1: string | null;
+    }[]> {
+        try {
+            const endpoint = isSeries
+                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images?api_key=${TMDB_API_KEY}`
+                : `${TMDB_BASE_URL}/movie/${tmdbId}/images?api_key=${TMDB_API_KEY}`;
+
+            const response = await fetch(endpoint);
+
+            if (!response.ok) {
+                return [];
+            }
+
+            const data = await response.json();
+            const logos = data.logos || [];
+
+            // Filtrar e ordenar logos por prioridade de idioma
+            return logos
+                .filter((logo: any) => logo.file_path) // Garantir que tem file_path
+                .sort((a: any, b: any) => {
+                    // Função para calcular prioridade do idioma
+                    const getLanguagePriority = (lang: string | null) => {
+                        if (lang === 'pt') return 1; // Português - maior prioridade
+                        if (lang === 'en') return 2; // Inglês - segunda prioridade
+                        if (!lang || lang === 'xx') return 3; // Neutro - terceira prioridade
+                        return 4; // Outros idiomas - menor prioridade
+                    };
+
+                    const aPriority = getLanguagePriority(a.iso_639_1);
+                    const bPriority = getLanguagePriority(b.iso_639_1);
+                    
+                    // Priorizar por idioma primeiro
+                    if (aPriority !== bPriority) {
+                        return aPriority - bPriority;
+                    }
+                    
+                    // Se mesmo idioma, priorizar SVGs sobre PNGs
+                    const aIsSvg = a.file_type === '.svg';
+                    const bIsSvg = b.file_type === '.svg';
+                    
+                    if (aIsSvg !== bIsSvg) {
+                        return aIsSvg ? -1 : 1;
+                    }
+                    
+                    // Se mesmo formato, priorizar maior resolução
+                    return (b.width * b.height) - (a.width * a.height);
+                })
+                .slice(0, 3) // Pegar os 3 melhores logos
+                .map((logo: any) => ({
+                    file_path: logo.file_path,
+                    file_type: logo.file_type || '.png',
+                    width: logo.width || 0,
+                    height: logo.height || 0,
+                    iso_639_1: logo.iso_639_1
+                }));
+        } catch (error) {
+            console.error('Error fetching logos:', error);
+            return [];
+        }
+    },
+
     // Get backdrop URL for carousel
     async getCarouselBackdrop(category: string): Promise<string | null> {
         try {

@@ -41,22 +41,42 @@ export default function MovieModal({
 
     const [details, setDetails] = useState<{ ageRating?: string; runtime?: string; year?: number; cast?: CastMember[]; genres?: string[] }>({});
     const [keywords, setKeywords] = useState<KeywordInfo[]>([]);
+    const [logos, setLogos] = useState<{
+        file_path: string;
+        file_type: string;
+        width: number;
+        height: number;
+        iso_639_1: string | null;
+    }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [logoLoadError, setLogoLoadError] = useState(false);
 
+    // Efeito para limpar dados quando o filme muda
+    useEffect(() => {
+        if (isOpen && movie) {
+            // Limpar dados imediatamente quando o filme mudar
+            setIsLoading(true);
+            setDetails({});
+            setKeywords([]);
+            setLogos([]);
+        }
+    }, [movie?.id]); // Apenas quando o ID do filme mudar
+
+    // Efeito para buscar detalhes do filme
     useEffect(() => {
         const fetchDetails = async () => {
             if (isOpen && movie?.tmdb_id) {
-                setIsLoading(true);
-                // Limpar detalhes anteriores ao abrir/trocar filme
-                setDetails({});
-                setKeywords([]);
-
                 try {
                     const isSeries = movie.type === 'series';
 
-                    // Buscar keywords
-                    const keywordsData = await TMDBService.fetchMovieKeywords(movie.tmdb_id, isSeries);
+                    // Buscar keywords e logos em paralelo
+                    const [keywordsData, logosData] = await Promise.all([
+                        TMDBService.fetchMovieKeywords(movie.tmdb_id, isSeries),
+                        TMDBService.fetchMovieLogos(movie.tmdb_id, isSeries)
+                    ]);
+                    
                     setKeywords(keywordsData);
+                    setLogos(logosData);
 
                     if (isSeries) {
                         const seriesData = await TMDBService.fetchSeriesDetails(movie.tmdb_id);
@@ -148,8 +168,9 @@ export default function MovieModal({
                      [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                     >
                         {isLoading ? (
-                            <div className="flex items-center justify-center h-full min-h-[400px]">
-                                <div className="w-12 h-12 border-4 border-t-[#46d369] border-[#333] rounded-full animate-spin"></div>
+                            <div className="min-h-[45vh] sm:min-h-[38vh] lg:min-h-[60vh] flex items-center justify-center">
+                                {/* Placeholder vazio durante o carregamento para evitar flicker */}
+                                <div className="opacity-0 h-0 w-0" />
                             </div>
                         ) : (
                             <div className="min-h-full">
@@ -158,7 +179,7 @@ export default function MovieModal({
                                     <ProgressiveImage
                                         src={movie.backdrop_url || movie.poster_url}
                                         alt={movie.title}
-                                        className="w-full h-full rounded-t-2xl object-cover [mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)]"
+                                        className="w-full h-full rounded-t-2xl object-cover mask-[linear-gradient(to_bottom,black_60%,transparent_100%)]"
                                     />
                                     <Illumination intensity={0.18} />
                                     <div className="absolute inset-0 bg-linear-to-t from-[#181818] via-[#181818]/50 to-transparent" />
@@ -176,16 +197,54 @@ export default function MovieModal({
                                     <div className="absolute bottom-0 left-0 right-0 p-0 mb-4 sm:mb-6 lg:mb-8 px-4 sm:px-8 lg:px-12">
                                         <div className="flex justify-between items-center w-full">
                                             <div className="w-full">
-                                                <h2
-                                                    className={`font-black text-white mb-3 sm:mb-4 leading-tight ${movie.title.length > 50
-                                                        ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
-                                                        : movie.title.length > 30
-                                                            ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
-                                                            : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl'
-                                                        }`}
-                                                >
-                                                    {movie.title}
-                                                </h2>
+                                                {/* Title - Logo ou Texto */}
+                                                <div className="mb-3 sm:mb-4">
+                                                    {logos.length > 0 ? (
+                                                        <div className="flex items-center">
+                                                            <img
+                                                                src={`https://image.tmdb.org/t/p/original${logos[0].file_path}`}
+                                                                alt={movie.title}
+                                                                className="max-h-16 sm:max-h-20 lg:max-h-24 w-auto object-contain"
+                                                                style={{
+                                                                    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))',
+                                                                    maxWidth: '80%'
+                                                                }}
+                                                                onError={(e) => {
+                                                                    // Fallback para texto se a imagem falhar
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.style.display = 'none';
+                                                                    const textFallback = target.nextElementSibling as HTMLElement;
+                                                                    if (textFallback) {
+                                                                        textFallback.style.display = 'block';
+                                                                    }
+                                                                }}
+                                                            />
+                                                            {/* Fallback de texto (inicialmente oculto) */}
+                                                            <h2
+                                                                className={`font-black text-white leading-tight ${movie.title.length > 50
+                                                                    ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
+                                                                    : movie.title.length > 30
+                                                                        ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
+                                                                        : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl'
+                                                                    }`}
+                                                                style={{ display: 'none' }}
+                                                            >
+                                                                {movie.title}
+                                                            </h2>
+                                                        </div>
+                                                    ) : (
+                                                        <h2
+                                                            className={`font-black text-white leading-tight ${movie.title.length > 50
+                                                                ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
+                                                                : movie.title.length > 30
+                                                                    ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
+                                                                    : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl'
+                                                                }`}
+                                                        >
+                                                            {movie.title}
+                                                        </h2>
+                                                    )}
+                                                </div>
 
                                                 {/* Action Buttons - Netflix Style */}
                                                 <div className="flex items-center gap-2">
