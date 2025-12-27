@@ -284,8 +284,8 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
 
             {/* Content */}
-            <div className="absolute inset-0 flex items-center sm:items-end z-20">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-12 sm:pb-24 lg:pb-32">
+            <div className="absolute inset-0 flex items-end z-20">
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-56 sm:pb-32 lg:pb-44">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={featured.id}
@@ -354,9 +354,9 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                 </div>
             </div>
 
-            {/* Progress Bar (Netflix style) */}
+            {/* Progress Bar (Netflix style) - DESATIVADO TEMPORARIAMENTE
             {featuredMovies?.length > 1 && (
-                <div className="absolute bottom-20 sm:bottom-16 lg:bottom-12 left-1/2 -translate-x-1/2 z-30">
+                <div className="absolute bottom-44 sm:bottom-48 lg:bottom-52 left-4 sm:left-6 lg:left-12 z-30">
                     <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2">
                         {featuredMovies.map((movie, index) => (
                             <button
@@ -371,7 +371,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                         className="absolute inset-0 bg-white origin-left"
                                         initial={{ scaleX: 0 }}
                                         animate={{ scaleX: 1 }}
-                                        transition={{ duration: 16, ease: 'linear' }} // 16 segundos (2 backdrops)
+                                        transition={{ duration: 16, ease: 'linear' }}
                                     />
                                 )}
                             </button>
@@ -379,33 +379,33 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                     </div>
                 </div>
             )}
+            FIM - Progress Bar */}
 
-            {/* Thumbnail Preview (Netflix style) */}
-            {featuredMovies?.length > 1 && (
-                <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 lg:right-12 z-30 hidden lg:flex gap-2">
-                    {featuredMovies.map((movie, index) => {
-                        if (Math.abs(index - currentIndex) > 2 && index !== 0 && index !== featuredMovies.length - 1) return null;
-                        return (
-                            <button
-                                key={movie.id}
-                                onClick={() => goToSlide(index)}
-                                className={`relative overflow-hidden rounded-lg transition-all duration-500 ${index === currentIndex
-                                    ? 'w-24 h-14 ring-2 ring-white ring-offset-2 ring-offset-[#0a0a0a]'
-                                    : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
-                                    }`}
-                            >
-                                <ProgressiveImage 
-                                    src={movie.backdrop_url || movie.poster_url} 
-                                    alt={movie.title} 
-                                    className="w-full h-full object-cover"
-                                    preloaded={loadedImages.has(index)}
-                                />
-                                {index === currentIndex && (
-                                    <div className="absolute inset-0 bg-white/20" />
-                                )}
-                            </button>
-                        );
-                    })}
+            {/* Backdrop Thumbnails - mostra os 3 backdrops disponíveis */}
+            {backdrops.length > 1 && (
+                <div className="absolute bottom-36 sm:bottom-40 right-4 sm:right-8 lg:right-12 z-30 hidden lg:flex gap-2">
+                    {backdrops.slice(0, 3).map((backdrop, index) => (
+                        <button
+                            key={`backdrop-thumb-${index}`}
+                            onClick={() => {
+                                setCurrentBackdropIndex(index);
+                                setBackdropCycle(index);
+                            }}
+                            className={`relative overflow-hidden rounded-lg transition-all duration-500 ${index === currentBackdropIndex
+                                ? 'w-24 h-14 ring-2 ring-white ring-offset-2 ring-offset-[#0a0a0a]'
+                                : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
+                                }`}
+                        >
+                            <img 
+                                src={backdrop} 
+                                alt={`Backdrop ${index + 1}`} 
+                                className="w-full h-full object-cover"
+                            />
+                            {index === currentBackdropIndex && (
+                                <div className="absolute inset-0 bg-white/10" />
+                            )}
+                        </button>
+                    ))}
                 </div>
             )}
         </section>

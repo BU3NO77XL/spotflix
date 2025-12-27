@@ -179,7 +179,7 @@ export default function Home() {
       />
 
       {/* Carousels */}
-      <div className="-mt-20 relative z-10 pb-16 space-y-2">
+      <div className="-mt-28 sm:-mt-36 lg:-mt-40 relative z-10 pb-16 space-y-2">
         {continueWatching.length > 0 && (
           <Carousel
             title="Continue Assistindo"
