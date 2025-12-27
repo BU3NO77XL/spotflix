@@ -26,6 +26,7 @@ const bebasNeue = Bebas_Neue({
 export const metadata: Metadata = {
   title: "SpotFlix - Streaming",
   description: "Your premier destination for movies and series. Stream unlimited entertainment anytime, anywhere.",
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({
@@ -42,9 +43,11 @@ export default function RootLayout({
         <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0a0a0a" />
+        <meta name="msapplication-navbutton-color" content="#0a0a0a" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="SpotFlix" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
