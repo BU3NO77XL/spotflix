@@ -51,13 +51,13 @@ export async function GET(
             ? CACHE_STRENGTH.search
             : CACHE_STRENGTH.default;
 
-        // Construct the TMDB URL
-        const tmdbUrl = new URL(`https://api.themoviedb.org/3/${subPath}`);
+        // Construct the content API URL
+        const contentUrl = new URL(`https://api.themoviedb.org/3/${subPath}`);
 
         // Append search params (excluding api_key if sent by client)
         searchParams.forEach((value, key) => {
             if (key !== 'api_key') {
-                tmdbUrl.searchParams.append(key, value);
+                contentUrl.searchParams.append(key, value);
             }
         });
 
@@ -67,10 +67,10 @@ export async function GET(
             return NextResponse.json({ error: 'System configuration error' }, { status: 500 });
         }
 
-        tmdbUrl.searchParams.set('api_key', apiKey);
+        contentUrl.searchParams.set('api_key', apiKey);
 
         // Internal Next.js fetch with optimized behavior
-        const response = await fetch(tmdbUrl.toString(), {
+        const response = await fetch(contentUrl.toString(), {
             next: {
                 revalidate: subPath.includes('search') ? 300 : 3600
             }
@@ -91,7 +91,7 @@ export async function GET(
             }
         });
     } catch (error) {
-        console.error('[TMDB PROXY ERROR]:', error);
+        console.error('[CONTENT PROXY ERROR]:', error);
         return NextResponse.json({ error: 'Internal gateway error' }, { status: 500 });
     }
 }

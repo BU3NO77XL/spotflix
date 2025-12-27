@@ -1,6 +1,6 @@
 // TMDB API Service - Handles all API calls to The Movie Database
 export class TMDBApiService {
-  private static readonly BASE_URL = '/api/spotflix';
+  private static readonly BASE_URL = '/api/content';
 
   private static async fetchFromTMDB(endpoint: string): Promise<any> {
     try {

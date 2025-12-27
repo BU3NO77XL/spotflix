@@ -2,7 +2,7 @@ import { Movie, CastMember } from '@/types/movie';
 
 const isServer = typeof window === 'undefined';
 const TMDB_API_KEY = isServer ? (process.env.TMDB_API_KEY || '') : 'hidden'; // Oculto no cliente
-const TMDB_BASE_URL = isServer ? 'https://api.themoviedb.org/3' : '/api/spotflix';
+const TMDB_BASE_URL = isServer ? 'https://api.themoviedb.org/3' : '/api/content';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 // Warn if API key is missing (apenas no servidor)

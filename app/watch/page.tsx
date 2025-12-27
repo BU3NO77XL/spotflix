@@ -448,7 +448,7 @@ function WatchContent() {
             const endpoint = isSeries ? 'tv' : 'movie';
 
             // Busca dados básicos do TMDB via proxy
-            const response = await fetch(`/api/spotflix/${endpoint}/${tmdbIdNum}?language=pt-BR`);
+            const response = await fetch(`/api/content/${endpoint}/${tmdbIdNum}?language=pt-BR`);
             if (!response.ok) return {} as any; // Retorna objeto vazio em vez de null para evitar erro do React Query
             const tmdbData = await response.json();
 
