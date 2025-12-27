@@ -1,0 +1,27 @@
+{
+    "name": "SpotFlix",
+    "short_name": "SpotFlix",
+    "description": "Your premier destination for movies and series.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#1DB954",
+    "icons": [
+        {
+            "src": "/assets/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/favicon-32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/favicon-180.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ]
+}

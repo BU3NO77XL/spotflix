@@ -31,45 +31,63 @@ export default function Home() {
     queryFn: () => base44.entities.Movie.list(),
   });
 
-  // Fetch TMDB data on component mount if database is empty
+  // Fetch TMDB data progressively on component mount if database is empty
   useEffect(() => {
     const loadTMDBData = async () => {
       if (movies.length === 0 && !isLoading) {
         setTmdbLoading(true);
         try {
-          const [trending, topRated, upcoming, top10, recommended, action, family, scifi] = await Promise.all([
+          // Load essential content first (trending + top rated)
+          const [trending, topRated] = await Promise.all([
             TMDBService.fetchTrending(),
-            TMDBService.fetchTopRatedMovies(),
-            TMDBService.fetchUpcoming(),
-            TMDBService.fetchTop10(),
-            TMDBService.fetchRecommended(),
-            TMDBService.fetchActionMovies(),
-            TMDBService.fetchFamilyMovies(),
-            TMDBService.fetchSciFiMovies()
+            TMDBService.fetchTopRatedMovies()
           ]);
 
-          const allMovies = [...trending, ...topRated, ...upcoming, ...top10, ...recommended, ...action, ...family, ...scifi];
+          const essentialMovies = [...trending, ...topRated];
 
-          // Bulk insert into database
-          if (allMovies.length > 0) {
-            await base44.entities.Movie.bulkCreate(allMovies);
+          if (essentialMovies.length > 0) {
+            await base44.entities.Movie.bulkCreate(essentialMovies);
             queryClient.invalidateQueries({ queryKey: ['movies'] });
           }
 
-          // Fetch backdrop images for carousels
-          const [topRatedBackdrop, upcomingBackdrop] = await Promise.all([
-            TMDBService.getCarouselBackdrop('top_rated'),
-            TMDBService.getCarouselBackdrop('coming_soon')
-          ]);
+          setTmdbLoading(false);
 
-          setCarouselBackdrops({
-            top_rated: topRatedBackdrop,
-            coming_soon: upcomingBackdrop
-          });
+          // Load remaining content in background (non-blocking)
+          setTimeout(async () => {
+            try {
+              const [upcoming, top10, recommended, action, family, scifi] = await Promise.all([
+                TMDBService.fetchUpcoming(),
+                TMDBService.fetchTop10(),
+                TMDBService.fetchRecommended(),
+                TMDBService.fetchActionMovies(),
+                TMDBService.fetchFamilyMovies(),
+                TMDBService.fetchSciFiMovies()
+              ]);
+
+              const additionalMovies = [...upcoming, ...top10, ...recommended, ...action, ...family, ...scifi];
+
+              if (additionalMovies.length > 0) {
+                await base44.entities.Movie.bulkCreate(additionalMovies);
+                queryClient.invalidateQueries({ queryKey: ['movies'] });
+              }
+
+              // Fetch backdrop images for carousels
+              const [topRatedBackdrop, upcomingBackdrop] = await Promise.all([
+                TMDBService.getCarouselBackdrop('top_rated'),
+                TMDBService.getCarouselBackdrop('coming_soon')
+              ]);
+
+              setCarouselBackdrops({
+                top_rated: topRatedBackdrop,
+                coming_soon: upcomingBackdrop
+              });
+            } catch (error) {
+              console.error('Error loading additional TMDB data:', error);
+            }
+          }, 100);
         } catch (error) {
           console.error('Error loading TMDB data:', error);
           toast.error('Failed to load content from TMDB');
-        } finally {
           setTmdbLoading(false);
         }
       }
@@ -102,8 +120,10 @@ export default function Home() {
   const sciFiMovies = movies.filter((m: Movie) => m.category === 'scifi');
 
   const handleWatch = (movie: Movie) => {
-    setModalOpen(false);
+    // Redirecionar imediatamente para melhor UX
     router.push(`/watch?id=${movie.id}`);
+    // Fechar modal em paralelo (não bloqueia o redirecionamento)
+    setTimeout(() => setModalOpen(false), 100);
   };
 
   const handleMoreInfo = (movie: Movie) => {

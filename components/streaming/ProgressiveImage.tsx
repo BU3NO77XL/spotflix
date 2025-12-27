@@ -32,10 +32,10 @@ export default function ProgressiveImage({ src, alt = '', className = '', preloa
                 style={{ filter: 'blur(6px)' }}
             >
                 <div className="w-full h-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.02)_0%,rgba(0,0,0,0.18)_100%)] animate-pulse" />
-                
+
                 {/* Shimmer effect - reflexo de brilho */}
                 <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent transform skew-x-12" />
+                    <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/20 to-transparent transform skew-x-12" />
                 </div>
             </div>
 

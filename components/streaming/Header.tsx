@@ -11,6 +11,7 @@ import { TMDBService } from './TMDBIntegration';
 import { Movie } from '@/types/movie';
 import MovieModal from './MovieModal';
 import SearchOverlay from './SearchOverlay';
+import InstallButton from './InstallButton';
 
 const HEADER_ITEMS = [
     { label: 'Lar', href: '/' },
@@ -33,14 +34,8 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    const [demoName, setDemoName] = useState("User");
-
-    // Efeito para gerar nome aleatório apenas no cliente (evita erro de hidratação)
-    useEffect(() => {
-        const names = ["Daniel", "Maria", "João", "Ana", "Lucas", "Beatriz", "Pedro", "Sofia", "Carlos", "Julia"];
-        const randomName = names[Math.floor(Math.random() * names.length)] + Math.random().toString();
-        setDemoName(randomName);
-    }, []);
+    // Nome fixo para evitar hydration mismatch
+    const [demoName] = useState("User");
 
     useEffect(() => {
         const handleScroll = () => {
@@ -179,7 +174,7 @@ export default function Header() {
                         ? "bg-[#0a0a0a]"
                         : scrolled
                             ? "bg-[#0a0a0a]/80 backdrop-blur-md"
-                            : "bg-gradient-to-b from-black/60 via-black/40 to-transparent"
+                            : "bg-linear-to-b from-black/60 via-black/40 to-transparent"
                 )}
                 style={{ WebkitBackdropFilter: scrolled ? 'blur(8px)' : undefined, backdropFilter: scrolled ? 'blur(8px)' : undefined }}
             >
@@ -234,9 +229,12 @@ export default function Header() {
                                     setUserDropdownOpen(false);
                                 }}
                                 className="p-2 text-gray-300 hover:text-white transition-colors duration-200 hover:bg-white/10 rounded-full"
+                                aria-label="Open search"
                             >
                                 <Search className="w-5 h-5" />
                             </button>
+
+                            <InstallButton />
 
                             {/* User Dropdown */}
                             <div className="relative">
@@ -251,6 +249,8 @@ export default function Header() {
                                         "flex items-center justify-center",
                                         true ? "rounded-md" : "p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full"
                                     )}
+                                    aria-label="Open user menu"
+                                    aria-expanded={userDropdownOpen}
                                 >
                                     {/* SIMULAÇÃO: Usuário logado (true) com Nome Aleatório para Teste */}
                                     {true ? (
@@ -313,6 +313,8 @@ export default function Header() {
                             <button
                                 className="md:hidden p-2 text-gray-300 hover:text-white"
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                                aria-expanded={mobileMenuOpen}
                             >
                                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
@@ -385,8 +387,10 @@ export default function Header() {
                 isOpen={!!selectedMovie}
                 onClose={closeModal}
                 onWatch={(movie) => {
-                    closeModal();
-                    router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}`);
+                    // Navegação com id e ref para otimização
+                    router.push(`/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${movie.type}`);
+                    // Delay para fechar modal
+                    setTimeout(() => closeModal(), 500);
                 }}
                 onAddToList={() => { }}
             />

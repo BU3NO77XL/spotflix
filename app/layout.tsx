@@ -40,6 +40,26 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/assets/favicon-180.png" sizes="180x180" />
         <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" />
         <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1DB954" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    },
+                    function(err) {
+                      console.log('ServiceWorker registration failed: ', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased min-h-screen bg-[#0a0a0a] text-white`}

@@ -78,7 +78,7 @@ export default function ActorModal({ actorId, isOpen, onClose }: ActorModalProps
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60]"
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-60"
                     />
 
                     {/* Modal */}
@@ -87,7 +87,7 @@ export default function ActorModal({ actorId, isOpen, onClose }: ActorModalProps
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed inset-4 sm:inset-8 lg:inset-y-16 lg:inset-x-32 z-[60] overflow-y-auto
+                        className="fixed inset-4 sm:inset-8 lg:inset-y-16 lg:inset-x-32 z-60 overflow-y-auto
                             rounded-xl bg-[#141414] shadow-2xl max-w-3xl mx-auto
                             [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                     >
@@ -109,7 +109,7 @@ export default function ActorModal({ actorId, isOpen, onClose }: ActorModalProps
                                 {/* Header */}
                                 <div className="flex flex-col sm:flex-row gap-6 p-6 sm:p-8">
                                     {/* Profile Image */}
-                                    <div className="flex-shrink-0 mx-auto sm:mx-0">
+                                    <div className="shrink-0 mx-auto sm:mx-0">
                                         <div className="w-40 h-52 sm:w-48 sm:h-64 rounded-lg overflow-hidden bg-[#2a2a2a]">
                                             {actor.profile_path ? (
                                                 <img
@@ -176,8 +176,8 @@ export default function ActorModal({ actorId, isOpen, onClose }: ActorModalProps
                                         <h3 className="text-white font-semibold mb-4">Conhecido por</h3>
                                         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                                             {actor.known_for.map((movie, i) => (
-                                                <div key={i} className="flex-shrink-0 w-24 sm:w-28">
-                                                    <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#2a2a2a] mb-2">
+                                                <div key={i} className="shrink-0 w-24 sm:w-28">
+                                                    <div className="aspect-2/3 rounded-lg overflow-hidden bg-[#2a2a2a] mb-2">
                                                         {movie.poster_path ? (
                                                             <img
                                                                 src={`${TMDB_IMAGE_BASE}/w185${movie.poster_path}`}

@@ -102,7 +102,7 @@ export default function Footer() {
                 </div>
 
                 {/* Divider */}
-                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
+                <div className="h-px bg-linear-to-r from-transparent via-white/10 to-transparent mb-8" />
 
                 {/* Bottom Section */}
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">

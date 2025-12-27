@@ -145,7 +145,7 @@ export default function DevErrorHandler() {
     const warningCount = errors.filter(e => e.type === 'warning').length;
 
     return (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-99999 flex items-center justify-center p-4">
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -155,7 +155,7 @@ export default function DevErrorHandler() {
             {/* Modal */}
             <div className="relative w-full max-w-lg bg-[#1a1a1a] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
                 {/* Header com gradiente */}
-                <div className="relative px-6 py-5 bg-gradient-to-b from-red-500/20 to-transparent">
+                <div className="relative px-6 py-5 bg-linear-to-b from-red-500/20 to-transparent">
                     <button
                         onClick={handleClose}
                         className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/10 transition-colors"

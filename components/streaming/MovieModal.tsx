@@ -7,6 +7,8 @@ import ProgressiveImage from './ProgressiveImage';
 import Illumination from './Illumination';
 import { Movie, CastMember } from '@/types/movie';
 import { TMDBService } from './TMDBIntegration';
+import { useRouterPreload } from '@/hooks/useRouterPreload';
+import { useLogoStore } from '@/stores/logoStore';
 
 interface MovieModalProps {
     movie: Movie | null;
@@ -30,6 +32,8 @@ export default function MovieModal({
     onWatch,
     onAddToList,
 }: MovieModalProps) {
+    const { preloadRoute } = useRouterPreload();
+    const { setLogosForMovie } = useLogoStore();
     const [localFavorited, setLocalFavorited] = useState(false);
     const [localLiked, setLocalLiked] = useState(false);
     const [volume, setVolume] = useState(0);
@@ -50,6 +54,14 @@ export default function MovieModal({
     }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [logoLoadError, setLogoLoadError] = useState(false);
+
+    // Preload da rota watch quando modal abre
+    useEffect(() => {
+        if (isOpen && movie) {
+            // Preload da página watch para navegação mais rápida
+            preloadRoute(`/watch?id=${movie.id}`);
+        }
+    }, [isOpen, movie, preloadRoute]);
 
     // Efeito para limpar dados quando o filme muda
     useEffect(() => {
@@ -74,9 +86,14 @@ export default function MovieModal({
                         TMDBService.fetchMovieKeywords(movie.tmdb_id, isSeries),
                         TMDBService.fetchMovieLogos(movie.tmdb_id, isSeries)
                     ]);
-                    
+
                     setKeywords(keywordsData);
                     setLogos(logosData);
+
+                    // Salvar logos no store global para pré-carregamento
+                    if (movie.tmdb_id) {
+                        setLogosForMovie(movie.tmdb_id, logosData);
+                    }
 
                     if (isSeries) {
                         const seriesData = await TMDBService.fetchSeriesDetails(movie.tmdb_id);
@@ -249,7 +266,10 @@ export default function MovieModal({
                                                 {/* Action Buttons - Netflix Style */}
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => onWatch(movie)}
+                                                        onClick={() => {
+                                                            // Redirecionamento imediato para melhor UX
+                                                            onWatch(movie);
+                                                        }}
                                                         className="bg-white hover:bg-gray-200 text-black font-bold py-1.5 sm:py-2 px-4 sm:px-8
                                            rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base"
                                                     >

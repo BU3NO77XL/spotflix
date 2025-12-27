@@ -1,12 +1,13 @@
 import { Movie, CastMember } from '@/types/movie';
 
-const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || '';
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const isServer = typeof window === 'undefined';
+const TMDB_API_KEY = isServer ? (process.env.TMDB_API_KEY || '') : 'hidden'; // Oculto no cliente
+const TMDB_BASE_URL = isServer ? 'https://api.themoviedb.org/3' : '/api/spotflix';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
-// Warn if API key is missing
-if (!TMDB_API_KEY) {
-    console.warn('⚠️ TMDB API key not found. Please set NEXT_PUBLIC_TMDB_API_KEY in your .env.local file.');
+// Warn if API key is missing (apenas no servidor)
+if (isServer && !TMDB_API_KEY) {
+    console.warn('⚠️ TMDB API key not found. Please set TMDB_API_KEY in your .env file.');
 }
 
 export const TMDBService = {
@@ -15,7 +16,8 @@ export const TMDBService = {
         if (!query.trim()) return [];
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&language=pt-BR`
+                `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(query)}&include_adult=false&language=pt-BR`,
+                { next: { revalidate: 600 } } // Cache search for 10 mins on server
             );
 
             if (!response.ok) {
@@ -39,7 +41,8 @@ export const TMDBService = {
     async fetchTrending(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/trending/all/week?api_key=${TMDB_API_KEY}&language=pt-BR`
+                `${TMDB_BASE_URL}/trending/all/week?language=pt-BR`,
+                { next: { revalidate: 3600 } } // Cache 1 hour
             );
 
             // Verificar se a resposta é válida
@@ -60,7 +63,8 @@ export const TMDBService = {
     async fetchTopRatedMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}&page=1&language=pt-BR`
+                `${TMDB_BASE_URL}/movie/top_rated?page=1&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -81,7 +85,8 @@ export const TMDBService = {
     async fetchUpcoming(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=1&language=pt-BR`
+                `${TMDB_BASE_URL}/movie/upcoming?page=1&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -102,7 +107,8 @@ export const TMDBService = {
     async fetchTop10(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=1&language=pt-BR`
+                `${TMDB_BASE_URL}/movie/popular?page=1&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -123,7 +129,8 @@ export const TMDBService = {
     async fetchRecommended(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=2&language=pt-BR`
+                `${TMDB_BASE_URL}/movie/popular?page=2&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -144,7 +151,8 @@ export const TMDBService = {
     async fetchActionMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=28&sort_by=popularity.desc&language=pt-BR`
+                `${TMDB_BASE_URL}/discover/movie?with_genres=28&sort_by=popularity.desc&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -165,7 +173,8 @@ export const TMDBService = {
     async fetchFamilyMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=10751&sort_by=popularity.desc&language=pt-BR`
+                `${TMDB_BASE_URL}/discover/movie?with_genres=10751&sort_by=popularity.desc&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -186,7 +195,8 @@ export const TMDBService = {
     async fetchSciFiMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=878&sort_by=popularity.desc&language=pt-BR`
+                `${TMDB_BASE_URL}/discover/movie?with_genres=878&sort_by=popularity.desc&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -207,7 +217,8 @@ export const TMDBService = {
     async fetchCriticsMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}&page=2&language=pt-BR`
+                `${TMDB_BASE_URL}/movie/top_rated?page=2&language=pt-BR`,
+                { next: { revalidate: 3600 } }
             );
 
             // Verificar se a resposta é válida
@@ -228,8 +239,8 @@ export const TMDBService = {
     async fetchSimilar(movieId: number, isSeries: boolean = false): Promise<Omit<Movie, 'id'>[]> {
         try {
             const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${movieId}/recommendations?api_key=${TMDB_API_KEY}&language=pt-BR`
-                : `${TMDB_BASE_URL}/movie/${movieId}/recommendations?api_key=${TMDB_API_KEY}&language=pt-BR`;
+                ? `${TMDB_BASE_URL}/tv/${movieId}/recommendations?language=pt-BR`
+                : `${TMDB_BASE_URL}/movie/${movieId}/recommendations?language=pt-BR`;
 
             const response = await fetch(endpoint);
 
@@ -254,8 +265,8 @@ export const TMDBService = {
     async fetchMovieVideos(tmdbId: number, isSeries: boolean = false): Promise<{ key: string; name: string; type: string; site: string; official: boolean; size: number }[]> {
         try {
             const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/videos?api_key=${TMDB_API_KEY}`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/videos?api_key=${TMDB_API_KEY}`;
+                ? `${TMDB_BASE_URL}/tv/${tmdbId}/videos`
+                : `${TMDB_BASE_URL}/movie/${tmdbId}/videos`;
 
             const response = await fetch(endpoint);
 
@@ -328,9 +339,9 @@ export const TMDBService = {
     } | null> {
         try {
             const [personResponse, creditsResponse, externalIdsResponse] = await Promise.all([
-                fetch(`${TMDB_BASE_URL}/person/${actorId}?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/person/${actorId}/movie_credits?api_key=${TMDB_API_KEY}`),
-                fetch(`${TMDB_BASE_URL}/person/${actorId}/external_ids?api_key=${TMDB_API_KEY}`)
+                fetch(`${TMDB_BASE_URL}/person/${actorId}?language=pt-BR`),
+                fetch(`${TMDB_BASE_URL}/person/${actorId}/movie_credits`),
+                fetch(`${TMDB_BASE_URL}/person/${actorId}/external_ids`)
             ]);
 
             // Verificar se as respostas são válidas
@@ -386,7 +397,7 @@ export const TMDBService = {
     } | null> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/movie/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}&language=pt-BR`
+                `${TMDB_BASE_URL}/movie/${tmdbId}/watch/providers?language=pt-BR`
             );
 
             // Verificar se a resposta é válida
@@ -410,8 +421,8 @@ export const TMDBService = {
     async fetchMovieKeywords(tmdbId: number, isSeries: boolean = false): Promise<{ id: number; name: string }[]> {
         try {
             const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/keywords?api_key=${TMDB_API_KEY}&language=pt-BR`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/keywords?api_key=${TMDB_API_KEY}&language=pt-BR`;
+                ? `${TMDB_BASE_URL}/tv/${tmdbId}/keywords?language=pt-BR`
+                : `${TMDB_BASE_URL}/movie/${tmdbId}/keywords?language=pt-BR`;
 
             const response = await fetch(endpoint);
 
@@ -443,7 +454,7 @@ export const TMDBService = {
     } | null> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/collection/${collectionId}?api_key=${TMDB_API_KEY}&language=pt-BR`
+                `${TMDB_BASE_URL}/collection/${collectionId}?language=pt-BR`
             );
 
             // Verificar se a resposta é válida
@@ -506,9 +517,9 @@ export const TMDBService = {
     async fetchMovieDetails(tmdbId: number): Promise<{ overview?: string; budget?: number; revenue?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; release_date?: string; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null> {
         try {
             const [movieResponse, creditsResponse, releaseDatesResponse] = await Promise.all([
-                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/release_dates?api_key=${TMDB_API_KEY}`)
+                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}?language=pt-BR`),
+                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/credits?language=pt-BR`),
+                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/release_dates`)
             ]);
 
             // Verificar se as respostas são válidas
@@ -560,9 +571,9 @@ export const TMDBService = {
     async fetchSeriesDetails(tmdbId: number): Promise<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null> {
         try {
             const [seriesResponse, creditsResponse, contentRatingsResponse] = await Promise.all([
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/content_ratings?api_key=${TMDB_API_KEY}`)
+                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}?language=pt-BR`),
+                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/credits?language=pt-BR`),
+                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/content_ratings`)
             ]);
 
             // Verificar se as respostas são válidas
@@ -623,7 +634,7 @@ export const TMDBService = {
     async fetchSeasonDetails(seriesId: number, seasonNumber: number): Promise<{ episodes: { id: number; episode_number: number; name: string; overview: string; air_date: string; runtime: number; still_path: string; vote_average: number }[] } | null> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/tv/${seriesId}/season/${seasonNumber}?api_key=${TMDB_API_KEY}&language=pt-BR`
+                `${TMDB_BASE_URL}/tv/${seriesId}/season/${seasonNumber}?language=pt-BR`
             );
 
             // Verificar se a resposta é válida
@@ -660,8 +671,8 @@ export const TMDBService = {
         try {
             // Fetch specifically 'xx' (no language/text-less) images
             const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images?api_key=${TMDB_API_KEY}&include_image_language=xx`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/images?api_key=${TMDB_API_KEY}&include_image_language=xx`;
+                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images?include_image_language=xx`
+                : `${TMDB_BASE_URL}/movie/${tmdbId}/images?include_image_language=xx`;
 
             const response = await fetch(endpoint);
 
@@ -690,8 +701,8 @@ export const TMDBService = {
     }[]> {
         try {
             const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images?api_key=${TMDB_API_KEY}`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/images?api_key=${TMDB_API_KEY}`;
+                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images`
+                : `${TMDB_BASE_URL}/movie/${tmdbId}/images`;
 
             const response = await fetch(endpoint);
 
@@ -716,20 +727,20 @@ export const TMDBService = {
 
                     const aPriority = getLanguagePriority(a.iso_639_1);
                     const bPriority = getLanguagePriority(b.iso_639_1);
-                    
+
                     // Priorizar por idioma primeiro
                     if (aPriority !== bPriority) {
                         return aPriority - bPriority;
                     }
-                    
+
                     // Se mesmo idioma, priorizar SVGs sobre PNGs
                     const aIsSvg = a.file_type === '.svg';
                     const bIsSvg = b.file_type === '.svg';
-                    
+
                     if (aIsSvg !== bIsSvg) {
                         return aIsSvg ? -1 : 1;
                     }
-                    
+
                     // Se mesmo formato, priorizar maior resolução
                     return (b.width * b.height) - (a.width * a.height);
                 })
@@ -752,9 +763,9 @@ export const TMDBService = {
         try {
             let endpoint = '';
             if (category === 'top_rated') {
-                endpoint = `${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}&page=1&language=pt-BR`;
+                endpoint = `${TMDB_BASE_URL}/movie/top_rated?page=1&language=pt-BR`;
             } else if (category === 'coming_soon') {
-                endpoint = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=1&language=pt-BR`;
+                endpoint = `${TMDB_BASE_URL}/movie/upcoming?page=1&language=pt-BR`;
             } else {
                 return null;
             }

@@ -5,6 +5,7 @@ import { Play, Info, Star } from 'lucide-react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ProgressiveImage from './ProgressiveImage';
 import Illumination from './Illumination';
+import PlayButton from '@/components/ui/PlayButton';
 import { Movie } from '@/types/movie';
 import { convertScoreToFivePoint } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
@@ -167,7 +168,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     };
 
     return (
-        <section className="relative h-[95vh] sm:h-[100vh] lg:h-[100vh] w-full overflow-hidden bg-[#0a0a0a]">
+        <section className="relative h-[95vh] sm:h-screen lg:h-screen w-full overflow-hidden bg-[#0a0a0a]">
             {/* Backdrop Image with Cinematic Transition */}
             <AnimatePresence initial={false} custom={direction} mode="popLayout">
                 <motion.div
@@ -198,10 +199,10 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             </AnimatePresence>
 
             {/* Gradient Overlays */}
-            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0a0a0a]/40 via-[#0a0a0a]/10 to-transparent z-10" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/40 via-[#0a0a0a]/20 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-[#0a0a0a]/40 via-[#0a0a0a]/10 to-transparent z-10" />
+            <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/40 via-[#0a0a0a]/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
 
             {/* Content */}
             <div className="absolute inset-0 flex items-center sm:items-end z-20">
@@ -252,16 +253,18 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
 
                             {/* Buttons */}
                             <motion.div variants={itemVariants} className="flex flex-wrap gap-3 sm:gap-4">
-                                <button
+                                <PlayButton
                                     onClick={() => onWatch(featured)}
-                                    className="bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-lg transition-all duration-200 hover:translate-y-[-2px] flex items-center"
+                                    size="lg"
+                                    variant="primary"
+                                    className="hover:translate-y-[-2px]"
                                 >
-                                    <Play className="w-5 h-5 sm:w-6 sm:h-6 mr-2 fill-current" />
                                     Watch Now
-                                </button>
+                                </PlayButton>
                                 <button
                                     onClick={() => onMoreInfo(featured)}
                                     className="bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-lg backdrop-blur-sm transition-all duration-200 hover:translate-y-[-2px] flex items-center"
+                                    aria-label={`More information about ${featured.title}`}
                                 >
                                     <Info className="w-5 h-5 mr-2" />
                                     More Info

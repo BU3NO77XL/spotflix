@@ -16,15 +16,17 @@ import Carousel from '@/components/streaming/Carousel';
 import MovieModal from '@/components/streaming/MovieModal';
 import ProgressiveImage from '@/components/streaming/ProgressiveImage';
 import VideoPlayer from '@/components/streaming/VideoPlayer';
+import MovieTitle from '@/components/streaming/MovieTitle';
 import { cn } from '@/lib/utils';
+import { useLogoStore } from '@/stores/logoStore';
 
 // Hook para preload de imagens
 const useImagePreload = (urls: string[]) => {
     const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-    
+
     useEffect(() => {
         if (urls.length === 0) return;
-        
+
         const preloadPromises = urls.map(url => {
             return new Promise<string>((resolve, reject) => {
                 const img = new window.Image();
@@ -36,10 +38,10 @@ const useImagePreload = (urls: string[]) => {
                 img.src = url;
             });
         });
-        
+
         Promise.allSettled(preloadPromises);
     }, [urls]);
-    
+
     return loadedImages;
 };
 
@@ -160,6 +162,7 @@ function WatchLoading() {
 function WatchContent() {
     const queryClient = useQueryClient();
     const router = useRouter();
+    const { getLogosForMovie } = useLogoStore();
     const searchParams = useSearchParams();
     const movieId = searchParams.get('id');
     const tmdbId = searchParams.get('ref');
@@ -198,7 +201,21 @@ function WatchContent() {
         width: number;
         height: number;
         iso_639_1: string | null;
-    }[]>([]);
+    }[]>(() => {
+        if (tmdbId) {
+            const preloaded = getLogosForMovie(Number(tmdbId));
+            if (preloaded) return preloaded.logos;
+        }
+        return [];
+    });
+    // Estado para indicar se o logo está pronto (carregado ou não existe)
+    const [isLogoReady, setIsLogoReady] = useState(() => {
+        if (tmdbId) {
+            const preloaded = getLogosForMovie(Number(tmdbId));
+            if (preloaded) return preloaded.logoImageLoaded;
+        }
+        return false;
+    });
     const [collection, setCollection] = useState<{ id: number; name: string; overview: string; backdrop_path: string; parts: { id: number; title: string; poster_path: string; release_date: string }[] } | null>(null);
     const [creatorSeries, setCreatorSeries] = useState<Movie[]>([]);
     const [creatorInfo, setCreatorInfo] = useState<{ id: number; name: string } | null>(null);
@@ -401,14 +418,20 @@ function WatchContent() {
         }, CREATOR_PAUSE_AFTER_INTERACTION);
     };
 
-    // Busca por ID normal
+    // Buscar filme por ID (se passado na URL)
     const { data: movieById, isLoading: isLoadingById } = useQuery({
-        queryKey: ['movie', movieId],
+        queryKey: ['movies', movieId],
         queryFn: async () => {
             const movies = await base44.entities.Movie.filter({ id: movieId! });
-            return movies[0] || {} as any; // Retorna objeto vazio se não encontrar
+            return movies[0] || null;
         },
-        enabled: !!movieId && !tmdbId,
+        enabled: !!movieId,
+        // Usar dados da lista 'movies' como initialData para renderização instantânea
+        initialData: () => {
+            const movies = queryClient.getQueryData<Movie[]>(['movies']);
+            return movies?.find(m => m.id === movieId);
+        },
+        staleTime: 1000 * 60 * 30, // 30 minutos
     });
 
     // Busca por TMDB ID (para filmes similares ou da pesquisa)
@@ -424,8 +447,8 @@ function WatchContent() {
             const isSeries = mediaType === 'series';
             const endpoint = isSeries ? 'tv' : 'movie';
 
-            // Busca dados básicos do TMDB
-            const response = await fetch(`https://api.themoviedb.org/3/${endpoint}/${tmdbIdNum}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR`);
+            // Busca dados básicos do TMDB via proxy
+            const response = await fetch(`/api/spotflix/${endpoint}/${tmdbIdNum}?language=pt-BR`);
             if (!response.ok) return {} as any; // Retorna objeto vazio em vez de null para evitar erro do React Query
             const tmdbData = await response.json();
 
@@ -468,29 +491,28 @@ function WatchContent() {
         enabled: !!tmdbId,
     });
 
-    // Efeito para carregar os logos pré-carregados da URL
-    useEffect(() => {
-        if (encodedLogos) {
-            try {
-                const decodedLogos = JSON.parse(decodeURIComponent(encodedLogos));
-                setLogos(decodedLogos);
-            } catch (error) {
-                console.error('Erro ao decodificar logos da URL:', error);
-            }
-        }
-    }, [encodedLogos]);
-
     const movie = movieById || movieByTmdb;
     const isLoading = isLoadingById || isLoadingByTmdb;
+
+    // Efeito para carregar logos pré-carregados do store global (Zustand-like/Context)
+    useEffect(() => {
+        if (movie?.tmdb_id) {
+            const preloaded = getLogosForMovie(movie.tmdb_id);
+            if (preloaded) {
+                setLogos(preloaded.logos);
+                setIsLogoReady(preloaded.logoImageLoaded);
+            }
+        }
+    }, [movie?.id, movie?.tmdb_id, getLogosForMovie]);
 
     // Preload das imagens principais para evitar flash de loading
     const imagesToPreload = movie ? [
         movie.backdrop_url,
         movie.poster_url
     ].filter(Boolean) : [];
-    
+
     const preloadedImages = useImagePreload(imagesToPreload);
-    
+
     // Preload dos backdrops adicionais
     const preloadedBackdrops = useImagePreload(backdrops);
 
@@ -603,6 +625,46 @@ function WatchContent() {
         fetchDetails();
     }, [movie?.tmdb_id, movie?.type]);
 
+    // Efeito para pré-carregar a imagem do logo
+    useEffect(() => {
+        // Se já temos logos prontos (ex: do store), não reseta e mantém o logo visível
+        if (isLogoReady && logos.length > 0) return;
+
+        // Se ainda está carregando detalhes e não temos logos prontos
+        if (isLoadingDetails) {
+            setIsLogoReady(false);
+            return;
+        }
+
+        // Se não há logos, marca como pronto (vai usar texto)
+        if (logos.length === 0) {
+            setIsLogoReady(true);
+            return;
+        }
+
+        // Se há logo, pré-carrega a imagem
+        const logoUrl = `https://image.tmdb.org/t/p/original${logos[0]?.file_path}`;
+        const img = new window.Image();
+
+        img.onload = () => {
+            setIsLogoReady(true);
+        };
+
+        img.onerror = () => {
+            // Se falhar, marca como pronto (vai usar texto)
+            setIsLogoReady(true);
+        };
+
+        img.src = logoUrl;
+
+        // Timeout de segurança: se demorar mais de 3 segundos, mostra mesmo assim
+        const timeout = setTimeout(() => {
+            setIsLogoReady(true);
+        }, 3000);
+
+        return () => clearTimeout(timeout);
+    }, [isLoadingDetails, logos]);
+
     // Efeito para buscar e rotacionar backdrops
     useEffect(() => {
         // Resetar backdrops imediatamente quando o filme mudar
@@ -685,8 +747,8 @@ function WatchContent() {
         }
     };
 
-    // Verificar se temos um filme válido antes de renderizar
-    if (isLoading || !movie || Object.keys(movie).length === 0) {
+    // Verificar se temos um filme válido e logo pronto antes de renderizar
+    if (isLoading || !movie || Object.keys(movie).length === 0 || !isLogoReady) {
         return <WatchLoading />;
     }
 
@@ -743,11 +805,10 @@ function WatchContent() {
                             {(backdrops.length > 0 ? backdrops : [movie.backdrop_url || movie.poster_url]).map((bd, index) => (
                                 <div
                                     key={index}
-                                    className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${
-                                        index === currentBackdropIndex 
-                                            ? 'opacity-100 scale-100 blur-0' 
-                                            : 'opacity-0 scale-105 blur-lg'
-                                    }`}
+                                    className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${index === currentBackdropIndex
+                                        ? 'opacity-100 scale-100 blur-0'
+                                        : 'opacity-0 scale-105 blur-lg'
+                                        }`}
                                 >
                                     <ProgressiveImage
                                         src={bd}
@@ -809,60 +870,12 @@ function WatchContent() {
                 <div className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-0 sm:pb-2 lg:pb-4">
                     <div className="max-w-4xl">
 
-                        {/* Title */}
+                        {/* Title - Otimizado */}
                         <div className="mb-4">
-                            {isLoadingDetails ? (
-                                <h1 className={`font-black text-white leading-tight ${movie.title.length > 50
-                                    ? 'text-2xl sm:text-3xl lg:text-4xl'
-                                    : movie.title.length > 30
-                                        ? 'text-3xl sm:text-4xl lg:text-5xl'
-                                        : 'text-3xl sm:text-5xl lg:text-6xl'
-                                    }`}>
-                                    {movie.title}
-                                </h1>
-                            ) : logos.length > 0 ? (
-                                <div className="flex items-center">
-                                    <img
-                                        src={`https://image.tmdb.org/t/p/original${logos[0]?.file_path || ''}`}
-                                        alt={movie.title}
-                                        className={`max-h-20 sm:max-h-24 lg:max-h-28 w-auto object-contain ${logos[0]?.file_path ? '' : 'hidden'}`}
-                                        style={{
-                                            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))',
-                                            maxWidth: '90%'
-                                        }}
-                                        onError={(e) => {
-                                            // Fallback para texto se a imagem falhar
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
-                                            const textFallback = target.nextElementSibling as HTMLElement;
-                                            if (textFallback) {
-                                                textFallback.style.display = 'block';
-                                            }
-                                        }}
-                                    />
-                                    {/* Fallback de texto (inicialmente oculto) */}
-                                    <h1
-                                        className={`font-black text-white leading-tight ${movie.title.length > 50
-                                            ? 'text-2xl sm:text-3xl lg:text-4xl'
-                                            : movie.title.length > 30
-                                                ? 'text-3xl sm:text-4xl lg:text-5xl'
-                                                : 'text-3xl sm:text-5xl lg:text-6xl'
-                                            }`}
-                                        style={{ display: logos[0]?.file_path ? 'none' : 'block' }}
-                                    >
-                                        {movie.title}
-                                    </h1>
-                                </div>
-                            ) : (
-                                <h1 className={`font-black text-white leading-tight ${movie.title.length > 50
-                                    ? 'text-2xl sm:text-3xl lg:text-4xl'
-                                    : movie.title.length > 30
-                                        ? 'text-3xl sm:text-4xl lg:text-5xl'
-                                        : 'text-3xl sm:text-5xl lg:text-6xl'
-                                    }`}>
-                                    {movie.title}
-                                </h1>
-                            )}
+                            <MovieTitle
+                                title={movie.title}
+                                logos={logos}
+                            />
                         </div>
 
                         {/* Tagline */}
@@ -1368,7 +1381,6 @@ function WatchContent() {
                             }
                         </h2>
 
-                        {/* Player Container */}
                         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
                             <iframe
                                 src={
@@ -1383,6 +1395,7 @@ function WatchContent() {
                                 width="100%"
                                 height="100%"
                                 frameBorder="0"
+                                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                                 allowFullScreen
                                 className="w-full h-full"
                             />
@@ -1432,11 +1445,10 @@ function WatchContent() {
                                     {creatorSeries.map((series, index) => (
                                         <div
                                             key={`creator-backdrop-${index}-${movie.tmdb_id}`}
-                                            className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${
-                                                index === activeCreatorBackdrop
-                                                    ? 'opacity-100 scale-100 blur-0' 
-                                                    : 'opacity-0 scale-105 blur-lg'
-                                            }`}
+                                            className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${index === activeCreatorBackdrop
+                                                ? 'opacity-100 scale-100 blur-0'
+                                                : 'opacity-0 scale-105 blur-lg'
+                                                }`}
                                         >
                                             <img
                                                 src={(series.backdrop_url && series.backdrop_url !== '')
@@ -1762,11 +1774,12 @@ function WatchContent() {
                     )}
 
                 </div>
-            </div>
+            </div >
             {/* Movie Modal */}
-            <MovieModal
+            < MovieModal
                 movie={selectedModalMovie}
-                isOpen={!!selectedModalMovie}
+                isOpen={!!selectedModalMovie
+                }
                 onClose={() => setSelectedModalMovie(null)}
                 onWatch={(movie: Movie) => {
                     setSelectedModalMovie(null);
@@ -1776,7 +1789,7 @@ function WatchContent() {
                 }}
                 onAddToList={() => { }}
             />
-        </div>
+        </div >
     );
 }
 

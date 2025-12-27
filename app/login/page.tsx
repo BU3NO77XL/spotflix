@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2, Play, Eye, EyeOff, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { validateEmail, validatePassword, validateName, validatePasswordMatch } from '@/lib/validation';
 
 // Componente SVG para o logo do Google
 const GoogleLogo = ({ className = "" }: { className?: string }) => (
@@ -60,8 +61,16 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      toast.error('Por favor, preencha todos os campos.');
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      toast.error(emailValidation.error);
+      return;
+    }
+
+    // Validate password
+    if (!password) {
+      toast.error('Por favor, preencha a senha.');
       return;
     }
 
@@ -77,18 +86,31 @@ export default function LoginPage() {
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !signupEmail || !signupPassword || !confirmPassword) {
-      toast.error('Por favor, preencha todos os campos.');
+    // Validate name
+    const nameValidation = validateName(name);
+    if (!nameValidation.isValid) {
+      toast.error(nameValidation.error);
       return;
     }
 
-    if (signupPassword !== confirmPassword) {
-      toast.error('As senhas não coincidem.');
+    // Validate email
+    const emailValidation = validateEmail(signupEmail);
+    if (!emailValidation.isValid) {
+      toast.error(emailValidation.error);
       return;
     }
 
-    if (signupPassword.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres.');
+    // Validate password
+    const passwordValidation = validatePassword(signupPassword);
+    if (!passwordValidation.isValid) {
+      toast.error(passwordValidation.error);
+      return;
+    }
+
+    // Validate password match
+    const matchValidation = validatePasswordMatch(signupPassword, confirmPassword);
+    if (!matchValidation.isValid) {
+      toast.error(matchValidation.error);
       return;
     }
 
@@ -116,7 +138,7 @@ export default function LoginPage() {
           className="w-full h-full object-cover opacity-60"
         />
         {/* Gradiente com a cor da home (#0a0a0a) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(10,10,10,0.5)] to-[rgba(10,10,10,0.85)]" />
+        <div className="absolute inset-0 bg-linear-to-b from-[rgba(10,10,10,0.5)] to-[rgba(10,10,10,0.85)]" />
       </div>
 
       {/* Login/Signup Card */}

@@ -64,7 +64,7 @@ export default function MyListHero({ title = 'Minha Lista', description = '', ba
                         {src ? (
                             <ProgressiveImage src={src} alt={title} className="w-full h-full object-cover object-center" />
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-r from-[#071018] via-[#0b1620] to-[#071018]" />
+                            <div className="w-full h-full bg-linear-to-r from-[#071018] via-[#0b1620] to-[#071018]" />
                         )}
                         <Illumination intensity={0.22} />
                     </div>
@@ -73,10 +73,10 @@ export default function MyListHero({ title = 'Minha Lista', description = '', ba
             </AnimatePresence>
 
             {/* Gradients similar to home hero */}
-            <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-[#0a0a0a]/70 via-[#0a0a0a]/40 to-transparent z-10" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/30 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0a0a]/90 via-[#0a0a0a]/40 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-28 bg-linear-to-b from-[#0a0a0a]/70 via-[#0a0a0a]/40 to-transparent z-10" />
+            <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a] via-[#0a0a0a]/30 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-[#0a0a0a]/90 via-[#0a0a0a]/40 to-transparent" />
 
             {/* Content positioned like home hero, no buttons */}
             <div className="absolute inset-0 flex items-center sm:items-end z-20">
