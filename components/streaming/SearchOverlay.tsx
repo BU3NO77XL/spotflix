@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
 import { Movie } from '@/types/movie';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/lib/dataClient';
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -20,6 +22,13 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     const [results, setResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('all');
+
+    // Buscar filmes locais para tentar fazer match com os resultados da pesquisa
+    const { data: localMovies = [] } = useQuery({
+        queryKey: ['movies'],
+        queryFn: () => base44.entities.Movie.list(),
+        staleTime: 1000 * 60 * 5, // 5 minutos
+    });
 
     // Reset state when opening
     useEffect(() => {
@@ -46,7 +55,16 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
             setIsSearching(true);
             try {
                 const data = await TMDBService.search(query);
-                setResults(data.map((r, i) => ({ ...r, id: `search-${i}` })) as Movie[]);
+                // Tentar fazer match com filmes locais para ter IDs locais
+                const enhancedResults = data.map((searchResult, i) => {
+                    const localMatch = localMovies.find(local => 
+                        local.tmdb_id === searchResult.tmdb_id
+                    );
+                    
+                    return localMatch || { ...searchResult, id: `search-${i}` };
+                }) as Movie[];
+                
+                setResults(enhancedResults);
             } catch (error) {
                 console.error('Search error:', error);
                 setResults([]);
@@ -76,7 +94,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="fixed inset-0 z-[100] bg-[#0a0a0a]/75 backdrop-blur-md flex flex-col overflow-hidden"
+                    className="fixed inset-0 z-100 bg-[#0a0a0a]/75 backdrop-blur-md flex flex-col overflow-hidden"
                 >
                     {/* Top Bar with Close Button */}
                     <div className="flex justify-end p-6 lg:p-10 shrink-0">
@@ -97,19 +115,28 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.1, duration: 0.4 }}
-                                className="w-full relative mb-8 shrink-0"
+                                className="w-full relative mb-10 shrink-0"
                             >
-                                <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 lg:w-8 lg:h-8 text-gray-500 stroke-1" />
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    placeholder="O que você quer assistir?"
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    // Fecha no ESC
-                                    onKeyDown={(e) => e.key === 'Escape' && handleClose()}
-                                    className="w-full bg-transparent border-b border-white/10 focus:border-[#1DB954]/50 text-2xl lg:text-4xl font-light text-white placeholder:text-gray-600 py-4 pl-10 lg:pl-14 pr-4 outline-none transition-all duration-300 placeholder:font-extralight"
-                                />
+                                <div className="relative group">
+                                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 lg:w-6 lg:h-6 text-gray-500 group-focus-within:text-[#1DB954] transition-colors duration-300" />
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        placeholder="Pesquisar..."
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Escape' && handleClose()}
+                                        className="w-full bg-white/3 border border-white/5 rounded-2xl text-xl lg:text-2xl font-light text-white placeholder:text-gray-600 py-4 lg:py-5 pl-14 lg:pl-16 pr-5 outline-none transition-all duration-300 focus:bg-white/5 focus:border-white/10 placeholder:font-light"
+                                    />
+                                    {query && (
+                                        <button
+                                            onClick={() => setQuery('')}
+                                            className="absolute right-5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10 text-gray-500 hover:text-white transition-all"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
                             </motion.div>
 
                             {/* Tabs / Filters */}
@@ -170,20 +197,27 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                             animate={{ opacity: 1 }}
                                             className="flex flex-col space-y-2 lg:space-y-4"
                                         >
-                                            {filteredResults.map((movie, index) => (
-                                                <Link
-                                                    key={movie.id}
-                                                    href={`/watch?ref=${movie.tmdb_id}&type=${movie.type}`}
-                                                    onClick={handleClose}
-                                                    className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/[0.04] transition-all duration-300 rounded-2xl"
-                                                >
+                                            {filteredResults.map((movie, index) => {
+                                                // Tentar construir URL otimizada: se tiver id local, usar; senão usar apenas ref
+                                                const hasLocalId = movie.id && !movie.id.startsWith('search-');
+                                                const watchUrl = hasLocalId 
+                                                    ? `/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${movie.type}`
+                                                    : `/watch?ref=${movie.tmdb_id}&type=${movie.type}`;
+                                                
+                                                return (
+                                                    <Link
+                                                        key={movie.id}
+                                                        href={watchUrl}
+                                                        onClick={handleClose}
+                                                        className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/4 transition-all duration-300 rounded-2xl"
+                                                    >
                                                     {/* Poster thumbnail */}
                                                     <div className="w-14 h-20 lg:w-20 lg:h-28 shrink-0 relative rounded-xl overflow-hidden bg-white/5 ring-1 ring-white/10 group-hover:ring-white/20 transition-all">
                                                         {movie.poster_url ? (
                                                             <img
                                                                 src={movie.poster_url}
                                                                 alt={movie.title}
-                                                                className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500"
+                                                                className="w-full h-full object-cover grayscale-20 group-hover:grayscale-0 transition-all duration-500"
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center">
@@ -211,7 +245,8 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                         </div>
                                                     </div>
                                                 </Link>
-                                            ))}
+                                                );
+                                            })}
                                         </motion.div>
                                     ) : (
                                         <motion.div

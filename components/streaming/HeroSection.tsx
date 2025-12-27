@@ -23,6 +23,11 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     const [isReady, setIsReady] = useState(false);
     const [nextImageReady, setNextImageReady] = useState(false);
     const [seriesDetails, setSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
+    
+    // Estados para rotação de backdrops (igual à página watch)
+    const [backdrops, setBackdrops] = useState<string[]>([]);
+    const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
+    const [backdropCycle, setBackdropCycle] = useState(0); // Controla o ciclo de backdrops
 
     const featured = featuredMovies?.[currentIndex];
 
@@ -54,6 +59,53 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
 
         fetchSeriesDetails();
     }, [featuredId, featuredType, featuredTmdbId, seriesDetails]);
+
+    // Efeito para buscar e rotacionar backdrops (igual à página watch)
+    useEffect(() => {
+        // Resetar backdrops quando o filme mudar
+        setBackdrops([]);
+        setCurrentBackdropIndex(0);
+
+        if (!featuredTmdbId) return;
+
+        const fetchBackdrops = async () => {
+            try {
+                const images = await TMDBService.fetchMovieImages(featuredTmdbId, featuredType === 'series');
+                if (images.length > 0) {
+                    setBackdrops(images);
+                }
+            } catch (error) {
+                console.error('Error fetching backdrops:', error);
+            }
+        };
+
+        fetchBackdrops();
+    }, [featuredTmdbId, featuredType]);
+
+    // Rotação automática dos backdrops (coordenada com mudança de filmes)
+    useEffect(() => {
+        if (backdrops.length <= 1) return;
+
+        // Resetar backdrop e ciclo quando filme muda
+        setCurrentBackdropIndex(0);
+        setBackdropCycle(0);
+
+        const maxBackdrops = Math.min(backdrops.length, 2); // Máximo 2 backdrops por filme
+
+        const interval = setInterval(() => {
+            setBackdropCycle(prev => {
+                const nextCycle = prev + 1;
+                if (nextCycle < maxBackdrops) {
+                    setCurrentBackdropIndex(nextCycle);
+                    return nextCycle;
+                }
+                // Para após mostrar 2 backdrops
+                return prev;
+            });
+        }, 8000); // 8 segundos por backdrop
+
+        return () => clearInterval(interval);
+    }, [backdrops, currentIndex]); // Resetar quando filme muda
 
     // Preload images
     const preloadImage = useCallback((index: number): Promise<boolean> => {
@@ -90,13 +142,13 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
         }
     }, [currentIndex, featuredMovies?.length, preloadImage]);
 
-    // Auto-advance - only when next image is ready (10 seconds interval)
+    // Auto-advance - coordenado com rotação de backdrops
     useEffect(() => {
         if (featuredMovies?.length > 1 && isReady && nextImageReady) {
             const interval = setInterval(() => {
                 setDirection(1);
                 setCurrentIndex((prev) => (prev + 1) % featuredMovies.length);
-            }, 10000); // 10 seconds
+            }, 16000); // 16 segundos (2 backdrops de 8s cada)
             return () => clearInterval(interval);
         }
     }, [featuredMovies?.length, isReady, nextImageReady]);
@@ -180,19 +232,46 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                     exit="exit"
                     className="absolute inset-0"
                 >
-                    <motion.div 
-                        initial={{ scale: 1, filter: 'blur(8px)' }} 
-                        animate={{ scale: 1.05, filter: 'blur(0px)' }} 
-                        transition={{ duration: 10, ease: 'linear' }} 
-                        className="w-full h-full"
-                    >
-                        <ProgressiveImage 
-                            src={currentImageUrl} 
-                            alt={featured.title} 
-                            className="w-full h-full object-cover object-center"
-                            preloaded={loadedImages.has(currentIndex)}
-                        />
-                    </motion.div>
+                    {/* Rotação de backdrops (idêntico à página watch) */}
+                    {backdrops.length > 0 ? (
+                        <div className="absolute inset-0 transition-opacity duration-2000 ease-in-out">
+                            {backdrops.map((bd, index) => (
+                                <div
+                                    key={`${featured.id}-${index}`}
+                                    className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${
+                                        index === currentBackdropIndex
+                                            ? 'opacity-100 scale-100'
+                                            : 'opacity-0 scale-105'
+                                    }`}
+                                    style={{
+                                        filter: index === currentBackdropIndex ? 'blur(0px)' : 'blur(8px)'
+                                    }}
+                                >
+                                    <ProgressiveImage 
+                                        src={bd} 
+                                        alt={featured.title} 
+                                        className="w-full h-full object-cover object-center"
+                                        preloaded={loadedImages.has(currentIndex)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        /* Fallback para quando não há backdrops múltiplos */
+                        <motion.div 
+                            initial={{ scale: 1, filter: 'blur(8px)' }} 
+                            animate={{ scale: 1.05, filter: 'blur(0px)' }} 
+                            transition={{ duration: 10, ease: 'linear' }} 
+                            className="w-full h-full"
+                        >
+                            <ProgressiveImage 
+                                src={currentImageUrl} 
+                                alt={featured.title} 
+                                className="w-full h-full object-cover object-center"
+                                preloaded={loadedImages.has(currentIndex)}
+                            />
+                        </motion.div>
+                    )}
                     {/* Vignette cinematográfico */}
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
                 </motion.div>
@@ -292,7 +371,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                         className="absolute inset-0 bg-white origin-left"
                                         initial={{ scaleX: 0 }}
                                         animate={{ scaleX: 1 }}
-                                        transition={{ duration: 10, ease: 'linear' }}
+                                        transition={{ duration: 16, ease: 'linear' }} // 16 segundos (2 backdrops)
                                     />
                                 )}
                             </button>

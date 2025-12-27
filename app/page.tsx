@@ -37,13 +37,14 @@ export default function Home() {
       if (movies.length === 0 && !isLoading) {
         setTmdbLoading(true);
         try {
-          // Load essential content first (trending + top rated)
-          const [trending, topRated] = await Promise.all([
-            TMDBService.fetchTrending(),
+          // Load essential content first (trending today para hero + trending semanal + top rated)
+          const [trendingToday, trending, topRated] = await Promise.all([
+            TMDBService.fetchTrendingToday(), // Para o hero
+            TMDBService.fetchTrending(),      // Para carrossel
             TMDBService.fetchTopRatedMovies()
           ]);
 
-          const essentialMovies = [...trending, ...topRated];
+          const essentialMovies = [...trendingToday, ...trending, ...topRated];
 
           if (essentialMovies.length > 0) {
             await base44.entities.Movie.bulkCreate(essentialMovies);
@@ -110,6 +111,7 @@ export default function Home() {
   });
 
   const featuredMovies = movies.filter((m: Movie) => m.is_featured);
+  const trendingTodayMovies = movies.filter((m: Movie) => m.category === 'trending_today');
   const trendingMovies = movies.filter((m: Movie) => m.category === 'trending');
   const topRatedMovies = movies.filter((m: Movie) => m.category === 'top_rated');
   const comingSoonMovies = movies.filter((m: Movie) => m.category === 'coming_soon');
@@ -163,9 +165,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Hero */}
+      {/* Hero - Prioriza filmes em alta do dia */}
       <HeroSection
-        featuredMovies={featuredMovies.length > 0 ? featuredMovies : movies.slice(0, 3)}
+        featuredMovies={
+          trendingTodayMovies.length > 0 
+            ? trendingTodayMovies 
+            : featuredMovies.length > 0 
+              ? featuredMovies 
+              : movies.slice(0, 3)
+        }
         onWatch={handleWatch}
         onMoreInfo={handleMoreInfo}
       />

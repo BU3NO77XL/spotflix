@@ -41,7 +41,10 @@ export default function RootLayout({
         <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" />
         <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1DB954" />
+        <meta name="theme-color" content="#0a0a0a" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="SpotFlix" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

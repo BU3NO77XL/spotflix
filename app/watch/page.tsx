@@ -167,7 +167,6 @@ function WatchContent() {
     const movieId = searchParams.get('id');
     const tmdbId = searchParams.get('ref');
     const mediaType = searchParams.get('type') || 'movie'; // 'movie' ou 'series'
-    const encodedLogos = searchParams.get('logos'); // Obter logos da URL se disponíveis
 
     // Quando o id da mídia mudar (navegação para outro filme/série),
     // em dispositivos móveis queremos garantir que a página comece no topo.
@@ -201,21 +200,10 @@ function WatchContent() {
         width: number;
         height: number;
         iso_639_1: string | null;
-    }[]>(() => {
-        if (tmdbId) {
-            const preloaded = getLogosForMovie(Number(tmdbId));
-            if (preloaded) return preloaded.logos;
-        }
-        return [];
-    });
+    }[]>([]);
+    
     // Estado para indicar se o logo está pronto (carregado ou não existe)
-    const [isLogoReady, setIsLogoReady] = useState(() => {
-        if (tmdbId) {
-            const preloaded = getLogosForMovie(Number(tmdbId));
-            if (preloaded) return preloaded.logoImageLoaded;
-        }
-        return false;
-    });
+    const [isLogoReady, setIsLogoReady] = useState(false);
     const [collection, setCollection] = useState<{ id: number; name: string; overview: string; backdrop_path: string; parts: { id: number; title: string; poster_path: string; release_date: string }[] } | null>(null);
     const [creatorSeries, setCreatorSeries] = useState<Movie[]>([]);
     const [creatorInfo, setCreatorInfo] = useState<{ id: number; name: string } | null>(null);
@@ -489,6 +477,8 @@ function WatchContent() {
             };
         },
         enabled: !!tmdbId,
+        staleTime: 1000 * 60 * 30, // 30 minutos
+        gcTime: 1000 * 60 * 60, // 1 hora
     });
 
     const movie = movieById || movieByTmdb;
@@ -541,6 +531,13 @@ function WatchContent() {
         fetchSeriesDetails();
     }, [movie?.id, movie?.type, movie?.tmdb_id, updatedSeriesDetails]);
 
+    // Resetar logos quando mudar de filme/série
+    useEffect(() => {
+        setLogos([]);
+        setIsLogoReady(false);
+        setIsLoadingDetails(true); // Garantir que isLoadingDetails seja true ao mudar
+    }, [tmdbId]);
+
     useEffect(() => {
         const fetchDetails = async () => {
             // Verificar se temos um filme válido
@@ -548,7 +545,7 @@ function WatchContent() {
                 setIsLoadingDetails(true);
                 setCollection(null); // Resetar collection ao mudar de filme
                 setCreatorSeries([]); // Resetar séries do criador
-                setLogos([]); // Resetar logos
+                // Não resetar logos aqui para evitar flash de loading
                 try {
                     // Verificar se é uma série ou filme
                     const isSeries = movie.type === 'series';
@@ -627,43 +624,59 @@ function WatchContent() {
 
     // Efeito para pré-carregar a imagem do logo
     useEffect(() => {
-        // Se já temos logos prontos (ex: do store), não reseta e mantém o logo visível
-        if (isLogoReady && logos.length > 0) return;
+        // Se já temos logos pré-carregados do store, usar eles
+        if (movie?.tmdb_id) {
+            const preloaded = getLogosForMovie(movie.tmdb_id);
+            if (preloaded && preloaded.logoImageLoaded) {
+                setLogos(preloaded.logos);
+                setIsLogoReady(true);
+                return;
+            }
+        }
 
-        // Se ainda está carregando detalhes e não temos logos prontos
-        if (isLoadingDetails) {
-            setIsLogoReady(false);
+        // Se ainda está carregando detalhes ou não tem movie, aguardar
+        if (isLoadingDetails || !movie) {
             return;
         }
 
-        // Se não há logos, marca como pronto (vai usar texto)
-        if (logos.length === 0) {
-            setIsLogoReady(true);
+        // Se já está pronto, não precisa recarregar
+        if (isLogoReady) {
             return;
+        }
+
+        // Se não há logos após carregar detalhes, marca como pronto
+        // Mas só se realmente terminou de carregar (isLoadingDetails = false)
+        if (logos.length === 0) {
+            // Pequeno delay para garantir que o React processou todos os updates
+            const timer = setTimeout(() => {
+                setIsLogoReady(true);
+            }, 50);
+            return () => clearTimeout(timer);
         }
 
         // Se há logo, pré-carrega a imagem
         const logoUrl = `https://image.tmdb.org/t/p/original${logos[0]?.file_path}`;
         const img = new window.Image();
 
+        // Timeout de segurança: se demorar mais de 1.5 segundos, mostra mesmo assim
+        const timeout = setTimeout(() => {
+            setIsLogoReady(true);
+        }, 1500);
+
         img.onload = () => {
+            clearTimeout(timeout);
             setIsLogoReady(true);
         };
 
         img.onerror = () => {
-            // Se falhar, marca como pronto (vai usar texto)
+            clearTimeout(timeout);
             setIsLogoReady(true);
         };
 
         img.src = logoUrl;
 
-        // Timeout de segurança: se demorar mais de 3 segundos, mostra mesmo assim
-        const timeout = setTimeout(() => {
-            setIsLogoReady(true);
-        }, 3000);
-
         return () => clearTimeout(timeout);
-    }, [isLoadingDetails, logos]);
+    }, [movie?.tmdb_id, movie, logos, getLogosForMovie, isLoadingDetails, isLogoReady]);
 
     // Efeito para buscar e rotacionar backdrops
     useEffect(() => {
@@ -806,9 +819,12 @@ function WatchContent() {
                                 <div
                                     key={index}
                                     className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${index === currentBackdropIndex
-                                        ? 'opacity-100 scale-100 blur-0'
-                                        : 'opacity-0 scale-105 blur-lg'
+                                        ? 'opacity-100 scale-100'
+                                        : 'opacity-0 scale-105'
                                         }`}
+                                    style={{
+                                        filter: index === currentBackdropIndex ? 'blur(0px)' : 'blur(8px)'
+                                    }}
                                 >
                                     <ProgressiveImage
                                         src={bd}
@@ -1216,9 +1232,9 @@ function WatchContent() {
                                                         </div>
                                                     </div>
                                                     <div className="p-3">
-                                                        <h3 className="text-white font-medium text-sm mb-1 truncate">
+                                                        {/* <h3 className="text-white font-medium text-sm mb-1 truncate">
                                                             {episode.episode_number}. {episode.name}
-                                                        </h3>
+                                                        </h3> */}
                                                         <p className="text-gray-400 text-xs line-clamp-2">
                                                             {episode.overview || 'Sem descrição disponível.'}
                                                         </p>
@@ -1330,12 +1346,12 @@ function WatchContent() {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors
+                                                        {/* <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors
                                                     ${isCurrentMovie ? 'text-white font-medium' : 'text-gray-400 group-hover:text-white'}`}>
                                                             {part.title}
-                                                        </p>
+                                                        </p> */}
                                                         {part.release_date && (
-                                                            <p className="text-gray-500 text-[10px] font-bold">
+                                                            <p className="text-gray-400 text-[11px] mt-2 text-center">
                                                                 {new Date(part.release_date).getFullYear()}
                                                             </p>
                                                         )}
@@ -1551,12 +1567,12 @@ function WatchContent() {
                                                         )}
 
                                                     </div>
-                                                    <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors
+                                                    {/* <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors
                                                         ${index === selectedCreatorIndex ? 'text-white font-medium' : 'text-gray-400 group-hover:text-white'}`}>
                                                         {series.title}
-                                                    </p>
+                                                    </p> */}
                                                     {series.year && (
-                                                        <p className="text-gray-600 text-[10px]">
+                                                        <p className="text-gray-400 text-[11px] mt-2 text-center">
                                                             {series.year}
                                                         </p>
                                                     )}
@@ -1587,7 +1603,7 @@ function WatchContent() {
                     )}
 
 
-                    {/* Trailers Section (movida para depois do elenco) */}
+                    {/* Trailers Section - DESATIVADO TEMPORARIAMENTE
                     {trailers.length > 0 && (
                         <section
                             className="py-8 bg-[#141414] rounded-lg p-6"
@@ -1596,7 +1612,6 @@ function WatchContent() {
                             <h2 id="trailers-heading" className="text-white text-lg font-semibold mb-4">Trailers & Teasers</h2>
 
                             <div className="relative">
-                                {/* Left Arrow */}
                                 {showLeftTrailersArrow && (
                                     <button
                                         onClick={() => scrollTrailers('left')}
@@ -1605,7 +1620,6 @@ function WatchContent() {
                                         <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                                     </button>
                                 )}
-                                {/* Right Arrow */}
                                 {showRightTrailersArrow && (
                                     <button
                                         onClick={() => scrollTrailers('right')}
@@ -1656,9 +1670,6 @@ function WatchContent() {
                                                     </span>
                                                 </div>
                                             </div>
-                                            <p className="text-gray-400 text-xs mt-2 truncate w-48 sm:w-56 group-hover:text-white transition-colors">
-                                                {trailer.name}
-                                            </p>
                                         </a>
                                     ))}
 
@@ -1668,6 +1679,7 @@ function WatchContent() {
                         </section>
 
                     )}
+                    FIM - Trailers Section */}
 
                     {/* Discussões - Desativado temporariamente
                     <section
@@ -1783,9 +1795,7 @@ function WatchContent() {
                 onClose={() => setSelectedModalMovie(null)}
                 onWatch={(movie: Movie) => {
                     setSelectedModalMovie(null);
-                    // Codificar os logos em base64 para passar na URL
-                    const encodedLogos = logos.length > 0 ? encodeURIComponent(JSON.stringify(logos)) : '';
-                    router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}${encodedLogos ? `&logos=${encodedLogos}` : ''}`);
+                    router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}`);
                 }}
                 onAddToList={() => { }}
             />

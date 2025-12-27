@@ -37,7 +37,7 @@ export const TMDBService = {
         }
     },
 
-    // Fetch trending content
+    // Fetch trending content (weekly)
     async fetchTrending(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
@@ -55,6 +55,29 @@ export const TMDBService = {
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'trending');
         } catch (error) {
             console.error('Error fetching trending:', error);
+            return [];
+        }
+    },
+
+    // Fetch trending content for today (daily) - para o hero
+    async fetchTrendingToday(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const response = await fetch(
+                `${TMDB_BASE_URL}/trending/all/day?language=pt-BR`,
+                { next: { revalidate: 1800 } } // Cache 30 minutos (mais frequente para conteúdo diário)
+            );
+
+            // Verificar se a resposta é válida
+            if (!response.ok) {
+                console.warn(`Error fetching daily trending content: ${response.status}`);
+                return [];
+            }
+
+            const data = await response.json();
+            // Marcar como featured para aparecer no hero
+            return this.transformTMDBData(data.results?.slice(0, 8) || [], 'trending_today');
+        } catch (error) {
+            console.error('Error fetching daily trending:', error);
             return [];
         }
     },
@@ -841,7 +864,7 @@ export const TMDBService = {
                     ? `${TMDB_IMAGE_BASE}/w1280${item.backdrop_path}`
                     : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop',
                 score: item.vote_average ? parseFloat(item.vote_average.toFixed(1)) : 8.0,
-                is_featured: category === 'trending' && index < 3,
+                is_featured: (category === 'trending' && index < 3) || (category === 'trending_today' && index < 6),
                 category: category,
                 tmdb_id: item.id
             };

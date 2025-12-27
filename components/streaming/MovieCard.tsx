@@ -93,8 +93,8 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                 </div>
             </div>
 
-            {/* Title (always visible) */}
-            <div className="mt-2 lg:mt-3">
+            {/* Title (always visible) - DISABLED */}
+            {/* <div className="mt-2 lg:mt-3">
                 <h3 className="text-white text-xs sm:text-sm font-medium truncate group-hover:text-[#1DB954] 
                      transition-colors duration-200">
                     {movie.title}
@@ -102,7 +102,7 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                 <p className="text-gray-500 text-xs truncate mt-0.5">
                     {movie.genre?.slice(0, 2).join(' • ')}
                 </p>
-            </div>
+            </div> */}
         </motion.div>
     );
 }
