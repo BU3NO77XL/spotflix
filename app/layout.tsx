@@ -42,11 +42,16 @@ export default function RootLayout({
         <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" />
         <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#0a0a0a" />
+        {/* Theme color para barra de status/navegação */}
+        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: light)" />
         <meta name="msapplication-navbutton-color" content="#0a0a0a" />
+        <meta name="msapplication-TileColor" content="#0a0a0a" />
+        {/* iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
         <meta name="apple-mobile-web-app-title" content="SpotFlix" />
+        {/* Android */}
         <meta name="mobile-web-app-capable" content="yes" />
         <script
           dangerouslySetInnerHTML={{
