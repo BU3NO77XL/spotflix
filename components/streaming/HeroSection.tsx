@@ -284,8 +284,8 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
 
             {/* Content */}
-            <div className="absolute inset-0 flex items-end z-20">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-56 sm:pb-32 lg:pb-44">
+            <div className="absolute inset-0 flex items-center sm:items-end z-20">
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-16 sm:pb-32 lg:pb-44">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={featured.id}
