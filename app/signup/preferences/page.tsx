@@ -24,12 +24,12 @@ const POPULAR_GENRES = [
 
 export default function PreferencesPage() {
   const router = useRouter();
-  
+
   // Estados para a seleção de avatar e gêneros
   const [selectedAvatar, setSelectedAvatar] = useState(0);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [userName, setUserName] = useState('');
-  
+
   // Carregar informações do usuário
   useEffect(() => {
     const userInfo = localStorage.getItem('userBasicInfo');
@@ -73,9 +73,9 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#0a0a0a]">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#121212]">
       {/* Fundo igual à home */}
-      <div className="absolute inset-0 z-0 bg-[#0a0a0a]" />
+      <div className="absolute inset-0 z-0 bg-[#121212]" />
 
       {/* Conteúdo Principal */}
       <div className="relative z-10 min-h-screen flex flex-col">
@@ -105,11 +105,10 @@ export default function PreferencesPage() {
                   <button
                     key={index}
                     onClick={() => selectAvatar(index)}
-                    className={`aspect-square rounded-xl overflow-hidden transition-all ${
-                      selectedAvatar === index 
-                        ? 'ring-4 ring-[#1DB954]' 
+                    className={`aspect-square rounded-xl overflow-hidden transition-all ${selectedAvatar === index
+                        ? 'ring-4 ring-[#1DB954]'
                         : 'ring-1 ring-white/10 hover:ring-white/30'
-                    }`}
+                      }`}
                   >
                     <NetflixAvatar name={`User${index}`} className="w-full h-full" />
                   </button>
@@ -130,11 +129,10 @@ export default function PreferencesPage() {
                   <span className="text-xs px-3 py-1.5 rounded-full whitespace-nowrap" style={{ color: '#888', background: 'rgba(255, 255, 255, 0.05)' }}>
                     Passo 2 de 2
                   </span>
-                  <span className={`text-sm font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${
-                    selectedGenres.length >= 3 
-                      ? 'bg-white/10 text-white' 
+                  <span className={`text-sm font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${selectedGenres.length >= 3
+                      ? 'bg-white/10 text-white'
                       : 'text-gray-400'
-                  }`} style={{ background: selectedGenres.length >= 3 ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)' }}>
+                    }`} style={{ background: selectedGenres.length >= 3 ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)' }}>
                     {selectedGenres.length}/3
                   </span>
                 </div>
@@ -144,11 +142,10 @@ export default function PreferencesPage() {
                   <button
                     key={genre}
                     onClick={() => toggleGenre(genre)}
-                    className={`relative py-3 px-4 rounded-lg transition-colors ${
-                      selectedGenres.includes(genre)
+                    className={`relative py-3 px-4 rounded-lg transition-colors ${selectedGenres.includes(genre)
                         ? 'text-white'
                         : 'text-gray-300 hover:bg-white/10'
-                    }`}
+                      }`}
                     style={{
                       background: selectedGenres.includes(genre) ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)',
                       border: selectedGenres.includes(genre) ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)'

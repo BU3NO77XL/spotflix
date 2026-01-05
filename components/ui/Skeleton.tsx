@@ -10,15 +10,15 @@ interface SkeletonProps {
   count?: number;
 }
 
-export default function Skeleton({ 
-  className, 
+export default function Skeleton({
+  className,
   variant = 'rectangle',
   width,
   height,
   count = 1
 }: SkeletonProps) {
   const baseClasses = "animate-pulse bg-white/10 rounded";
-  
+
   const variantClasses = {
     card: "aspect-2/3 w-full rounded-lg",
     text: "h-4 w-full rounded",
@@ -27,7 +27,7 @@ export default function Skeleton({
   };
 
   const skeletonElement = (
-    <div 
+    <div
       className={cn(baseClasses, variantClasses[variant], className)}
       style={{ width, height }}
     />
@@ -82,7 +82,7 @@ export function CarouselSkeleton({ title }: { title?: string }) {
 
 export function HeroSkeleton() {
   return (
-    <section className="relative h-[95vh] sm:h-screen lg:h-screen w-full bg-[#0a0a0a]">
+    <section className="relative h-[95vh] sm:h-screen lg:h-screen w-full bg-[#121212]">
       <Skeleton className="absolute inset-0" />
       <div className="absolute inset-0 flex items-center sm:items-end z-20">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-12 sm:pb-24 lg:pb-32">

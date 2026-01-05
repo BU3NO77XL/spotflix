@@ -71,7 +71,7 @@ const CastSkeleton = memo(() => (
                 <Skeleton key={i} className="w-24 h-32 sm:w-28 sm:h-36 rounded-lg shrink-0" />
             ))}
         </div>
-        <div className="bg-[#141414] rounded-lg p-4">
+        <div className="bg-[#1f1f1f] rounded-lg p-4">
             <div className="flex gap-4">
                 <Skeleton className="w-28 sm:w-32 aspect-3/4 shrink-0" />
                 <div className="flex-1 space-y-3">
@@ -107,7 +107,7 @@ const OptimizedImage = memo(({
     const [error, setError] = useState(false);
 
     if (error || !src) {
-        return <div className={`bg-[#1a1a1a] ${className}`} aria-label={`Imagem não disponível: ${alt}`} />;
+        return <div className={`bg-[#1f1f1f] ${className}`} aria-label={`Imagem não disponível: ${alt}`} />;
     }
 
     return (
@@ -152,7 +152,7 @@ export default function Watch() {
 
 function WatchLoading() {
     return (
-        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="min-h-screen bg-[#121212] flex items-center justify-center">
             <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
         </div>
     );
@@ -201,7 +201,7 @@ function WatchContent() {
         height: number;
         iso_639_1: string | null;
     }[]>([]);
-    
+
     // Estado para indicar se o logo está pronto (carregado ou não existe)
     const [isLogoReady, setIsLogoReady] = useState(false);
     const [collection, setCollection] = useState<{ id: number; name: string; overview: string; backdrop_path: string; parts: { id: number; title: string; poster_path: string; release_date: string }[] } | null>(null);
@@ -794,7 +794,7 @@ function WatchContent() {
     const hasBackdropAudio = animatedBackdrop?.hasAudio || false;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a]">
+        <div className="min-h-screen bg-[#121212]">
             {/* Hero Section - Similar to MovieModal */}
             <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh] overflow-hidden">
                 {/* Backdrop - Video animado ou Imagem */}
@@ -836,12 +836,12 @@ function WatchContent() {
                             ))}
                         </div>
                     ) : (
-                        <div className="w-full h-full bg-linear-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+                        <div className="w-full h-full bg-linear-to-br from-[#1f1f1f] to-[#121212] flex items-center justify-center">
                             <span className="text-white/20 text-2xl font-bold">{movie.title}</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-[#0a0a0a]/20 to-transparent" />
-                    <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/60 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-[#121212]/20 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/60 via-transparent to-transparent" />
                 </div>
 
                 {/* Botão de Volume - Canto direito (apenas desktop) */}
@@ -1008,7 +1008,7 @@ function WatchContent() {
             </section>
 
             {/* Content */}
-            <div className="relative z-20 bg-[#0a0a0a] overflow-clip">
+            <div className="relative z-20 bg-[#121212] overflow-clip">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
 
                     {/* Synopsis */}
@@ -1212,8 +1212,8 @@ function WatchContent() {
                                                             });
                                                         }
                                                     }}
-                                                    className={`shrink-0 w-64 bg-[#1a1a1a] rounded-lg overflow-hidden hover:scale-105 transition-all duration-200 cursor-pointer
-                                                        ${selectedEpisode === episode.episode_number ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#141414]' : ''}`}
+                                                    className={`shrink-0 w-64 bg-[#1f1f1f] rounded-lg overflow-hidden hover:scale-105 transition-all duration-200 cursor-pointer
+                                                        ${selectedEpisode === episode.episode_number ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#1f1f1f]' : ''}`}
                                                 >
                                                     <div className="relative">
                                                         {episode.still_path ? (
@@ -1272,12 +1272,12 @@ function WatchContent() {
                                             className="w-full h-full object-cover"
                                         />
                                         <div className="absolute inset-0 bg-black/50" />
-                                        <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/90 via-transparent to-transparent" />
-                                        <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
+                                        <div className="absolute inset-0 bg-linear-to-r from-[#121212]/90 via-transparent to-transparent" />
+                                        <div className="absolute inset-0 bg-linear-to-t from-[#121212]/80 via-transparent to-transparent" />
                                     </div>
                                 )}
 
-                                <div className={`relative z-10 p-4 sm:p-5 ${!collection.backdrop_path ? 'bg-[#141414]' : ''}`}>
+                                <div className={`relative z-10 p-4 sm:p-5 ${!collection.backdrop_path ? 'bg-[#1f1f1f]' : ''}`}>
                                     <h2 className="text-white text-lg font-semibold mb-1">{collection.name}</h2>
                                     <p className="text-gray-400 text-sm mb-4">
                                         Parte de uma coleção com {collection.parts.length} títulos
@@ -1316,8 +1316,8 @@ function WatchContent() {
                                                     >
 
                                                         <div
-                                                            className={`relative w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg overflow-hidden bg-[#1a1a1a] transition-all duration-300
-                                                    ${isCurrentMovie ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#141414]' : 'hover:ring-1 hover:ring-white/30'}`}
+                                                            className={`relative w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg overflow-hidden bg-[#1f1f1f] transition-all duration-300
+                                                    ${isCurrentMovie ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#1f1f1f]' : 'hover:ring-1 hover:ring-white/30'}`}
                                                             role="button"
                                                             tabIndex={isCurrentMovie ? -1 : 0}
                                                             aria-label={isCurrentMovie ? `${part.title} - Assistindo agora` : `Assistir ${part.title}`}
@@ -1387,7 +1387,7 @@ function WatchContent() {
                                 aria-hidden="true"
                             />
                             {/* Gradiente suave nas bordas para integrar com o fundo */}
-                            <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+                            <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
                         </div>
 
                         <h2 id="player-heading" className="text-white text-lg font-semibold mb-6 text-center drop-shadow-lg">
@@ -1481,8 +1481,8 @@ function WatchContent() {
                                         </div>
                                     ))}
                                     <div className="absolute inset-0 bg-black/50" />
-                                    <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/90 via-transparent to-transparent" />
-                                    <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/90 via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-linear-to-t from-[#121212]/80 via-transparent to-transparent" />
                                 </div>
 
                                 <div className="relative z-10 p-4 sm:p-5">
@@ -1526,7 +1526,7 @@ function WatchContent() {
                                                 >
 
                                                     <div
-                                                        className={`relative w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg overflow-hidden bg-[#1a1a1a] transition-all duration-300
+                                                        className={`relative w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg overflow-hidden bg-[#1f1f1f] transition-all duration-300
                                                             ${index === selectedCreatorIndex ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-transparent' : 'hover:ring-1 hover:ring-white/30'}`}
                                                         role="button"
                                                         tabIndex={0}
@@ -1547,7 +1547,7 @@ function WatchContent() {
                                                                     ${index === selectedCreatorIndex ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`}
                                                             />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-[#2a2a2a] to-[#1a1a1a] text-gray-400 text-xs p-3 text-center font-medium">
+                                                            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-[#2a2a2a] to-[#1f1f1f] text-gray-400 text-xs p-3 text-center font-medium">
                                                                 {series.title}
                                                             </div>
                                                         )}

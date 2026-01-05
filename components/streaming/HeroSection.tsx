@@ -23,7 +23,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     const [isReady, setIsReady] = useState(false);
     const [nextImageReady, setNextImageReady] = useState(false);
     const [seriesDetails, setSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
-    
+
     // Estados para rotação de backdrops (igual à página watch)
     const [backdrops, setBackdrops] = useState<string[]>([]);
     const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
@@ -220,7 +220,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     };
 
     return (
-        <section className="relative h-[95vh] sm:h-screen lg:h-screen w-full overflow-hidden bg-[#0a0a0a]">
+        <section className="relative h-[95vh] sm:h-screen lg:h-screen w-full overflow-hidden bg-[#121212]">
             {/* Backdrop Image with Cinematic Transition */}
             <AnimatePresence initial={false} custom={direction} mode="popLayout">
                 <motion.div
@@ -238,18 +238,17 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                             {backdrops.map((bd, index) => (
                                 <div
                                     key={`${featured.id}-${index}`}
-                                    className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${
-                                        index === currentBackdropIndex
+                                    className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${index === currentBackdropIndex
                                             ? 'opacity-100 scale-100'
                                             : 'opacity-0 scale-105'
-                                    }`}
+                                        }`}
                                     style={{
                                         filter: index === currentBackdropIndex ? 'blur(0px)' : 'blur(8px)'
                                     }}
                                 >
-                                    <ProgressiveImage 
-                                        src={bd} 
-                                        alt={featured.title} 
+                                    <ProgressiveImage
+                                        src={bd}
+                                        alt={featured.title}
                                         className="w-full h-full object-cover object-center"
                                         preloaded={loadedImages.has(currentIndex)}
                                     />
@@ -258,15 +257,15 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                         </div>
                     ) : (
                         /* Fallback para quando não há backdrops múltiplos */
-                        <motion.div 
-                            initial={{ scale: 1, filter: 'blur(8px)' }} 
-                            animate={{ scale: 1.05, filter: 'blur(0px)' }} 
-                            transition={{ duration: 10, ease: 'linear' }} 
+                        <motion.div
+                            initial={{ scale: 1, filter: 'blur(8px)' }}
+                            animate={{ scale: 1.05, filter: 'blur(0px)' }}
+                            transition={{ duration: 10, ease: 'linear' }}
                             className="w-full h-full"
                         >
-                            <ProgressiveImage 
-                                src={currentImageUrl} 
-                                alt={featured.title} 
+                            <ProgressiveImage
+                                src={currentImageUrl}
+                                alt={featured.title}
                                 className="w-full h-full object-cover object-center"
                                 preloaded={loadedImages.has(currentIndex)}
                             />
@@ -278,10 +277,10 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             </AnimatePresence>
 
             {/* Gradient Overlays */}
-            <div className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-[#0a0a0a]/40 via-[#0a0a0a]/10 to-transparent z-10" />
-            <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/40 via-[#0a0a0a]/20 to-transparent" />
-            <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#0a0a0a]/80 via-[#0a0a0a]/20 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-[#121212]/40 via-[#121212]/10 to-transparent z-10" />
+            <div className="absolute inset-0 bg-linear-to-r from-[#121212]/40 via-[#121212]/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#121212]/80 via-[#121212]/20 to-transparent" />
 
             {/* Content */}
             <div className="absolute inset-0 flex items-center sm:items-end z-20">
@@ -392,13 +391,13 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                 setBackdropCycle(index);
                             }}
                             className={`relative overflow-hidden rounded-lg transition-all duration-500 ${index === currentBackdropIndex
-                                ? 'w-24 h-14 ring-2 ring-white ring-offset-2 ring-offset-[#0a0a0a]'
+                                ? 'w-24 h-14 ring-2 ring-white ring-offset-2 ring-offset-[#121212]'
                                 : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
                                 }`}
                         >
-                            <img 
-                                src={backdrop} 
-                                alt={`Backdrop ${index + 1}`} 
+                            <img
+                                src={backdrop}
+                                alt={`Backdrop ${index + 1}`}
                                 className="w-full h-full object-cover"
                             />
                             {index === currentBackdropIndex && (

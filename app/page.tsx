@@ -152,7 +152,7 @@ export default function Home() {
 
   if (isLoading || tmdbLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#1DB954] border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-400">
@@ -164,14 +164,14 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[#121212]">
       {/* Hero - Prioriza filmes em alta do dia */}
       <HeroSection
         featuredMovies={
-          trendingTodayMovies.length > 0 
-            ? trendingTodayMovies 
-            : featuredMovies.length > 0 
-              ? featuredMovies 
+          trendingTodayMovies.length > 0
+            ? trendingTodayMovies
+            : featuredMovies.length > 0
+              ? featuredMovies
               : movies.slice(0, 3)
         }
         onWatch={handleWatch}

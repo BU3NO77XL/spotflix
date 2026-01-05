@@ -171,9 +171,9 @@ export default function Header() {
                 className={cn(
                     "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
                     mobileMenuOpen
-                        ? "bg-[#0a0a0a]"
+                        ? "bg-[#121212]"
                         : scrolled
-                            ? "bg-[#0a0a0a]/80 backdrop-blur-md"
+                            ? "bg-[#121212]/80 backdrop-blur-md"
                             : "bg-linear-to-b from-black/60 via-black/40 to-transparent"
                 )}
                 style={{ WebkitBackdropFilter: scrolled ? 'blur(8px)' : undefined, backdropFilter: scrolled ? 'blur(8px)' : undefined }}
@@ -266,7 +266,7 @@ export default function Header() {
                                             className="fixed inset-0 z-30"
                                             onClick={() => setUserDropdownOpen(false)}
                                         />
-                                        <div className="absolute right-0 mt-2 w-56 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-40 overflow-hidden">
+                                        <div className="absolute right-0 mt-2 w-56 bg-[#1f1f1f] border border-white/10 rounded-xl shadow-2xl z-40 overflow-hidden">
                                             <div className="p-4 border-b border-white/10">
                                                 <p className="text-white font-semibold">Minha Conta</p>
                                                 <p className="text-gray-400 text-sm">usuario@email.com</p>
@@ -344,7 +344,7 @@ export default function Header() {
                             transition={{ duration: 0.18 }}
                             className="fixed top-16 lg:top-20 left-0 right-0 z-60"
                         >
-                            <div className="bg-[#0a0a0a] border-b border-white/10 shadow-sm">
+                            <div className="bg-[#121212] border-b border-white/10 shadow-sm">
                                 <nav className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
                                     <div className="flex flex-col py-2">
                                         {HEADER_ITEMS.map((link) => (

@@ -26,7 +26,7 @@ const bebasNeue = Bebas_Neue({
 export const metadata: Metadata = {
   title: "SpotFlix - Streaming",
   description: "Your premier destination for movies and series. Stream unlimited entertainment anytime, anywhere.",
-  themeColor: "#0a0a0a",
+  themeColor: "#121212",
 };
 
 export default function RootLayout({
@@ -43,10 +43,10 @@ export default function RootLayout({
         <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" />
         <link rel="manifest" href="/manifest.json" />
         {/* Theme color para barra de status/navegação */}
-        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: light)" />
-        <meta name="msapplication-navbutton-color" content="#0a0a0a" />
-        <meta name="msapplication-TileColor" content="#0a0a0a" />
+        <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#121212" media="(prefers-color-scheme: light)" />
+        <meta name="msapplication-navbutton-color" content="#121212" />
+        <meta name="msapplication-TileColor" content="#121212" />
         {/* iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -73,7 +73,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased min-h-screen bg-[#0a0a0a] text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased min-h-screen bg-[#121212] text-white`}
       >
         <Providers>
           <ErrorBoundary>
@@ -83,7 +83,7 @@ export default function RootLayout({
             position="bottom-right"
             toastOptions={{
               style: {
-                background: '#1a1a1a',
+                background: '#1f1f1f',
                 color: '#fff',
                 border: '1px solid rgba(255,255,255,0.1)',
               },

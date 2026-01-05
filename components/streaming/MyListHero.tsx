@@ -49,7 +49,7 @@ export default function MyListHero({ title = 'Minha Lista', description = '', ba
     }, [src, currentIndex, loaded]);
 
     return (
-        <section className="relative h-[52vh] sm:h-[60vh] lg:h-[70vh] w-full overflow-hidden bg-[#0a0a0a]">
+        <section className="relative h-[52vh] sm:h-[60vh] lg:h-[70vh] w-full overflow-hidden bg-[#121212]">
             <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                     key={`mylist-backdrop-${currentIndex}`}
@@ -73,14 +73,14 @@ export default function MyListHero({ title = 'Minha Lista', description = '', ba
             </AnimatePresence>
 
             {/* Gradients similar to home hero */}
-            <div className="absolute top-0 left-0 right-0 h-28 bg-linear-to-b from-[#0a0a0a]/70 via-[#0a0a0a]/40 to-transparent z-10" />
-            <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a] via-[#0a0a0a]/30 to-transparent" />
-            <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-[#0a0a0a]/90 via-[#0a0a0a]/40 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-28 bg-linear-to-b from-[#121212]/70 via-[#121212]/40 to-transparent z-10" />
+            <div className="absolute inset-0 bg-linear-to-r from-[#121212] via-[#121212]/30 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-[#121212]/90 via-[#121212]/40 to-transparent" />
 
             {/* Content positioned like home hero, no buttons */}
             <div className="absolute inset-0 flex items-center sm:items-end z-20">
-                    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-4 sm:pb-8 lg:pb-12">
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-4 sm:pb-8 lg:pb-12">
                     <AnimatePresence mode="wait" initial={false}>
                         <motion.div
                             key={`mylist-content-${currentIndex}`}

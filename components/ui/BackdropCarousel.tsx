@@ -50,9 +50,9 @@ export default function BackdropCarousel({
         />
 
         {/* Cinematic Overlay System */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#0a0a0a_90%)] opacity-80" />
-        <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a] via-transparent to-transparent opacity-90" />
-        <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#121212_90%)] opacity-80" />
+        <div className="absolute inset-0 bg-linear-to-r from-[#121212] via-transparent to-transparent opacity-90" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-[#121212]/40 to-transparent" />
       </div>
 
       {/* Content */}

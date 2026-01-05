@@ -42,12 +42,12 @@ const AppleLogo = ({ className = "" }: { className?: string }) => (
 export default function LoginPage() {
   const router = useRouter();
   const [isSignup, setIsSignup] = useState(false);
-  
+
   // Estados para login
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Estados para cadastro
   const [name, setName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -55,7 +55,7 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -122,14 +122,14 @@ export default function LoginPage() {
         name,
         email: signupEmail
       }));
-      
+
       toast.success('Conta criada com sucesso!');
       router.push('/signup/preferences');
     }, 2000);
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#0a0a0a]">
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#121212]">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
@@ -137,17 +137,17 @@ export default function LoginPage() {
           alt=""
           className="w-full h-full object-cover opacity-60"
         />
-        {/* Gradiente com a cor da home (#0a0a0a) */}
-        <div className="absolute inset-0 bg-linear-to-b from-[rgba(10,10,10,0.5)] to-[rgba(10,10,10,0.85)]" />
+        {/* Gradiente com a cor da home (#121212) */}
+        <div className="absolute inset-0 bg-linear-to-b from-[rgba(18,18,18,0.5)] to-[rgba(18,18,18,0.85)]" />
       </div>
 
       {/* Login/Signup Card */}
       <div className="relative z-10 w-full max-w-md px-6 mt-12 mb-12">
-        <div 
+        <div
           className="rounded-[20px] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
           style={{
             backdropFilter: 'blur(10px)',
-            background: 'rgba(10, 10, 10, 0.7)',
+            background: 'rgba(18, 18, 18, 0.7)',
             border: '1px solid rgba(255, 255, 255, 0.05)'
           }}
         >
@@ -169,22 +169,20 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setIsSignup(false)}
-              className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${
-                !isSignup 
-                  ? 'bg-[#1DB954] text-white' 
+              className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${!isSignup
+                  ? 'bg-[#1DB954] text-white'
                   : 'text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               Entrar
             </button>
             <button
               type="button"
               onClick={() => setIsSignup(true)}
-              className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${
-                isSignup 
-                  ? 'bg-[#1DB954] text-white' 
+              className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${isSignup
+                  ? 'bg-[#1DB954] text-white'
                   : 'text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               Criar conta
             </button>
@@ -369,7 +367,7 @@ export default function LoginPage() {
                     <div className="w-full border-t border-gray-700" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-[#141414] text-gray-500">Ou entre com</span>
+                    <span className="px-2 bg-[#1f1f1f] text-gray-500">Ou entre com</span>
                   </div>
                 </div>
 

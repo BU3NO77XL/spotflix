@@ -57,13 +57,13 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 const data = await TMDBService.search(query);
                 // Tentar fazer match com filmes locais para ter IDs locais
                 const enhancedResults = data.map((searchResult, i) => {
-                    const localMatch = localMovies.find(local => 
+                    const localMatch = localMovies.find(local =>
                         local.tmdb_id === searchResult.tmdb_id
                     );
-                    
+
                     return localMatch || { ...searchResult, id: `search-${i}` };
                 }) as Movie[];
-                
+
                 setResults(enhancedResults);
             } catch (error) {
                 console.error('Search error:', error);
@@ -94,7 +94,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="fixed inset-0 z-100 bg-[#0a0a0a]/75 backdrop-blur-md flex flex-col overflow-hidden"
+                    className="fixed inset-0 z-100 bg-[#121212]/75 backdrop-blur-md flex flex-col overflow-hidden"
                 >
                     {/* Top Bar with Close Button */}
                     <div className="flex justify-end p-6 lg:p-10 shrink-0">
@@ -200,10 +200,10 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                             {filteredResults.map((movie, index) => {
                                                 // Tentar construir URL otimizada: se tiver id local, usar; senão usar apenas ref
                                                 const hasLocalId = movie.id && !movie.id.startsWith('search-');
-                                                const watchUrl = hasLocalId 
+                                                const watchUrl = hasLocalId
                                                     ? `/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${movie.type}`
                                                     : `/watch?ref=${movie.tmdb_id}&type=${movie.type}`;
-                                                
+
                                                 return (
                                                     <Link
                                                         key={movie.id}
@@ -211,40 +211,40 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                         onClick={handleClose}
                                                         className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/4 transition-all duration-300 rounded-2xl"
                                                     >
-                                                    {/* Poster thumbnail */}
-                                                    <div className="w-14 h-20 lg:w-20 lg:h-28 shrink-0 relative rounded-xl overflow-hidden bg-white/5 ring-1 ring-white/10 group-hover:ring-white/20 transition-all">
-                                                        {movie.poster_url ? (
-                                                            <img
-                                                                src={movie.poster_url}
-                                                                alt={movie.title}
-                                                                className="w-full h-full object-cover grayscale-20 group-hover:grayscale-0 transition-all duration-500"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                <Film className="w-6 h-6 text-gray-700 stroke-1" />
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                        {/* Poster thumbnail */}
+                                                        <div className="w-14 h-20 lg:w-20 lg:h-28 shrink-0 relative rounded-xl overflow-hidden bg-white/5 ring-1 ring-white/10 group-hover:ring-white/20 transition-all">
+                                                            {movie.poster_url ? (
+                                                                <img
+                                                                    src={movie.poster_url}
+                                                                    alt={movie.title}
+                                                                    className="w-full h-full object-cover grayscale-20 group-hover:grayscale-0 transition-all duration-500"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <Film className="w-6 h-6 text-gray-700 stroke-1" />
+                                                                </div>
+                                                            )}
+                                                        </div>
 
-                                                    {/* Info Section */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between gap-4">
-                                                            <h3 className="text-lg lg:text-2xl font-light text-white truncate group-hover:text-[#1DB954] transition-colors">
-                                                                {movie.title}
-                                                            </h3>
-                                                            <ChevronRight className="w-5 h-5 text-gray-700 group-hover:text-white group-hover:translate-x-1 transition-all stroke-1 shrink-0" />
+                                                        {/* Info Section */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between gap-4">
+                                                                <h3 className="text-lg lg:text-2xl font-light text-white truncate group-hover:text-[#1DB954] transition-colors">
+                                                                    {movie.title}
+                                                                </h3>
+                                                                <ChevronRight className="w-5 h-5 text-gray-700 group-hover:text-white group-hover:translate-x-1 transition-all stroke-1 shrink-0" />
+                                                            </div>
+                                                            <div className="flex items-center gap-3 mt-1.5 text-xs lg:text-sm text-gray-500 font-light">
+                                                                <span className="text-[#46d369] font-medium">
+                                                                    {(movie.score ?? 0) > 0 ? `${((movie.score || 0) * 10).toFixed(0)}% Relevância` : 'Novo'}
+                                                                </span>
+                                                                <span className="w-1 h-1 rounded-full bg-gray-700" />
+                                                                <span>{movie.year}</span>
+                                                                <span className="w-1 h-1 rounded-full bg-gray-700" />
+                                                                <span className="uppercase text-[10px] tracking-wider border border-gray-700 px-1 rounded-sm">HD</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center gap-3 mt-1.5 text-xs lg:text-sm text-gray-500 font-light">
-                                                            <span className="text-[#46d369] font-medium">
-                                                                {(movie.score ?? 0) > 0 ? `${((movie.score || 0) * 10).toFixed(0)}% Relevância` : 'Novo'}
-                                                            </span>
-                                                            <span className="w-1 h-1 rounded-full bg-gray-700" />
-                                                            <span>{movie.year}</span>
-                                                            <span className="w-1 h-1 rounded-full bg-gray-700" />
-                                                            <span className="uppercase text-[10px] tracking-wider border border-gray-700 px-1 rounded-sm">HD</span>
-                                                        </div>
-                                                    </div>
-                                                </Link>
+                                                    </Link>
                                                 );
                                             })}
                                         </motion.div>

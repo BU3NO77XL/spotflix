@@ -180,7 +180,7 @@ export default function MovieModal({
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed inset-4 sm:inset-8 lg:inset-16 z-50 overflow-y-auto scrollbar-hide
-                     rounded-2xl bg-[#181818] shadow-2xl
+                     rounded-2xl bg-[#1f1f1f] shadow-2xl
                      flex flex-col max-h-[90vh] mx-auto max-w-5xl
                      [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                     >
@@ -199,7 +199,7 @@ export default function MovieModal({
                                         className="w-full h-full rounded-t-2xl object-cover mask-[linear-gradient(to_bottom,black_60%,transparent_100%)]"
                                     />
                                     <Illumination intensity={0.18} />
-                                    <div className="absolute inset-0 bg-linear-to-t from-[#181818] via-[#181818]/50 to-transparent" />
+                                    <div className="absolute inset-0 bg-linear-to-t from-[#1f1f1f] via-[#1f1f1f]/50 to-transparent" />
 
                                     {/* Close Button */}
                                     <button
@@ -321,7 +321,7 @@ export default function MovieModal({
                                 </div>
 
                                 {/* Informações abaixo da imagem de backdrop */}
-                                <div className="px-4 sm:px-8 lg:px-12 py-3 sm:py-4 bg-linear-to-b from-[#181818] to-[#181818]/90">
+                                <div className="px-4 sm:px-8 lg:px-12 py-3 sm:py-4 bg-linear-to-b from-[#1f1f1f] to-[#1f1f1f]/90">
                                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                         <span className="text-[#46d369] font-bold text-sm sm:text-base whitespace-nowrap">{matchPercentage}% Match</span>
                                         <span className="text-white font-bold text-sm sm:text-base whitespace-nowrap">{details.year || movie.year}</span>

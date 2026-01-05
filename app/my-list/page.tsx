@@ -69,7 +69,7 @@ export default function MyList() {
     const currentList = activeTab === 'favorites' ? favorites : watchLater;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a]">
+        <div className="min-h-screen bg-[#121212]">
             <MyListHero
                 title="Minha Lista"
                 description={
@@ -110,7 +110,7 @@ export default function MyList() {
                 {/* Content */}
                 <AnimatePresence mode="popLayout">
                     {currentList.length > 0 ? (
-                        <div className="bg-[#141414] rounded-lg p-6">
+                        <div className="bg-[#1f1f1f] rounded-lg p-6">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-6">
                                 {currentList.map((movie) => (
                                     <motion.div
@@ -125,7 +125,7 @@ export default function MyList() {
                                             setModalOpen(true);
                                         }}
                                     >
-                                        <div className="relative aspect-2/3 rounded-xl overflow-hidden bg-[#1a1a1a] 
+                                        <div className="relative aspect-2/3 rounded-xl overflow-hidden bg-[#1f1f1f] 
                                 shadow-lg transition-all duration-500 
                                 group-hover:shadow-2xl group-hover:shadow-[#1DB954]/20 group-hover:scale-105">
                                             <img
