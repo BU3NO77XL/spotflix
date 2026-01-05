@@ -31,7 +31,7 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
         >
             {/* Poster Container */}
             <div className="relative aspect-2/3 rounded-lg lg:rounded-xl overflow-hidden 
-                    bg-[#1a1a1a] transition-all duration-300 
+                    bg-[#1f1f1f] transition-all duration-300 
                     group-hover:scale-105 group-hover:z-10 
                     shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
                 {/* Image */}
@@ -54,7 +54,7 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                         aria-label={`Rating: ${movie.score} out of 10`}
                     >
                         <svg className="w-3 h-3 text-[#1DB954] fill-[#1DB954]" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                         </svg>
                         <span className="text-white text-xs font-semibold">{movie.score}</span>
                     </div>
@@ -65,15 +65,15 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                       transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
                     {/* Quick Actions */}
                     <div className="flex gap-2 mb-2">
-                        <PlayButton 
-                            size="sm" 
+                        <PlayButton
+                            size="sm"
                             className="flex-1"
                             onClick={() => {
                                 // Handle play action - prevent event bubbling handled by parent div
                             }}
                         />
-                        <ActionButton 
-                            type="add" 
+                        <ActionButton
+                            type="add"
                             size="sm"
                             onClick={() => {
                                 // Handle add to list action - prevent event bubbling handled by parent div

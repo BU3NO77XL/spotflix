@@ -222,6 +222,8 @@ export default function Header() {
 
                         {/* Right Section */}
                         <div className="flex items-center gap-2 sm:gap-3">
+                            <InstallButton />
+
                             <button
                                 onClick={() => {
                                     setSearchOpen(true);
@@ -233,8 +235,6 @@ export default function Header() {
                             >
                                 <Search className="w-5 h-5" />
                             </button>
-
-                            <InstallButton />
 
                             {/* User Dropdown */}
                             <div className="relative">

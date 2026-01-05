@@ -88,7 +88,7 @@ export default function ActorModal({ actorId, isOpen, onClose }: ActorModalProps
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed inset-4 sm:inset-8 lg:inset-y-16 lg:inset-x-32 z-60 overflow-y-auto
-                            rounded-xl bg-[#141414] shadow-2xl max-w-3xl mx-auto
+                            rounded-xl bg-[#1f1f1f] shadow-2xl max-w-3xl mx-auto
                             [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                     >
                         {loading ? (

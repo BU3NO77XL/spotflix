@@ -11,7 +11,7 @@ interface CastCardProps {
 }
 
 export default function CastCard({ member, onClick, index = 0 }: CastCardProps) {
-  const profileUrl = member.profile_path 
+  const profileUrl = member.profile_path
     ? `https://image.tmdb.org/t/p/w300${member.profile_path}`
     : null;
 
@@ -23,9 +23,9 @@ export default function CastCard({ member, onClick, index = 0 }: CastCardProps) 
       className="shrink-0 w-[140px] group cursor-pointer"
       onClick={() => onClick?.(member)}
     >
-      <div className="bg-[#1a1a1a] rounded-lg p-3 
+      <div className="bg-[#1f1f1f] rounded-lg p-3 
               transition-all duration-300 hover:bg-[#222] hover:scale-[1.02]">
-        
+
         {/* Profile Image */}
         <div className="aspect-3/4 overflow-hidden">
           {profileUrl ? (
@@ -35,7 +35,7 @@ export default function CastCard({ member, onClick, index = 0 }: CastCardProps) 
               className="w-full h-full object-cover rounded-lg"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-linear-to-b from-[#2a2a2a] to-[#1a1a1a]">
+            <div className="w-full h-full flex items-center justify-center bg-linear-to-b from-[#2a2a2a] to-[#1f1f1f]">
               <User className="w-12 h-12 text-gray-600" />
             </div>
           )}

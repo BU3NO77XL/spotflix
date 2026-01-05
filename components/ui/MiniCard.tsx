@@ -12,10 +12,10 @@ interface MiniCardProps {
   accentColor?: string;
 }
 
-export default function MiniCard({ 
-  movie, 
-  onClick, 
-  index = 0, 
+export default function MiniCard({
+  movie,
+  onClick,
+  index = 0,
   variant = 'portrait',
   accentColor = '#1DB954'
 }: MiniCardProps) {
@@ -30,7 +30,7 @@ export default function MiniCard({
     >
       {variant === 'landscape' ? (
         // Landscape Layout
-        <div className="bg-[#1a1a1a] rounded-lg overflow-hidden group-hover:bg-[#222] transition-all duration-300">
+        <div className="bg-[#1f1f1f] rounded-lg overflow-hidden group-hover:bg-[#222] transition-all duration-300">
           <div className="flex">
             {/* Poster */}
             <div className="w-16 h-24 shrink-0 relative">
@@ -66,14 +66,14 @@ export default function MiniCard({
       ) : (
         // Portrait Layout
         <div className="space-y-2">
-          <div className="relative aspect-2/3 rounded-lg overflow-hidden bg-[#1a1a1a] group-hover:scale-105 transition-transform duration-300">
+          <div className="relative aspect-2/3 rounded-lg overflow-hidden bg-[#1f1f1f] group-hover:scale-105 transition-transform duration-300">
             <img
               src={movie.poster_url}
               alt={movie.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent" />
-            
+
             <div className="absolute bottom-0 left-0 right-0 p-3">
               <h3 className="text-white text-sm font-medium truncate">{movie.title}</h3>
               <div className="flex items-center gap-2 text-xs text-gray-300 mt-1">
@@ -86,7 +86,7 @@ export default function MiniCard({
 
             {/* Hover Play Button */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <button 
+              <button
                 className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200"
                 style={{ backgroundColor: accentColor }}
               >

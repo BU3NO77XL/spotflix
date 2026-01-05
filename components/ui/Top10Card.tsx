@@ -41,7 +41,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
 
         {/* Poster Container */}
         <div className="relative aspect-2/3 w-full rounded-lg lg:rounded-xl overflow-hidden 
-              bg-[#1a1a1a] transition-all duration-300 
+              bg-[#1f1f1f] transition-all duration-300 
               group-hover:scale-105 group-hover:z-20
               shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
           {/* Image */}
@@ -71,12 +71,12 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
               transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
             {/* Quick Actions */}
             <div className="flex gap-2 mb-2">
-              <PlayButton 
-                size="sm" 
+              <PlayButton
+                size="sm"
                 className="flex-1 text-xs py-2"
               />
-              <ActionButton 
-                type="add" 
+              <ActionButton
+                type="add"
                 size="sm"
               />
             </div>

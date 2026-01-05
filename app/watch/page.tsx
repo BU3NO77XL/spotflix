@@ -31,7 +31,7 @@ const useImagePreload = (urls: string[]) => {
             return new Promise<string>((resolve, reject) => {
                 const img = new window.Image();
                 img.onload = () => {
-                    setLoadedImages(prev => new Set([...prev, url]));
+                    setLoadedImages((prev: Set<string>) => new Set([...prev, url]));
                     resolve(url);
                 };
                 img.onerror = () => reject(url);
@@ -330,7 +330,7 @@ function WatchContent() {
         if (isCreatorPaused || creatorSeries.length <= 1) return;
 
         const interval = setInterval(() => {
-            setSelectedCreatorIndex((prev) => {
+            setSelectedCreatorIndex((prev: number) => {
                 const nextIndex = (prev + 1) % creatorSeries.length;
                 setActiveCreatorBackdrop(nextIndex);
 
@@ -514,7 +514,7 @@ function WatchContent() {
                 try {
                     const seriesData = await TMDBService.fetchSeriesDetails(movie.tmdb_id);
                     if (seriesData) {
-                        setUpdatedSeriesDetails(prev => ({
+                        setUpdatedSeriesDetails((prev: Record<string, { runtime: string; year?: number }>) => ({
                             ...prev,
                             [movie.id]: {
                                 runtime: `${seriesData.number_of_seasons} Temporada${seriesData.number_of_seasons !== 1 ? 's' : ''}`,
@@ -700,7 +700,7 @@ function WatchContent() {
         if (backdrops.length <= 1) return;
 
         const interval = setInterval(() => {
-            setCurrentBackdropIndex((prev) => (prev + 1) % backdrops.length);
+            setCurrentBackdropIndex((prev: number) => (prev + 1) % backdrops.length);
         }, 8000); // 8 segundos
 
         return () => clearInterval(interval);
@@ -809,7 +809,7 @@ function WatchContent() {
                             playsInline
                             preload="metadata"
                             className="w-full h-full object-cover"
-                            onError={(e) => {
+                            onError={(e: any) => {
                                 console.error('Erro ao carregar vídeo de backdrop:', animatedBackdropUrl, e);
                             }}
                         />
@@ -1120,8 +1120,8 @@ function WatchContent() {
                                 <div className="relative">
                                     <select
                                         value={selectedSeason}
-                                        onChange={(e) => fetchSeasonDetails(Number(e.target.value))}
-                                        className="bg-[#1a1a1a] text-white border border-white/20 rounded-lg py-2 pl-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:border-transparent cursor-pointer"
+                                        onChange={(e: any) => fetchSeasonDetails(Number(e.target.value))}
+                                        className="bg-[#1f1f1f] text-white border border-white/20 rounded-lg py-2 pl-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:border-transparent cursor-pointer"
                                     >
                                         {seriesDetails.seasons
                                             .filter(season => season.season_number !== 0) // Excluir temporada especial
@@ -1129,7 +1129,7 @@ function WatchContent() {
                                                 <option
                                                     key={season.season_number}
                                                     value={season.season_number}
-                                                    className="bg-[#1a1a1a] text-white"
+                                                    className="bg-[#1f1f1f] text-white"
                                                 >
                                                     {season.season_number}
                                                 </option>
@@ -1257,6 +1257,90 @@ function WatchContent() {
 
                     )}
 
+                    {/* Video Player */}
+                    <section
+                        id="player-section"
+                        className="relative py-12"
+                        aria-labelledby="player-heading"
+                    >
+
+                        {/* Backdrop Cinematográfico Artístico - Full Width */}
+                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
+                            <img
+                                src={(movie.backdrop_url && movie.backdrop_url !== '')
+                                    ? movie.backdrop_url
+                                    : (movie.poster_url && movie.poster_url !== '')
+                                        ? movie.poster_url
+                                        : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=1920&h=1080&fit=crop'}
+                                alt=""
+                                className="w-full h-full object-cover grayscale brightness-50"
+                                aria-hidden="true"
+                            />
+                            {/* Gradiente suave nas bordas para integrar com o fundo */}
+                            <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
+                        </div>
+
+                        <h2 id="player-heading" className="text-white text-lg font-semibold mb-6 text-center drop-shadow-lg">
+                            {isSeries
+                                ? `Temporada ${selectedSeason} • Episódio ${selectedEpisode}`
+                                : `Assistir: ${movie.title}`
+                            }
+                        </h2>
+
+                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
+                            <iframe
+                                src={
+                                    selectedSource === 'vidsrc.me'
+                                        ? isSeries
+                                            ? `https://vidsrc.me/embed/tv?tmdb=${movie.tmdb_id}&s=${selectedSeason}&e=${selectedEpisode}`
+                                            : `https://vidsrc.me/embed/movie?tmdb=${movie.tmdb_id}`
+                                        : isSeries
+                                            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                                            : `https://megaembed.com/embed/${movie.tmdb_id}`
+                                }
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full"
+                            />
+                        </div>
+
+                        {/* Seletor de Servidores */}
+                        <div className="mt-4 flex items-center justify-center gap-2 relative z-10">
+                            {[
+                                { id: 'vidsrc.me', label: 'Servidor 1' },
+                                { id: 'megaembed', label: 'Servidor 2' }
+                            ].map((source) => (
+                                <button
+                                    key={source.id}
+                                    onClick={() => setSelectedSource(source.id as any)}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded text-xs font-medium transition-all duration-200",
+                                        selectedSource === source.id
+                                            ? "bg-white/10 text-white"
+                                            : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    {source.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Player Original (Comentado)
+                        <VideoPlayer
+                            title={movie.title}
+                            posterUrl={movie.poster_url}
+                            backdropUrl={movie.backdrop_url}
+                            duration={movie.duration}
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                        />
+                        */}
+                    </section>
+
+
                     {/* Collection/Franchise */}
                     {collection && collection.parts.length > 1 && (
                         <section className="py-8">
@@ -1366,89 +1450,6 @@ function WatchContent() {
                         </section>
 
                     )}
-
-                    {/* Video Player */}
-                    <section
-                        id="player-section"
-                        className="relative py-12"
-                        aria-labelledby="player-heading"
-                    >
-
-                        {/* Backdrop Cinematográfico Artístico - Full Width */}
-                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
-                            <img
-                                src={(movie.backdrop_url && movie.backdrop_url !== '')
-                                    ? movie.backdrop_url
-                                    : (movie.poster_url && movie.poster_url !== '')
-                                        ? movie.poster_url
-                                        : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=1920&h=1080&fit=crop'}
-                                alt=""
-                                className="w-full h-full object-cover grayscale brightness-50"
-                                aria-hidden="true"
-                            />
-                            {/* Gradiente suave nas bordas para integrar com o fundo */}
-                            <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
-                        </div>
-
-                        <h2 id="player-heading" className="text-white text-lg font-semibold mb-6 text-center drop-shadow-lg">
-                            {isSeries
-                                ? `Temporada ${selectedSeason} • Episódio ${selectedEpisode}`
-                                : `Assistir: ${movie.title}`
-                            }
-                        </h2>
-
-                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
-                            <iframe
-                                src={
-                                    selectedSource === 'vidsrc.me'
-                                        ? isSeries
-                                            ? `https://vidsrc.me/embed/tv?tmdb=${movie.tmdb_id}&s=${selectedSeason}&e=${selectedEpisode}`
-                                            : `https://vidsrc.me/embed/movie?tmdb=${movie.tmdb_id}`
-                                        : isSeries
-                                            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                                            : `https://megaembed.com/embed/${movie.tmdb_id}`
-                                }
-                                width="100%"
-                                height="100%"
-                                frameBorder="0"
-                                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                                allowFullScreen
-                                className="w-full h-full"
-                            />
-                        </div>
-
-                        {/* Seletor de Servidores */}
-                        <div className="mt-4 flex items-center justify-center gap-2 relative z-10">
-                            {[
-                                { id: 'vidsrc.me', label: 'Servidor 1' },
-                                { id: 'megaembed', label: 'Servidor 2' }
-                            ].map((source) => (
-                                <button
-                                    key={source.id}
-                                    onClick={() => setSelectedSource(source.id as any)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded text-xs font-medium transition-all duration-200",
-                                        selectedSource === source.id
-                                            ? "bg-white/10 text-white"
-                                            : "text-gray-500 hover:text-gray-300"
-                                    )}
-                                >
-                                    {source.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Player Original (Comentado)
-                        <VideoPlayer
-                            title={movie.title}
-                            posterUrl={movie.poster_url}
-                            backdropUrl={movie.backdrop_url}
-                            duration={movie.duration}
-                            onPlay={() => setIsPlaying(true)}
-                            onPause={() => setIsPlaying(false)}
-                        />
-                        */}
-                    </section>
 
 
                     {/* Do Mesmo Criador - Para Séries (Slider estilo Collection com backdrop dinâmico) */}
@@ -1606,7 +1607,7 @@ function WatchContent() {
                     {/* Trailers Section - DESATIVADO TEMPORARIAMENTE
                     {trailers.length > 0 && (
                         <section
-                            className="py-8 bg-[#141414] rounded-lg p-6"
+                            className="py-8 bg-[#1f1f1f] rounded-lg p-6"
                             aria-labelledby="trailers-heading"
                         >
                             <h2 id="trailers-heading" className="text-white text-lg font-semibold mb-4">Trailers & Teasers</h2>
@@ -1646,7 +1647,7 @@ function WatchContent() {
                                             role="listitem"
                                             aria-label={`Assistir ${trailer.type}: ${trailer.name} no YouTube`}
                                         >
-                                            <div className="relative w-48 sm:w-56 aspect-video rounded-md overflow-hidden bg-[#1a1a1a]">
+                                            <div className="relative w-48 sm:w-56 aspect-video rounded-md overflow-hidden bg-[#1f1f1f]">
 
                                                 <img
                                                     src={`https://img.youtube.com/vi/${trailer.key}/mqdefault.jpg`}
@@ -1683,7 +1684,7 @@ function WatchContent() {
 
                     {/* Discussões - Desativado temporariamente
                     <section
-                        className="py-8 mt-6 border-b border-white/10 bg-[#141414] rounded-lg p-6"
+                        className="py-8 mt-6 border-b border-white/10 bg-[#1f1f1f] rounded-lg p-6"
                         aria-labelledby="discussions-heading"
                     >
                         <h2 id="discussions-heading" className="text-white text-lg font-semibold mb-6">Discussões</h2>

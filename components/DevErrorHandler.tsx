@@ -39,10 +39,10 @@ export default function DevErrorHandler() {
         const originalWarn = console.warn;
 
         console.error = (...args) => {
-            const message = args.map(arg => 
+            const message = args.map(arg =>
                 typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
             ).join(' ');
-            
+
             // Ignora alguns erros internos do React/Next e erros de rede
             const ignoredPatterns = [
                 'Warning: ReactDOM.render',
@@ -55,7 +55,7 @@ export default function DevErrorHandler() {
                 'Load failed',
                 'Network request failed'
             ];
-            
+
             if (!ignoredPatterns.some(pattern => message.includes(pattern))) {
                 addError('error', message);
             }
@@ -63,7 +63,7 @@ export default function DevErrorHandler() {
         };
 
         console.warn = (...args) => {
-            const message = args.map(arg => 
+            const message = args.map(arg =>
                 typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
             ).join(' ');
             addError('warning', message);
@@ -99,7 +99,7 @@ export default function DevErrorHandler() {
             stack,
             timestamp: new Date()
         };
-        
+
         setErrors(prev => {
             // Evita duplicatas
             if (prev.some(e => e.message === message)) return prev;
@@ -147,13 +147,13 @@ export default function DevErrorHandler() {
     return (
         <div className="fixed inset-0 z-99999 flex items-center justify-center p-4">
             {/* Backdrop */}
-            <div 
+            <div
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                 onClick={handleClose}
             />
-            
+
             {/* Modal */}
-            <div className="relative w-full max-w-lg bg-[#1a1a1a] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
+            <div className="relative w-full max-w-lg bg-[#1f1f1f] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
                 {/* Header com gradiente */}
                 <div className="relative px-6 py-5 bg-linear-to-b from-red-500/20 to-transparent">
                     <button
@@ -162,7 +162,7 @@ export default function DevErrorHandler() {
                     >
                         <X className="w-5 h-5 text-white/60" />
                     </button>
-                    
+
                     <div className="flex flex-col items-center text-center">
                         <div className="p-3 rounded-full bg-red-500/20 mb-4">
                             <AlertTriangle className="w-8 h-8 text-red-400" />
@@ -184,11 +184,10 @@ export default function DevErrorHandler() {
                     <div className="px-6 py-4">
                         <div className="p-4 rounded-xl bg-black/40 border border-white/5">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                    latestError.type === 'error' 
-                                        ? 'bg-red-500/20 text-red-400' 
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${latestError.type === 'error'
+                                        ? 'bg-red-500/20 text-red-400'
                                         : 'bg-yellow-500/20 text-yellow-400'
-                                }`}>
+                                    }`}>
                                     {latestError.type === 'error' ? 'ERRO' : 'AVISO'}
                                 </span>
                                 <span className="text-white/30 text-xs">
@@ -214,11 +213,10 @@ export default function DevErrorHandler() {
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                                    error.type === 'error' 
-                                                        ? 'bg-red-500/20 text-red-400' 
+                                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${error.type === 'error'
+                                                        ? 'bg-red-500/20 text-red-400'
                                                         : 'bg-yellow-500/20 text-yellow-400'
-                                                }`}>
+                                                    }`}>
                                                     {error.type === 'error' ? 'ERRO' : 'AVISO'}
                                                 </span>
                                                 <span className="text-white/30 text-xs">

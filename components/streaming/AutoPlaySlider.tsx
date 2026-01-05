@@ -16,16 +16,16 @@ export default function AutoPlaySlider({ title, movies, onMovieClick }: AutoPlay
     if (!movies?.length) return null;
 
     const slides = movies.slice(0, 5).map((movie, index) => (
-        <AutoPlaySlide 
-          key={movie.id} 
-          movie={movie} 
-          onMovieClick={onMovieClick}
-          index={index}
+        <AutoPlaySlide
+            key={movie.id}
+            movie={movie}
+            onMovieClick={onMovieClick}
+            index={index}
         />
     ));
 
     return (
-        <AutoPlayCarousel 
+        <AutoPlayCarousel
             title={title}
             autoPlayInterval={6000}
         >
@@ -47,7 +47,7 @@ function AutoPlaySlide({ movie, onMovieClick, index }: AutoPlaySlideProps) {
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="relative bg-[#1a1a1a] rounded-xl overflow-hidden mx-4 sm:mx-6 lg:mx-12"
+            className="relative bg-[#1f1f1f] rounded-xl overflow-hidden mx-4 sm:mx-6 lg:mx-12"
         >
             <div className="flex flex-col lg:flex-row">
                 {/* Large Poster / Backdrop Area */}

@@ -46,7 +46,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     handleCopyError = async () => {
         const { error, errorInfo } = this.state;
         const errorText = `Error: ${error?.message}\n\nStack: ${error?.stack}\n\nComponent Stack: ${errorInfo?.componentStack}`;
-        
+
         try {
             await navigator.clipboard.writeText(errorText);
             this.setState({ copied: true });
@@ -63,17 +63,17 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
             return (
                 <>
                     {this.props.children}
-                    
+
                     {/* Modal de Erro */}
                     <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4">
                         {/* Backdrop */}
-                        <div 
+                        <div
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                             onClick={this.handleDismiss}
                         />
-                        
+
                         {/* Modal */}
-                        <div className="relative w-full max-w-lg bg-[#1a1a1a] rounded-xl shadow-2xl border border-white/10 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                        <div className="relative w-full max-w-lg bg-[#1f1f1f] rounded-xl shadow-2xl border border-white/10 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
                             {/* Header */}
                             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-red-500/10">
                                 <div className="flex items-center gap-3">
@@ -154,7 +154,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
                                         </>
                                     )}
                                 </button>
-                                
+
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={this.handleDismiss}
