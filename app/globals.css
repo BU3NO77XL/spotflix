@@ -78,13 +78,14 @@ input[type="button"],
     height: 0 !important;
     display: none !important;
   }
-  
+
   * {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
   }
-  
-  html, body {
+
+  html,
+  body {
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
   }
@@ -143,6 +144,7 @@ input[type="button"],
   0% {
     transform: translateX(-100%) skewX(12deg);
   }
+
   100% {
     transform: translateX(200%) skewX(12deg);
   }

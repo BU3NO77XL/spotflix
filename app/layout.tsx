@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
@@ -23,10 +23,13 @@ const bebasNeue = Bebas_Neue({
   weight: "400",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#121212",
+};
+
 export const metadata: Metadata = {
   title: "SpotFlix - Streaming",
   description: "Your premier destination for movies and series. Stream unlimited entertainment anytime, anywhere.",
-  themeColor: "#121212",
 };
 
 export default function RootLayout({

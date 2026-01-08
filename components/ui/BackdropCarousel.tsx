@@ -32,7 +32,7 @@ export default function BackdropCarousel({
   }
 
   return (
-    <section className={cn("relative py-8 lg:py-12 group/section overflow-hidden", className)}>
+    <section className={cn("relative py-8 lg:py-12", className)}>
       {/* Backdrop Image */}
       <div className="absolute inset-0 z-0">
         <motion.img

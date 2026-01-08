@@ -20,19 +20,19 @@ const sizeClasses = {
 
 const iconSizes = {
   sm: 'w-3 h-3',
-  md: 'w-4 h-4', 
+  md: 'w-4 h-4',
   lg: 'w-5 h-5'
 };
 
 const variantClasses = {
-  primary: 'bg-[#1DB954] hover:bg-[#1ed760] text-black font-semibold',
+  primary: 'bg-[#1DB954] hover:bg-[#1ed760] text-white font-semibold',
   secondary: 'bg-white hover:bg-gray-200 text-black font-bold',
   ghost: 'bg-white/20 hover:bg-white/30 text-white'
 };
 
-export default function PlayButton({ 
-  onClick, 
-  size = 'md', 
+export default function PlayButton({
+  onClick,
+  size = 'md',
   variant = 'primary',
   className,
   children,

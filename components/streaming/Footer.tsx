@@ -38,7 +38,7 @@ export default function Footer() {
     ];
 
     return (
-        <footer className="relative bg-[#121212] border-t border-white/5 mt-16">
+        <footer className="relative bg-[#121212] border-t border-white/5">
             <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-16">
                 {/* Top Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">

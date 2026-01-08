@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
+import { Star, Play } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import PlayButton from '@/components/ui/PlayButton';
 import ActionButton from '@/components/ui/ActionButton';
@@ -67,38 +67,23 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
           )}
 
           {/* Hover Content */}
-          <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 
-              transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-            {/* Quick Actions */}
-            <div className="flex gap-2 mb-2">
-              <PlayButton
-                size="sm"
-                className="flex-1 text-xs py-2"
-              />
-              <ActionButton
-                type="add"
-                size="sm"
-              />
-            </div>
+          <div className="absolute inset-0 p-3 opacity-0 group-hover:opacity-100 
+              transition-all duration-300 flex flex-col justify-end">
+
+
 
             {/* Meta */}
-            <div className="flex items-center gap-2 text-xs text-gray-300">
+            <div className="relative z-10 flex items-center gap-2 text-xs text-gray-300 font-medium translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
               <span>{movie.year}</span>
               {movie.rating && (
-                <span className="px-1 border border-gray-500 text-[10px]">{movie.rating}</span>
+                <span className="px-1.5 py-0.5 border border-gray-500 rounded text-[10px]">{movie.rating}</span>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Title */}
-      <div className="mt-2 lg:mt-3 ml-[40px] sm:ml-[45px] lg:ml-[60px]">
-        <h3 className="text-white text-xs sm:text-sm font-medium truncate group-hover:text-[#1DB954] 
-             transition-colors duration-200">
-          {movie.title}
-        </h3>
-      </div>
+
     </motion.div>
   );
 }

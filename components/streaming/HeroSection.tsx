@@ -220,7 +220,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
     };
 
     return (
-        <section className="relative h-[95vh] sm:h-screen lg:h-screen w-full overflow-hidden bg-[#121212]">
+        <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh] w-full overflow-hidden bg-[#121212]">
             {/* Backdrop Image with Cinematic Transition */}
             <AnimatePresence initial={false} custom={direction} mode="popLayout">
                 <motion.div
@@ -233,44 +233,34 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                     className="absolute inset-0"
                 >
                     {/* Rotação de backdrops (idêntico à página watch) */}
-                    {backdrops.length > 0 ? (
-                        <div className="absolute inset-0 transition-opacity duration-2000 ease-in-out">
-                            {backdrops.map((bd, index) => (
-                                <div
-                                    key={`${featured.id}-${index}`}
-                                    className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${index === currentBackdropIndex
-                                            ? 'opacity-100 scale-100'
-                                            : 'opacity-0 scale-105'
-                                        }`}
-                                    style={{
-                                        filter: index === currentBackdropIndex ? 'blur(0px)' : 'blur(8px)'
-                                    }}
-                                >
-                                    <ProgressiveImage
-                                        src={bd}
-                                        alt={featured.title}
-                                        className="w-full h-full object-cover object-center"
-                                        preloaded={loadedImages.has(currentIndex)}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        /* Fallback para quando não há backdrops múltiplos */
-                        <motion.div
-                            initial={{ scale: 1, filter: 'blur(8px)' }}
-                            animate={{ scale: 1.05, filter: 'blur(0px)' }}
-                            transition={{ duration: 10, ease: 'linear' }}
-                            className="w-full h-full"
-                        >
-                            <ProgressiveImage
-                                src={currentImageUrl}
-                                alt={featured.title}
-                                className="w-full h-full object-cover object-center"
-                                preloaded={loadedImages.has(currentIndex)}
-                            />
-                        </motion.div>
-                    )}
+                    {/* Rotação de backdrops unificada */}
+                    <div className="absolute inset-0 transition-opacity duration-2000 ease-in-out">
+                        {(backdrops.length > 0 ? backdrops : [currentImageUrl]).map((bd, index) => (
+                            <div
+                                key={`${featured.id}-${index}`}
+                                className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${index === currentBackdropIndex
+                                    ? 'opacity-100 scale-100' // Ativa: normal
+                                    : 'opacity-0 scale-110'   // Inativa: zoom maior e invisível
+                                    }`}
+                                style={{
+                                    filter: index === currentBackdropIndex ? 'blur(0px)' : 'blur(8px)',
+                                    zIndex: index === currentBackdropIndex ? 10 : 0
+                                }}
+                            >
+                                <ProgressiveImage
+                                    src={bd}
+                                    alt={featured.title}
+                                    className="w-full h-full object-cover object-center"
+                                    preloaded={loadedImages.has(currentIndex) && index === 0}
+                                />
+
+                                {/* Efeito Ken Burns sutil contínuo via CSS para imagem ativa se for única */}
+                                {backdrops.length <= 1 && index === currentBackdropIndex && (
+                                    <div className="absolute inset-0 bg-transparent animate-pulse-slow" style={{ animationDuration: '20s' }} />
+                                )}
+                            </div>
+                        ))}
+                    </div>
                     {/* Vignette cinematográfico */}
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
                 </motion.div>
@@ -283,8 +273,8 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#121212]/80 via-[#121212]/20 to-transparent" />
 
             {/* Content */}
-            <div className="absolute inset-0 flex items-center sm:items-end z-20">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-16 sm:pb-32 lg:pb-44">
+            <div className="absolute inset-0 flex items-center justify-start z-20 overflow-hidden">
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pt-16 sm:pt-20 lg:pt-24 pb-16 sm:pb-20 lg:pb-24">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={featured.id}
@@ -295,49 +285,52 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                             className="max-w-2xl"
                         >
                             {/* Title - tamanho dinâmico baseado no comprimento */}
-                            <motion.h1 variants={itemVariants} className={`font-black text-white mb-4 lg:mb-6 leading-tight tracking-tight ${featured.title.length > 40
-                                ? 'text-2xl sm:text-3xl lg:text-4xl'
-                                : featured.title.length > 25
-                                    ? 'text-3xl sm:text-4xl lg:text-5xl'
-                                    : 'text-4xl sm:text-5xl lg:text-7xl'
+                            <motion.h1 variants={itemVariants} className={`font-black text-white mb-2 sm:mb-3 lg:mb-4 leading-tight tracking-tight ${featured.title.length > 50
+                                ? 'text-lg sm:text-xl lg:text-2xl'
+                                : featured.title.length > 35
+                                    ? 'text-xl sm:text-2xl lg:text-3xl'
+                                    : featured.title.length > 20
+                                        ? 'text-2xl sm:text-3xl lg:text-4xl'
+                                        : 'text-3xl sm:text-4xl lg:text-5xl'
                                 }`}>
-                                {featured.title.length > 50 ? `${featured.title.slice(0, 50)}...` : featured.title}
+                                {featured.title.length > 55 ? `${featured.title.slice(0, 55)}...` : featured.title}
                             </motion.h1>
 
                             {/* Metadata */}
-                            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3 mb-4 lg:mb-6">
+                            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3 lg:mb-4">
                                 {featured.score && (
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full">
+                                    <div className="flex items-center gap-1.5">
                                         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                        <span className="text-white font-semibold text-sm">{convertScoreToFivePoint(featured.score)}</span>
+                                        <span className="text-white font-bold text-sm">{convertScoreToFivePoint(featured.score)}</span>
                                     </div>
                                 )}
-                                <span className="text-gray-300 text-sm font-medium">{displayYear}</span>
+                                {/* <span className="text-[#46d369] font-bold text-sm">{featured.score ? Math.min(100, Math.max(0, Math.round(parseFloat(featured.score.toString()) * 10))) : 78}% Match</span> */}
+                                <span className="text-gray-300 text-sm font-bold">{displayYear}</span>
                                 {featured.rating && (
-                                    <span className="px-2 py-0.5 border border-gray-500 text-gray-300 text-xs font-medium rounded">
+                                    <span className="px-2 py-0.5 border border-gray-500 text-gray-300 text-xs font-bold rounded">
                                         {featured.rating}
                                     </span>
                                 )}
-                                <span className="text-gray-300 text-sm">{displayDuration}</span>
+                                <span className="text-gray-300 text-sm font-bold">{displayDuration}</span>
                                 {featured.genre?.slice(0, 2).map((g, i) => (
                                     <span key={i} className="text-gray-400 text-sm">• {g}</span>
                                 ))}
                             </motion.div>
 
                             {/* Synopsis */}
-                            <motion.p variants={itemVariants} className="text-gray-300 text-base lg:text-lg leading-relaxed mb-6 lg:mb-8 line-clamp-3 max-w-xl">
+                            <motion.p variants={itemVariants} className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed mb-3 sm:mb-4 lg:mb-5 line-clamp-2 sm:line-clamp-3 max-w-xl">
                                 {featured.synopsis}
                             </motion.p>
 
                             {/* Buttons */}
-                            <motion.div variants={itemVariants} className="flex flex-wrap gap-3 sm:gap-4">
+                            <motion.div variants={itemVariants} className="flex flex-wrap gap-2 sm:gap-3">
                                 <PlayButton
                                     onClick={() => onWatch(featured)}
                                     size="lg"
-                                    variant="primary"
+                                    variant="secondary"
                                     className="hover:translate-y-[-2px]"
                                 >
-                                    Watch Now
+                                    Assistir
                                 </PlayButton>
                                 <button
                                     onClick={() => onMoreInfo(featured)}
@@ -345,7 +338,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                     aria-label={`More information about ${featured.title}`}
                                 >
                                     <Info className="w-5 h-5 mr-2" />
-                                    More Info
+                                    Detalhes
                                 </button>
                             </motion.div>
                         </motion.div>
@@ -355,7 +348,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
 
             {/* Progress Bar (Netflix style) - DESATIVADO TEMPORARIAMENTE
             {featuredMovies?.length > 1 && (
-                <div className="absolute bottom-44 sm:bottom-48 lg:bottom-52 left-4 sm:left-6 lg:left-12 z-30">
+                <div className="absolute bottom-24 sm:bottom-28 lg:bottom-32 left-4 sm:left-6 lg:left-12 z-30">
                     <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2">
                         {featuredMovies.map((movie, index) => (
                             <button
@@ -380,33 +373,26 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             )}
             FIM - Progress Bar */}
 
-            {/* Backdrop Thumbnails - mostra os 3 backdrops disponíveis */}
-            {backdrops.length > 1 && (
-                <div className="absolute bottom-36 sm:bottom-40 right-4 sm:right-8 lg:right-12 z-30 hidden lg:flex gap-2">
-                    {backdrops.slice(0, 3).map((backdrop, index) => (
-                        <button
-                            key={`backdrop-thumb-${index}`}
-                            onClick={() => {
-                                setCurrentBackdropIndex(index);
-                                setBackdropCycle(index);
-                            }}
-                            className={`relative overflow-hidden rounded-lg transition-all duration-500 ${index === currentBackdropIndex
-                                ? 'w-24 h-14 ring-2 ring-white ring-offset-2 ring-offset-[#121212]'
-                                : 'w-20 h-12 opacity-50 hover:opacity-100 hover:scale-105'
-                                }`}
-                        >
-                            <img
-                                src={backdrop}
-                                alt={`Backdrop ${index + 1}`}
-                                className="w-full h-full object-cover"
+            {/* Barra de Navegação Progressiva - Indicadores de Dots */}
+            {
+                backdrops.length > 1 && (
+                    <div className="absolute bottom-20 sm:bottom-24 lg:bottom-28 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+                        {backdrops.slice(0, 3).map((_, index) => (
+                            <button
+                                key={`progress-dot-${index}`}
+                                onClick={() => {
+                                    setCurrentBackdropIndex(index);
+                                    setBackdropCycle(index);
+                                }}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${index === currentBackdropIndex
+                                    ? 'bg-white w-6'
+                                    : 'bg-white/40 w-1.5 hover:bg-white/60'
+                                    }`}
                             />
-                            {index === currentBackdropIndex && (
-                                <div className="absolute inset-0 bg-white/10" />
-                            )}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </section>
+                        ))}
+                    </div>
+                )
+            }
+        </section >
     );
 }

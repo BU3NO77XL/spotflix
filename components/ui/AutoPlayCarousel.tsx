@@ -83,21 +83,7 @@ export default function AutoPlayCarousel({
           </div>
         )}
 
-        {/* Play/Pause Control */}
-        <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-        >
-          {isPlaying ? (
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-            </svg>
-          ) : (
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          )}
-        </button>
+
       </div>
     </section>
   );

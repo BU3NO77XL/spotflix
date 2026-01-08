@@ -264,7 +264,7 @@ export default function Home() {
         {/* CRÍTICO: Trending (carregado na Fase 1) */}
         {trendingMovies.length > 0 && (
           <Carousel
-            title="Trending Today"
+            title="Em Alta Hoje"
             movies={trendingMovies}
             onMovieClick={handleMoreInfo}
           />
@@ -281,7 +281,7 @@ export default function Home() {
         {/* SECUNDÁRIO: Coming Soon (carregado na Fase 2) */}
         {comingSoonMovies.length > 0 && (
           <BackdropCarousel
-            title="Coming Soon to Theaters"
+            title="Em Breve nos Cinemas"
             movies={comingSoonMovies}
             onMovieClick={handleMoreInfo}
             backdropUrl={null}
@@ -292,7 +292,7 @@ export default function Home() {
         <div ref={familyRef}>
           {familyVisible && familyMovies.length > 0 && (
             <Carousel
-              title="Family Favorites"
+              title="Favoritos da Família"
               movies={familyMovies}
               onMovieClick={handleMoreInfo}
             />
@@ -303,7 +303,7 @@ export default function Home() {
         <div ref={sciFiRef}>
           {sciFiVisible && sciFiMovies.length > 0 && (
             <Carousel
-              title="Sci-Fi Universe"
+              title="Universo de Ficção Científica"
               movies={sciFiMovies}
               onMovieClick={handleMoreInfo}
             />
@@ -314,7 +314,7 @@ export default function Home() {
         <div ref={recommendedRef}>
           {recommendedVisible && recommendedMovies.length > 0 && (
             <Carousel
-              title="Recommended For You"
+              title="Recomendados Para Você"
               movies={recommendedMovies}
               onMovieClick={handleMoreInfo}
             />
@@ -324,7 +324,7 @@ export default function Home() {
         {/* Top Rated (carregado na Fase 2) */}
         {topRatedMovies.length > 0 && (
           <AutoPlaySlider
-            title="Best Rated Movies"
+            title="Melhores Avaliados"
             movies={topRatedMovies}
             onMovieClick={handleMoreInfo}
           />

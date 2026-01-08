@@ -870,7 +870,7 @@ function WatchContent() {
                     )}
                 </button>
 
-                {/* Back Button */}
+                {/* Back Button - DESATIVADO TEMPORARIAMENTE 
                 <div className="absolute top-20 left-4 sm:left-8 lg:left-12 z-20">
                     <Link
                         href="/"
@@ -880,6 +880,7 @@ function WatchContent() {
                         <span className="text-sm">Voltar</span>
                     </Link>
                 </div>
+                FIM - Back Button */}
 
 
                 {/* Hero Content - Bottom */}
@@ -1261,7 +1262,7 @@ function WatchContent() {
                     <section
                         id="player-section"
                         className="relative py-12"
-                        aria-labelledby="player-heading"
+                        aria-label="Video Player"
                     >
 
                         {/* Backdrop Cinematográfico Artístico - Full Width */}
@@ -1280,12 +1281,7 @@ function WatchContent() {
                             <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
                         </div>
 
-                        <h2 id="player-heading" className="text-white text-lg font-semibold mb-6 text-center drop-shadow-lg">
-                            {isSeries
-                                ? `Temporada ${selectedSeason} • Episódio ${selectedEpisode}`
-                                : `Assistir: ${movie.title}`
-                            }
-                        </h2>
+
 
                         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
                             <iframe
@@ -1430,12 +1426,11 @@ function WatchContent() {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        {/* <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors
-                                                    ${isCurrentMovie ? 'text-white font-medium' : 'text-gray-400 group-hover:text-white'}`}>
+                                                        <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors text-center ${isCurrentMovie ? 'text-white font-medium' : 'text-gray-400 group-hover:text-white'}`}>
                                                             {part.title}
-                                                        </p> */}
+                                                        </p>
                                                         {part.release_date && (
-                                                            <p className="text-gray-400 text-[11px] mt-2 text-center">
+                                                            <p className="text-gray-400 text-[11px] mt-1 text-center">
                                                                 {new Date(part.release_date).getFullYear()}
                                                             </p>
                                                         )}
@@ -1568,12 +1563,12 @@ function WatchContent() {
                                                         )}
 
                                                     </div>
-                                                    {/* <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors
+                                                    <p className={`text-xs mt-2 truncate w-28 sm:w-32 lg:w-36 transition-colors text-center
                                                         ${index === selectedCreatorIndex ? 'text-white font-medium' : 'text-gray-400 group-hover:text-white'}`}>
                                                         {series.title}
-                                                    </p> */}
+                                                    </p>
                                                     {series.year && (
-                                                        <p className="text-gray-400 text-[11px] mt-2 text-center">
+                                                        <p className="text-gray-400 text-[11px] mt-1 text-center">
                                                             {series.year}
                                                         </p>
                                                     )}

@@ -188,6 +188,7 @@ export default function CastSlider({ cast }: CastSliderProps) {
                 {/* Top row - Photo + Info */}
                 <div className="flex flex-row">
                     {/* Actor Photo */}
+                    {/* Imagem do Ator (DESATIVADO)
                     <div className="w-28 sm:w-32 md:w-36 lg:w-40 shrink-0 self-start">
                         <div className="relative aspect-3/4">
                             <AnimatePresence mode="wait">
@@ -213,7 +214,6 @@ export default function CastSlider({ cast }: CastSliderProps) {
                                 </motion.div>
                             </AnimatePresence>
 
-                            {/* Progress bar */}
                             {!isPaused && cast.length > 1 && (
                                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/60">
                                     <motion.div
@@ -226,9 +226,8 @@ export default function CastSlider({ cast }: CastSliderProps) {
                                 </div>
                             )}
                         </div>
-
-                        {/* Social Media - Mobile only */}
                     </div>
+                    */}
 
                     {/* Actor Info - Name + Bio */}
                     <div className="flex-1 p-3 lg:p-4 min-w-0">

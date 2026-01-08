@@ -186,9 +186,7 @@ export default function Header() {
                                 <Play className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-white fill-white" />
                             </div>
                             <h1 className="text-lg sm:text-xl lg:text-2xl font-black tracking-tight">
-                                <span className="text-white">
-                                    Spot
-                                </span>
+                                <span className="text-white">Spot</span>
                                 <span className="text-white">Flix</span>
                             </h1>
                         </Link>

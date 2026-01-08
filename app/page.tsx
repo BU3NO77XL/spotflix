@@ -179,7 +179,7 @@ export default function Home() {
       />
 
       {/* Carousels */}
-      <div className="-mt-32 sm:-mt-36 lg:-mt-40 relative z-10 pb-16 space-y-2">
+      <div className="-mt-20 sm:-mt-24 lg:-mt-28 relative z-10 pb-16 space-y-2">
         {continueWatching.length > 0 && (
           <Carousel
             title="Continue Assistindo"
@@ -190,7 +190,7 @@ export default function Home() {
 
         {trendingMovies.length > 0 && (
           <Carousel
-            title="Trending Today"
+            title="Em Alta Hoje"
             movies={trendingMovies}
             onMovieClick={handleMoreInfo}
           />
@@ -207,7 +207,7 @@ export default function Home() {
 
         {comingSoonMovies.length > 0 && (
           <BackdropCarousel
-            title="Coming Soon to Theaters"
+            title="Em Breve nos Cinemas"
             movies={comingSoonMovies}
             onMovieClick={handleMoreInfo}
             backdropUrl={carouselBackdrops.coming_soon}
@@ -227,7 +227,7 @@ export default function Home() {
 
         {familyMovies.length > 0 && (
           <Carousel
-            title="Family Favorites"
+            title="Favoritos da Família"
             movies={familyMovies}
             onMovieClick={handleMoreInfo}
           />
@@ -235,7 +235,7 @@ export default function Home() {
 
         {sciFiMovies.length > 0 && (
           <Carousel
-            title="Sci-Fi Universe"
+            title="Universo de Ficção Científica"
             movies={sciFiMovies}
             onMovieClick={handleMoreInfo}
           />
@@ -243,7 +243,7 @@ export default function Home() {
 
         {recommendedMovies.length > 0 && (
           <Carousel
-            title="Recommended For You"
+            title="Recomendados Para Você"
             movies={recommendedMovies}
             onMovieClick={handleMoreInfo}
           />
@@ -251,7 +251,7 @@ export default function Home() {
 
         {topRatedMovies.length > 0 && (
           <AutoPlaySlider
-            title="Best Rated Movies"
+            title="Melhores Avaliados"
             movies={topRatedMovies}
             onMovieClick={handleMoreInfo}
           />
@@ -260,7 +260,7 @@ export default function Home() {
         {/* Show all movies if no categories */}
         {trendingMovies.length === 0 && topRatedMovies.length === 0 && movies.length > 0 && (
           <Carousel
-            title="All Movies & Series"
+            title="Todos os Filmes e Séries"
             movies={movies}
             onMovieClick={handleMoreInfo}
           />
