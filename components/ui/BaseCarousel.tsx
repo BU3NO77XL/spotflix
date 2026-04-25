@@ -24,9 +24,9 @@ const gapClasses = {
 };
 
 const paddingClasses = {
-  sm: 'px-2 sm:px-4 lg:px-8',
-  md: 'px-4 sm:px-6 lg:px-12',
-  lg: 'px-6 sm:px-8 lg:px-16'
+  sm: 'pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-[24px] lg:pr-0',
+  md: 'pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-[24px] lg:pr-0',
+  lg: 'pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-[24px] lg:pr-0'
 };
 
 export default function BaseCarousel({
@@ -63,12 +63,12 @@ export default function BaseCarousel({
   };
 
   return (
-    <section className={cn("relative py-4 lg:py-6 group/section", className)}>
+    <section className={cn("relative py-4 lg:py-4 group/section", className)}>
       {/* Section Title */}
       {showTitle && title && (
-        <div className={cn("max-w-[1800px] mx-auto mb-3 lg:mb-4", paddingClasses[padding])}>
+        <div className={cn("w-full mb-3 lg:mb-4", paddingClasses[padding])}>
           <h2 className={cn(
-            "text-lg sm:text-xl lg:text-2xl font-bold text-white tracking-tight",
+            "text-[20px] font-medium text-[#e5e5e5] tracking-tight leading-[18px]",
             titleClassName
           )}>
             {title}

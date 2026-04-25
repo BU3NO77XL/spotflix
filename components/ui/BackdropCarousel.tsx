@@ -39,14 +39,6 @@ export default function BackdropCarousel({
           src={backdropUrl}
           alt=""
           className="w-full h-full object-cover"
-          initial={{ scale: 1 }}
-          animate={{ scale: 1.05 }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "linear"
-          }}
         />
 
         {/* Cinematic Overlay System */}

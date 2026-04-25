@@ -14,10 +14,12 @@ import SearchOverlay from './SearchOverlay';
 import InstallButton from './InstallButton';
 
 const HEADER_ITEMS = [
-    { label: 'Lar', href: '/' },
-    { label: 'Série', href: '/?filter=series' },
-    { label: 'Filmes', href: '/?filter=movie' },
-    { label: 'Minha lista', href: '/my-list' },
+    { label: 'Home', href: '/' },
+    { label: 'TV Shows', href: '/?filter=series' },
+    { label: 'Movies', href: '/?filter=movie' },
+    { label: 'New & Popular', href: '/' },
+    { label: 'My List', href: '/my-list' },
+    { label: 'Browse by Languages', href: '/' },
 ];
 
 export default function Header() {
@@ -34,18 +36,16 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    // Nome fixo para evitar hydration mismatch
     const [demoName] = useState("User");
 
     useEffect(() => {
         const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
+            setScrolled(window.scrollY > 0);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Monitorar mudanças de rota para atualizar o filtro ativo
     useEffect(() => {
         const updateFilter = () => {
             if (typeof window !== 'undefined') {
@@ -55,18 +55,14 @@ export default function Header() {
             }
         };
 
-        // Atualizar filtro imediatamente
         updateFilter();
 
-        // Adicionar listener para mudanças de URL
         const handlePopState = () => {
-            // Usar requestAnimationFrame para evitar atualizações durante renderização
             requestAnimationFrame(updateFilter);
         };
 
         window.addEventListener('popstate', handlePopState);
 
-        // Monkey patch pushState e replaceState para detectar mudanças programáticas
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
 
@@ -100,50 +96,19 @@ export default function Header() {
         };
     }, [mobileMenuOpen]);
 
-    // Debounced search
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            setSearchResults([]);
-            return;
-        }
-
-        const timer = setTimeout(async () => {
-            setIsSearching(true);
-            try {
-                const results = await TMDBService.search(searchQuery);
-                setSearchResults(results.map((r, i) => ({ ...r, id: `search-${i}` })) as Movie[]);
-            } catch (error) {
-                console.error('Search error:', error);
-                setSearchResults([]);
-            } finally {
-                setIsSearching(false);
-            }
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
-
-    const handleResultClick = useCallback((movie: Movie) => {
-        setSelectedMovie(movie);
-        setSearchOpen(false);
-        setSearchQuery('');
-        setSearchResults([]);
-    }, []);
-
     const closeModal = useCallback(() => {
         setSelectedMovie(null);
     }, []);
 
-    // Retorna ícone correspondente ao rótulo (minimalista, cinza)
     const renderIcon = (label: string) => {
         switch (label) {
-            case 'Lar':
+            case 'Home':
                 return <Play className="w-5 h-5 text-gray-400" />;
-            case 'Série':
+            case 'TV Shows':
                 return <Tv className="w-5 h-5 text-gray-400" />;
-            case 'Filmes':
+            case 'Movies':
                 return <Film className="w-5 h-5 text-gray-400" />;
-            case 'Minha lista':
+            case 'My List':
                 return <Star className="w-5 h-5 text-gray-400" />;
             default:
                 return <Play className="w-5 h-5 text-gray-400" />;
@@ -169,93 +134,90 @@ export default function Header() {
         <>
             <header
                 className={cn(
-                    "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-                    mobileMenuOpen
-                        ? "bg-[#121212]"
-                        : scrolled
-                            ? "bg-[#121212]/80 backdrop-blur-md"
-                            : "bg-linear-to-b from-black/60 via-black/40 to-transparent"
+                    "fixed top-0 left-0 right-0 z-50 transition-colors duration-300",
+                    mobileMenuOpen || scrolled
+                        ? "bg-[#141414]"
+                        : "bg-transparent"
                 )}
-                style={{ WebkitBackdropFilter: scrolled ? 'blur(8px)' : undefined, backdropFilter: scrolled ? 'blur(8px)' : undefined }}
             >
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
-                    <div className="flex items-center justify-between h-16 lg:h-20">
-                        {/* Logo */}
-                        <Link href="/" className="shrink-0 flex items-center gap-2">
-                            <div className="w-7 h-7 lg:w-9 lg:h-9 rounded-lg bg-[#1DB954] flex items-center justify-center">
-                                <Play className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-white fill-white" />
-                            </div>
-                            <h1 className="text-lg sm:text-xl lg:text-2xl font-black tracking-tight">
-                                <span className="text-white">Spot</span>
-                                <span className="text-white">Flix</span>
-                            </h1>
-                        </Link>
+                {/* Header Gradient matching rdesign */}
+                <div 
+                    className={cn(
+                        "absolute inset-0 transition-opacity duration-300",
+                        scrolled ? "opacity-0" : "opacity-100"
+                    )}
+                    style={{
+                        background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.7) 12.5%, rgba(0, 0, 0, 0) 100%)',
+                        height: '68px'
+                    }}
+                />
 
-                        {/* Desktop Navigation */}
-                        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
-                            {HEADER_ITEMS?.map((link) => {
-                                // Determinar se o link está ativo
-                                const isActive =
-                                    (link.href === '/' && pathname === '/' && !activeFilter) ||
-                                    (link.href.includes('?filter=series') && activeFilter === 'series') ||
-                                    (link.href.includes('?filter=movie') && activeFilter === 'movie') ||
-                                    (link.href === '/my-list' && pathname === '/my-list');
+                <div className="w-full px-[38px] relative z-10">
+                    <div className="flex items-center justify-between h-[68px]">
+                        <div className="flex items-center gap-[45px]">
+                            {/* Logo matching rdesign dimensions */}
+                            <Link href="/" className="shrink-0 flex items-center gap-1">
+                                <h1 className="text-2xl font-black tracking-tighter uppercase text-white flex items-center gap-1">
+                                    <div className="w-[25px] h-[25px] rounded-sm bg-[#1DB954] flex items-center justify-center">
+                                        <Play className="w-[14px] h-[14px] text-white fill-white" />
+                                    </div>
+                                    <span className="hidden lg:inline text-[22px] tracking-tight font-bold">Spotflix</span>
+                                </h1>
+                            </Link>
 
-                                return (
-                                    <Link
-                                        key={link.label}
-                                        href={link.href}
-                                        className={cn(
-                                            "px-3 lg:px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg",
-                                            isActive
-                                                ? "text-white bg-white/10" // Estilo ativo (sem hover)
-                                                : "text-white hover:scale-105" // Estilo normal com efeito de escala no hover
-                                        )}
-                                    >
-                                        {link.label}
-                                    </Link>
-                                );
-                            })}
-                        </nav>
+                            {/* Desktop Navigation */}
+                            <nav className="hidden md:flex items-center gap-[20px] pt-[4px]">
+                                {HEADER_ITEMS?.map((link) => {
+                                    const isActive =
+                                        (link.href === '/' && pathname === '/' && !activeFilter) ||
+                                        (link.href.includes('?filter=series') && activeFilter === 'series') ||
+                                        (link.href.includes('?filter=movie') && activeFilter === 'movie') ||
+                                        (link.href === '/my-list' && pathname === '/my-list');
+
+                                    return (
+                                        <Link
+                                            key={link.label}
+                                            href={link.href}
+                                            className={cn(
+                                                "text-[14px] transition-colors duration-200 whitespace-nowrap",
+                                                isActive
+                                                    ? "text-white font-medium"
+                                                    : "text-[#e5e5e5] hover:text-[#b3b3b3] font-normal"
+                                            )}
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    );
+                                })}
+                            </nav>
+                        </div>
 
                         {/* Right Section */}
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <InstallButton />
+                        <div className="flex items-center gap-5">
+                            <div className="hidden lg:flex items-center">
+                                <InstallButton />
+                            </div>
 
                             <button
-                                onClick={() => {
-                                    setSearchOpen(true);
-                                    setMobileMenuOpen(false);
-                                    setUserDropdownOpen(false);
-                                }}
-                                className="p-2 text-gray-300 hover:text-white transition-colors duration-200 hover:bg-white/10 rounded-full"
+                                onClick={() => setSearchOpen(true)}
+                                className="p-1 text-white hover:opacity-80 transition-opacity"
                                 aria-label="Open search"
                             >
                                 <Search className="w-5 h-5" />
                             </button>
 
                             {/* User Dropdown */}
-                            <div className="relative">
+                            <div className="relative flex items-center gap-2">
                                 <button
                                     onClick={() => {
                                         setUserDropdownOpen(!userDropdownOpen);
                                         setMobileMenuOpen(false);
                                         setSearchOpen(false);
                                     }}
-                                    className={cn(
-                                        "transition-colors duration-200",
-                                        "flex items-center justify-center",
-                                        true ? "rounded-md" : "p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full"
-                                    )}
-                                    aria-label="Open user menu"
-                                    aria-expanded={userDropdownOpen}
+                                    className="flex items-center gap-2"
                                 >
-                                    {/* SIMULAÇÃO: Usuário logado (true) com Nome Aleatório para Teste */}
-                                    {true ? (
-                                        <NetflixAvatar name={demoName} size={32} />
-                                    ) : (
-                                        <User className="w-5 h-5" />
-                                    )}
+                                    <NetflixAvatar name={demoName} size={32} />
+                                    <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
                                 </button>
 
                                 {userDropdownOpen && (
@@ -264,7 +226,7 @@ export default function Header() {
                                             className="fixed inset-0 z-30"
                                             onClick={() => setUserDropdownOpen(false)}
                                         />
-                                        <div className="absolute right-0 mt-2 w-56 bg-[#1f1f1f] border border-white/10 rounded-xl shadow-2xl z-40 overflow-hidden">
+                                        <div className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md">
                                             <div className="p-4 border-b border-white/10">
                                                 <p className="text-white font-semibold">Minha Conta</p>
                                                 <p className="text-gray-400 text-sm">usuario@email.com</p>
@@ -300,19 +262,11 @@ export default function Header() {
                                 )}
                             </div>
 
-                            <button
-                                onClick={() => router.push('/login')}
-                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 text-black font-semibold text-sm rounded-full transition-colors"
-                            >
-                                Entrar
-                            </button>
-
                             {/* Mobile Menu Button */}
                             <button
-                                className="md:hidden p-2 text-gray-300 hover:text-white"
+                                className="md:hidden p-2 text-white"
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-                                aria-expanded={mobileMenuOpen}
                             >
                                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
@@ -322,7 +276,7 @@ export default function Header() {
 
             </header>
 
-            {/* Mobile Menu Dropdown (desce do header) */}
+            {/* Mobile Menu Dropdown */}
             <AnimatePresence>
                 {mobileMenuOpen && (
                     <>
@@ -330,7 +284,6 @@ export default function Header() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.18 }}
                             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
                             onClick={() => setMobileMenuOpen(false)}
                         />
@@ -339,32 +292,22 @@ export default function Header() {
                             initial={{ y: -10, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: -10, opacity: 0 }}
-                            transition={{ duration: 0.18 }}
-                            className="fixed top-16 lg:top-20 left-0 right-0 z-60"
+                            className="fixed top-[68px] left-0 right-0 z-60"
                         >
-                            <div className="bg-[#121212] border-b border-white/10 shadow-sm">
-                                <nav className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
-                                    <div className="flex flex-col py-2">
+                            <div className="bg-[#141414] border-b border-white/10 shadow-xl">
+                                <nav className="w-full px-[38px]">
+                                    <div className="flex flex-col py-4">
                                         {HEADER_ITEMS.map((link) => (
                                             <Link
                                                 key={link.label}
                                                 href={link.href}
                                                 onClick={() => setMobileMenuOpen(false)}
-                                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/5 transition-colors font-medium"
+                                                className="flex items-center gap-3 px-4 py-3 rounded text-white hover:bg-white/5 transition-colors font-medium"
                                             >
                                                 <span aria-hidden>{renderIcon(link.label)}</span>
                                                 <span>{link.label}</span>
                                             </Link>
                                         ))}
-                                        <button
-                                            onClick={() => {
-                                                setMobileMenuOpen(false);
-                                                router.push('/signup');
-                                            }}
-                                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/5 transition-colors font-medium w-full text-left"
-                                        >
-                                            <span>Criar conta</span>
-                                        </button>
                                     </div>
                                 </nav>
                             </div>
@@ -373,21 +316,17 @@ export default function Header() {
                 )}
             </AnimatePresence>
 
-            {/* Search Overlay (New) */}
             <SearchOverlay
                 isOpen={searchOpen}
                 onClose={() => setSearchOpen(false)}
             />
 
-            {/* Movie Modal */}
             <MovieModal
                 movie={selectedMovie}
                 isOpen={!!selectedMovie}
                 onClose={closeModal}
                 onWatch={(movie) => {
-                    // Navegação com id e ref para otimização
                     router.push(`/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${movie.type}`);
-                    // Delay para fechar modal
                     setTimeout(() => closeModal(), 500);
                 }}
                 onAddToList={() => { }}

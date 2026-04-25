@@ -66,11 +66,11 @@ export default function MiniCard({
       ) : (
         // Portrait Layout
         <div className="space-y-2">
-          <div className="relative aspect-2/3 rounded-lg overflow-hidden bg-[#1f1f1f] group-hover:scale-105 transition-transform duration-300">
+          <div className="relative aspect-2/3 rounded-lg overflow-hidden bg-[#1f1f1f] transition-transform duration-300">
             <img
               src={movie.poster_url}
               alt={movie.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent" />
 

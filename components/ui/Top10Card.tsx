@@ -1,10 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, Play } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Movie } from '@/types/movie';
-import PlayButton from '@/components/ui/PlayButton';
-import ActionButton from '@/components/ui/ActionButton';
 
 interface Top10CardProps {
   movie: Movie;
@@ -20,36 +19,36 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
       onClick={() => onClick(movie)}
-      className="group relative shrink-0 w-[130px] sm:w-[150px] lg:w-[180px] cursor-pointer"
+      className="group relative shrink-0 w-[215px] h-[154px] cursor-pointer"
     >
-      <div className="relative flex items-end">
+      <div className="relative w-full h-full">
         {/* Ranking Number */}
-        <div className="relative z-10 shrink-0 mr-[-20px] sm:mr-[-25px] lg:mr-[-30px]">
-          <div className="relative w-[60px] sm:w-[70px] lg:w-[90px] h-[90px] sm:h-[105px] lg:h-[135px] flex items-center justify-center">
-            <span
-              className="text-black font-black text-5xl sm:text-6xl lg:text-8xl select-none"
-              style={{
-                WebkitTextFillColor: 'black',
-                WebkitTextStroke: '1.5px white',
-                textShadow: '0 0 10px rgba(0,0,0,0.7), 0 0 20px rgba(0,0,0,0.5)'
-              }}
-            >
-              {rank}
-            </span>
-          </div>
+        <div 
+          className="absolute left-[-15px] top-[8px] w-[127px] h-[143px] flex items-center justify-start select-none pointer-events-none"
+        >
+          <span
+            className="font-bold leading-none"
+            style={{
+              fontSize: '204px',
+              color: 'transparent',
+              WebkitTextStroke: '4px rgba(255, 255, 255, 0.3)',
+              fontFamily: '"Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif'
+            }}
+          >
+            {rank}
+          </span>
         </div>
 
         {/* Poster Container */}
-        <div className="relative aspect-2/3 w-full rounded-lg lg:rounded-xl overflow-hidden 
-              bg-[#1f1f1f] transition-all duration-300 
-              group-hover:scale-105 group-hover:z-20
-              shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+        <div className={cn(
+          "absolute top-0 w-[109px] h-[154px] rounded-r-[2px] overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-20",
+          rank === 10 ? "left-[130px]" : "left-[55px]"
+        )}>
           {/* Image */}
           <img
             src={movie.poster_url}
             alt={movie.title}
-            className="w-full h-full object-cover transition-transform duration-700 
-                 group-hover:scale-110"
+            className="w-full h-full object-cover"
           />
 
           {/* Gradient Overlay */}
@@ -59,31 +58,24 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
           {/* Score Badge */}
           {movie.score && (
             <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm 
-                px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300
-                transform translate-y-2 group-hover:translate-y-0">
-              <Star className="w-3 h-3 text-[#1DB954] fill-[#1DB954]" />
-              <span className="text-white text-xs font-semibold">{movie.score}</span>
+                px-1.5 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <Star className="w-2.5 h-2.5 text-[#1DB954] fill-[#1DB954]" />
+              <span className="text-white text-[10px] font-semibold">{movie.score}</span>
             </div>
           )}
 
           {/* Hover Content */}
-          <div className="absolute inset-0 p-3 opacity-0 group-hover:opacity-100 
+          <div className="absolute inset-0 p-2 opacity-0 group-hover:opacity-100 
               transition-all duration-300 flex flex-col justify-end">
-
-
-
-            {/* Meta */}
-            <div className="relative z-10 flex items-center gap-2 text-xs text-gray-300 font-medium translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+            <div className="relative z-10 flex items-center gap-1 text-[10px] text-gray-300 font-medium translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
               <span>{movie.year}</span>
               {movie.rating && (
-                <span className="px-1.5 py-0.5 border border-gray-500 rounded text-[10px]">{movie.rating}</span>
+                <span className="px-1 py-0.5 border border-gray-500 rounded text-[8px]">{movie.rating}</span>
               )}
             </div>
           </div>
         </div>
       </div>
-
-
     </motion.div>
   );
 }

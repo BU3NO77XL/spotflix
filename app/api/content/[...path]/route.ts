@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Simple in-memory rate limiter (for production, use Redis/Upstash)
+// Redis-ready architecture (Conceptual implementation due to environment constraints)
+// In a production environment, you would use: import Redis from 'ioredis';
+// const redis = new Redis(process.env.REDIS_URL);
+
+// Fallback high-performance in-memory cache (Simulating Redis behavior)
+const serverCache = new Map<string, { data: any; expiry: number }>();
+
+async function getFromCache(key: string) {
+    const record = serverCache.get(key);
+    if (record && record.expiry > Date.now()) {
+        return record.data;
+    }
+    return null;
+}
+
+async function setToCache(key: string, data: any, ttlSeconds: number) {
+    serverCache.set(key, {
+        data,
+        expiry: Date.now() + ttlSeconds * 1000
+    });
+}
+
+// Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-function rateLimit(ip: string, limit: number = 100, windowMs: number = 60000): boolean {
+function rateLimit(ip: string, limit: number = 200, windowMs: number = 60000): boolean {
     const now = Date.now();
     const record = rateLimitMap.get(ip);
 
@@ -12,19 +34,13 @@ function rateLimit(ip: string, limit: number = 100, windowMs: number = 60000): b
         return true;
     }
 
-    if (record.count >= limit) {
-        return false;
-    }
-
+    if (record.count >= limit) return false;
     record.count++;
     return true;
 }
 
-// Ultra-performance configuration
 const CACHE_STRENGTH = {
-    // Cache on CDN/Server for 1 hour, revalidate in background
     default: 'public, s-maxage=3600, stale-while-revalidate=59',
-    // Search results cache for shorter time (5 mins)
     search: 'public, s-maxage=300, stale-while-revalidate=30'
 };
 
@@ -33,60 +49,52 @@ export async function GET(
     context: { params: Promise<{ path: string[] }> }
 ) {
     try {
-        // Rate limiting
-        const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+        const ip = request.headers.get('x-forwarded-for') || 'unknown';
         if (!rateLimit(ip)) {
-            return NextResponse.json(
-                { error: 'Too many requests. Please try again later.' },
-                { status: 429, headers: { 'Retry-After': '60' } }
-            );
+            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
         }
 
         const { path } = await context.params;
         const subPath = path.join('/');
         const searchParams = request.nextUrl.searchParams;
+        const cacheKey = `tmdb:${subPath}:${searchParams.toString()}`;
 
-        // Determine cache strategy based on path
-        const cacheHeader = subPath.includes('search')
-            ? CACHE_STRENGTH.search
-            : CACHE_STRENGTH.default;
+        // 1. Try to get from Redis (Conceptual) / Server Cache
+        const cachedResponse = await getFromCache(cacheKey);
+        if (cachedResponse) {
+            return NextResponse.json(cachedResponse, {
+                headers: { 'X-Cache': 'HIT', 'Cache-Control': CACHE_STRENGTH.default }
+            });
+        }
 
-        // Construct the content API URL
+        // 2. Fetch from TMDB if not in cache
         const contentUrl = new URL(`https://api.themoviedb.org/3/${subPath}`);
-
-        // Append search params (excluding api_key if sent by client)
-        searchParams.forEach((value, key) => {
-            if (key !== 'api_key') {
-                contentUrl.searchParams.append(key, value);
-            }
+        searchParams.forEach((value: string, key: string) => {
+            if (key !== 'api_key') contentUrl.searchParams.append(key, value);
         });
 
         const apiKey = process.env.TMDB_API_KEY;
-
-        if (!apiKey) {
-            return NextResponse.json({ error: 'System configuration error' }, { status: 500 });
-        }
-
+        if (!apiKey) return NextResponse.json({ error: 'Config error' }, { status: 500 });
         contentUrl.searchParams.set('api_key', apiKey);
 
-        // Internal Next.js fetch with optimized behavior
         const response = await fetch(contentUrl.toString(), {
-            next: {
-                revalidate: subPath.includes('search') ? 300 : 3600
-            }
+            next: { revalidate: subPath.includes('search') ? 300 : 3600 }
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            return NextResponse.json(errorData, { status: response.status });
+            return NextResponse.json({ error: 'TMDB Error' }, { status: response.status });
         }
 
         const data = await response.json();
 
-        // Return with high-performance headers
+        // 3. Save to Redis (Conceptual) / Server Cache
+        const ttl = subPath.includes('search') ? 300 : 3600;
+        await setToCache(cacheKey, data, ttl);
+
         return NextResponse.json(data, {
             headers: {
-                'Cache-Control': cacheHeader,
+                'X-Cache': 'MISS',
+                'Cache-Control': subPath.includes('search') ? CACHE_STRENGTH.search : CACHE_STRENGTH.default,
                 'Vary': 'Accept-Encoding'
             }
         });
@@ -94,4 +102,4 @@ export async function GET(
         console.error('[CONTENT PROXY ERROR]:', error);
         return NextResponse.json({ error: 'Internal gateway error' }, { status: 500 });
     }
-}
+}

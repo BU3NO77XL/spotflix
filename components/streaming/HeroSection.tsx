@@ -1,13 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Play, Info, Star } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Play, Info } from 'lucide-react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ProgressiveImage from './ProgressiveImage';
-import Illumination from './Illumination';
-import PlayButton from '@/components/ui/PlayButton';
 import { Movie } from '@/types/movie';
-import { convertScoreToFivePoint } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
 
 interface HeroSectionProps {
@@ -19,326 +16,228 @@ interface HeroSectionProps {
 export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: HeroSectionProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(1);
-    const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
-    const [isReady, setIsReady] = useState(false);
-    const [nextImageReady, setNextImageReady] = useState(false);
-    const [seriesDetails, setSeriesDetails] = useState<Record<string, { runtime: string; year?: number }>>({});
+    
+    // Cache for assets to ensure instant loading during transitions
+    const [logosCache, setLogosCache] = useState<Record<string, string | null>>({});
+    const [preloadedBackdrops, setPreloadedBackdrops] = useState<Set<string>>(new Set());
+    
+    // State synchronization: update everything at once to prevent "millisecond delay"
+    const [displayContent, setDisplayContent] = useState<{
+        movie: Movie;
+        logo: string | null;
+        isReady: boolean;
+    } | null>(null);
 
-    // Estados para rotação de backdrops (igual à página watch)
-    const [backdrops, setBackdrops] = useState<string[]>([]);
-    const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
-    const [backdropCycle, setBackdropCycle] = useState(0); // Controla o ciclo de backdrops
+    const isInitialMount = useRef(true);
 
-    const featured = featuredMovies?.[currentIndex];
-
-    // Extract dependencies to avoid issues with optional chaining in useEffect deps
-    const featuredId = featured?.id;
-    const featuredType = featured?.type;
-    const featuredTmdbId = featured?.tmdb_id;
-
-    // Fetch series details for accurate season count
+    // 1. Initial Pre-fetching: Load everything for all featured movies upfront
     useEffect(() => {
-        const fetchSeriesDetails = async () => {
-            if (featured && featuredType === 'series' && featuredTmdbId && !seriesDetails[featuredId]) {
+        const prefetchAssets = async () => {
+            if (!featuredMovies?.length) return;
+
+            // Prefetch logos for all movies in the carousel
+            const logoPromises = featuredMovies.map(async (movie) => {
+                if (logosCache[movie.id] !== undefined) return;
+                
                 try {
-                    const seriesData = await TMDBService.fetchSeriesDetails(featuredTmdbId);
-                    if (seriesData) {
-                        setSeriesDetails(prev => ({
-                            ...prev,
-                            [featuredId]: {
-                                runtime: `${seriesData.number_of_seasons} Temporada${seriesData.number_of_seasons !== 1 ? 's' : ''}`,
-                                year: seriesData.first_air_date ? new Date(seriesData.first_air_date).getFullYear() : undefined
-                            }
-                        }));
-                    }
-                } catch (error) {
-                    console.error('Error fetching series details:', error);
+                    const logos = await TMDBService.fetchMovieLogos(
+                        Number(movie.tmdb_id || movie.id), 
+                        movie.type === 'series'
+                    );
+                    const logoUrl = logos.length > 0 
+                        ? `https://image.tmdb.org/t/p/original${logos[0].file_path}` 
+                        : null;
+                    
+                    setLogosCache(prev => ({ ...prev, [movie.id]: logoUrl }));
+                } catch (err) {
+                    console.error(`Error prefetching logo for ${movie.title}:`, err);
                 }
-            }
+            });
+
+            // Prefetch backdrops into browser cache
+            featuredMovies.forEach(movie => {
+                const url = movie.backdrop_url || movie.poster_url;
+                if (url && !preloadedBackdrops.has(url)) {
+                    const img = new Image();
+                    img.src = url;
+                    img.onload = () => setPreloadedBackdrops(prev => new Set([...prev, url]));
+                }
+            });
+
+            await Promise.all(logoPromises);
         };
 
-        fetchSeriesDetails();
-    }, [featuredId, featuredType, featuredTmdbId, seriesDetails]);
+        prefetchAssets();
+    }, [featuredMovies]);
 
-    // Efeito para buscar e rotacionar backdrops (igual à página watch)
+    // 2. Synchronized State Update: Ensure background and info change together
     useEffect(() => {
-        // Resetar backdrops quando o filme mudar
-        setBackdrops([]);
-        setCurrentBackdropIndex(0);
+        const movie = featuredMovies[currentIndex];
+        if (!movie) return;
 
-        if (!featuredTmdbId) return;
+        // If we already have the logo in cache, we can switch immediately
+        const logo = logosCache[movie.id] || null;
+        
+        // Batch the update to ensure everything changes in the same frame
+        setDisplayContent({
+            movie,
+            logo,
+            isReady: true
+        });
 
-        const fetchBackdrops = async () => {
-            try {
-                const images = await TMDBService.fetchMovieImages(featuredTmdbId, featuredType === 'series');
-                if (images.length > 0) {
-                    setBackdrops(images);
-                }
-            } catch (error) {
-                console.error('Error fetching backdrops:', error);
-            }
-        };
+        // Set initial mount to false after first successful display
+        if (isInitialMount.current) isInitialMount.current = false;
+    }, [currentIndex, featuredMovies, logosCache]);
 
-        fetchBackdrops();
-    }, [featuredTmdbId, featuredType]);
-
-    // Rotação automática dos backdrops (coordenada com mudança de filmes)
+    // 3. Auto-rotation with high-performance interval
     useEffect(() => {
-        if (backdrops.length <= 1) return;
-
-        // Resetar backdrop e ciclo quando filme muda
-        setCurrentBackdropIndex(0);
-        setBackdropCycle(0);
-
-        const maxBackdrops = Math.min(backdrops.length, 2); // Máximo 2 backdrops por filme
+        if (featuredMovies?.length <= 1) return;
 
         const interval = setInterval(() => {
-            setBackdropCycle(prev => {
-                const nextCycle = prev + 1;
-                if (nextCycle < maxBackdrops) {
-                    setCurrentBackdropIndex(nextCycle);
-                    return nextCycle;
-                }
-                // Para após mostrar 2 backdrops
-                return prev;
-            });
-        }, 8000); // 8 segundos por backdrop
+            setDirection(1);
+            setCurrentIndex((prev) => (prev + 1) % featuredMovies.length);
+        }, 12000); // Relaxed interval for better UX
 
         return () => clearInterval(interval);
-    }, [backdrops, currentIndex]); // Resetar quando filme muda
+    }, [featuredMovies?.length]);
 
-    // Preload images
-    const preloadImage = useCallback((index: number): Promise<boolean> => {
-        if (!featuredMovies?.[index]) return Promise.resolve(false);
-        if (loadedImages.has(index)) return Promise.resolve(true);
+    if (!displayContent) return null;
 
-        return new Promise<boolean>((resolve) => {
-            const img = new Image();
-            const src = featuredMovies[index].backdrop_url || featuredMovies[index].poster_url;
-            img.onload = () => {
-                setLoadedImages(prev => new Set([...prev, index]));
-                resolve(true);
-            };
-            img.onerror = () => resolve(false);
-            img.src = src || '';
-        });
-    }, [featuredMovies, loadedImages]);
+    const { movie, logo } = displayContent;
+    const currentImageUrl = movie.backdrop_url || movie.poster_url;
 
-    // Preload adjacent images and set next image ready flag
-    useEffect(() => {
-        if (featuredMovies?.length > 1) {
-            const next = (currentIndex + 1) % featuredMovies.length;
-            const prev = (currentIndex - 1 + featuredMovies.length) % featuredMovies.length;
-
-            // Reset next image ready flag when index changes
-            setNextImageReady(false);
-
-            // Preload next image and set flag when ready
-            preloadImage(next).then((success) => {
-                if (success) setNextImageReady(true);
-            });
-            preloadImage(prev);
-            setIsReady(true);
-        }
-    }, [currentIndex, featuredMovies?.length, preloadImage]);
-
-    // Auto-advance - coordenado com rotação de backdrops
-    useEffect(() => {
-        if (featuredMovies?.length > 1 && isReady && nextImageReady) {
-            const interval = setInterval(() => {
-                setDirection(1);
-                setCurrentIndex((prev) => (prev + 1) % featuredMovies.length);
-            }, 16000); // 16 segundos (2 backdrops de 8s cada)
-            return () => clearInterval(interval);
-        }
-    }, [featuredMovies?.length, isReady, nextImageReady]);
-
-    const goToSlide = async (index: number) => {
-        if (index === currentIndex) return;
-        setDirection(index > currentIndex ? 1 : -1);
-        await preloadImage(index);
-        setCurrentIndex(index);
-    };
-
-    if (!featured) return null;
-
-    const currentImageUrl = featured.backdrop_url || featured.poster_url;
-
-    // Get display values - use fetched details for series, fallback to existing data
-    const displayDuration = featured.type === 'series' && seriesDetails[featured.id]
-        ? seriesDetails[featured.id].runtime
-        : featured.duration;
-
-    const displayYear = seriesDetails[featured.id]?.year || featured.year;
-
-    // Variantes cinematográficas simplificadas - sem blur customizado
-    const imageVariants: Variants = {
+    // Optimized Animation Variants
+    const backdropVariants: Variants = {
         enter: (dir: number) => ({
             opacity: 0,
             scale: 1.05,
-            x: dir > 0 ? '1%' : '-1%',
-            filter: 'blur(8px)',
         }),
         center: {
             opacity: 1,
             scale: 1,
-            x: 0,
-            filter: 'blur(0px)',
             transition: {
-                duration: 1.4,
-                ease: [0.25, 0.46, 0.45, 0.94],
+                duration: 1.2,
+                ease: [0.33, 1, 0.68, 1], // Smooth ease-out
             }
         },
-        exit: (dir: number) => ({
+        exit: {
             opacity: 0,
-            scale: 1.02,
-            x: dir > 0 ? '-1%' : '1%',
-            filter: 'blur(8px)',
             transition: {
-                duration: 1.4,
-                ease: [0.25, 0.46, 0.45, 0.94],
+                duration: 1.2,
+                ease: [0.33, 1, 0.68, 1],
             }
-        })
+        }
     };
 
-    const containerVariants: Variants = {
-        enter: { opacity: 0 },
+    const contentVariants: Variants = {
+        enter: { opacity: 0, y: 10 },
         center: {
             opacity: 1,
+            y: 0,
             transition: {
-                staggerChildren: 0.12,
-                delayChildren: 0.3
+                staggerChildren: 0.1,
+                delayChildren: 0.2,
+                duration: 0.6,
+                ease: "easeOut"
             }
         },
-        exit: { opacity: 0, transition: { duration: 0.2 } }
+        exit: { 
+            opacity: 0, 
+            y: -5,
+            transition: { duration: 0.4, ease: "easeIn" } 
+        }
     };
 
     const itemVariants: Variants = {
-        enter: { opacity: 0 },
-        center: { opacity: 1, transition: { duration: 0.5, ease: "easeOut" } },
-        exit: { opacity: 0, transition: { duration: 0.3 } }
+        enter: { opacity: 0, y: 10 },
+        center: { opacity: 1, y: 0, transition: { duration: 0.5 } },
     };
 
     return (
-        <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh] w-full overflow-hidden bg-[#121212]">
-            {/* Backdrop Image with Cinematic Transition */}
-            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+        <section className="relative h-[810px] w-full overflow-hidden bg-[#141414]">
+            {/* Background Layer: High-performance Cross-fade */}
+            <AnimatePresence initial={false} mode="popLayout">
                 <motion.div
-                    key={featured.id}
-                    custom={direction}
-                    variants={imageVariants}
+                    key={`bg-${movie.id}`}
+                    variants={backdropVariants}
                     initial="enter"
                     animate="center"
                     exit="exit"
                     className="absolute inset-0"
                 >
-                    {/* Rotação de backdrops (idêntico à página watch) */}
-                    {/* Rotação de backdrops unificada */}
-                    <div className="absolute inset-0 transition-opacity duration-2000 ease-in-out">
-                        {(backdrops.length > 0 ? backdrops : [currentImageUrl]).map((bd, index) => (
-                            <div
-                                key={`${featured.id}-${index}`}
-                                className={`absolute inset-0 w-full h-full transition-all duration-2000 ease-out ${index === currentBackdropIndex
-                                    ? 'opacity-100 scale-100' // Ativa: normal
-                                    : 'opacity-0 scale-110'   // Inativa: zoom maior e invisível
-                                    }`}
-                                style={{
-                                    filter: index === currentBackdropIndex ? 'blur(0px)' : 'blur(8px)',
-                                    zIndex: index === currentBackdropIndex ? 10 : 0
-                                }}
-                            >
-                                <ProgressiveImage
-                                    src={bd}
-                                    alt={featured.title}
-                                    className="w-full h-full object-cover object-center"
-                                    preloaded={loadedImages.has(currentIndex) && index === 0}
-                                />
-
-                                {/* Efeito Ken Burns sutil contínuo via CSS para imagem ativa se for única */}
-                                {backdrops.length <= 1 && index === currentBackdropIndex && (
-                                    <div className="absolute inset-0 bg-transparent animate-pulse-slow" style={{ animationDuration: '20s' }} />
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    {/* Vignette cinematográfico */}
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
+                    <ProgressiveImage
+                        src={currentImageUrl || ''}
+                        alt={movie.title}
+                        className="w-full h-full object-cover object-top"
+                        preloaded={preloadedBackdrops.has(currentImageUrl || '')}
+                    />
                 </motion.div>
             </AnimatePresence>
 
-            {/* Gradient Overlays */}
-            <div className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-[#121212]/40 via-[#121212]/10 to-transparent z-10" />
-            <div className="absolute inset-0 bg-linear-to-r from-[#121212]/40 via-[#121212]/20 to-transparent" />
-            <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#121212]/80 via-[#121212]/20 to-transparent" />
+            {/* Premium Overlays */}
+            <div 
+                className="absolute inset-0 z-10 pointer-events-none" 
+                style={{
+                    background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.08) 30%, rgba(0, 0, 0, 0.42) 78%, rgba(0, 0, 0, 0.92) 100%)'
+                }}
+            />
+            <div 
+                className="absolute inset-0 z-10 pointer-events-none" 
+                style={{
+                    background: 'linear-gradient(90deg, rgba(0, 0, 0, 0.76) 0%, rgba(0, 0, 0, 0.36) 21%, rgba(0, 0, 0, 0) 44%), linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 18%)'
+                }}
+            />
 
-            {/* Content */}
-            <div className="absolute inset-0 flex items-center justify-start z-20 overflow-hidden">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pt-16 sm:pt-20 lg:pt-24 pb-16 sm:pb-20 lg:pb-24">
+            {/* Content Layer */}
+            <div className="absolute inset-0 z-20 flex items-start justify-start">
+                <div className="w-full h-full px-[38px] pt-[154px]">
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={featured.id}
-                            variants={containerVariants}
+                            key={`content-${movie.id}`}
+                            variants={contentVariants}
                             initial="enter"
                             animate="center"
                             exit="exit"
-                            className="max-w-2xl"
+                            className="max-w-[518px] flex flex-col gap-[20px]"
                         >
-                            {/* Title - tamanho dinâmico baseado no comprimento */}
-                            <motion.h1 variants={itemVariants} className={`font-black text-white mb-2 sm:mb-3 lg:mb-4 leading-tight tracking-tight ${featured.title.length > 50
-                                ? 'text-lg sm:text-xl lg:text-2xl'
-                                : featured.title.length > 35
-                                    ? 'text-xl sm:text-2xl lg:text-3xl'
-                                    : featured.title.length > 20
-                                        ? 'text-2xl sm:text-3xl lg:text-4xl'
-                                        : 'text-3xl sm:text-4xl lg:text-5xl'
-                                }`}>
-                                {featured.title.length > 55 ? `${featured.title.slice(0, 55)}...` : featured.title}
-                            </motion.h1>
-
-                            {/* Metadata */}
-                            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3 lg:mb-4">
-                                {featured.score && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                        <span className="text-white font-bold text-sm">{convertScoreToFivePoint(featured.score)}</span>
-                                    </div>
+                            {/* Logo/Title Area */}
+                            <motion.div variants={itemVariants} className="min-h-[100px] flex items-end">
+                                {logo ? (
+                                    <img 
+                                        src={logo} 
+                                        alt={movie.title} 
+                                        className="max-w-[518px] max-h-[207px] object-contain object-left"
+                                    />
+                                ) : (
+                                    <h1 className="text-white font-black text-5xl leading-tight tracking-tighter uppercase drop-shadow-lg">
+                                        {movie.title}
+                                    </h1>
                                 )}
-                                {/* <span className="text-[#46d369] font-bold text-sm">{featured.score ? Math.min(100, Math.max(0, Math.round(parseFloat(featured.score.toString()) * 10))) : 78}% Match</span> */}
-                                <span className="text-gray-300 text-sm font-bold">{displayYear}</span>
-                                {featured.rating && (
-                                    <span className="px-2 py-0.5 border border-gray-500 text-gray-300 text-xs font-bold rounded">
-                                        {featured.rating}
-                                    </span>
-                                )}
-                                <span className="text-gray-300 text-sm font-bold">{displayDuration}</span>
-                                {featured.genre?.slice(0, 2).map((g, i) => (
-                                    <span key={i} className="text-gray-400 text-sm">• {g}</span>
-                                ))}
                             </motion.div>
 
                             {/* Synopsis */}
-                            <motion.p variants={itemVariants} className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed mb-3 sm:mb-4 lg:mb-5 line-clamp-2 sm:line-clamp-3 max-w-xl">
-                                {featured.synopsis}
+                            <motion.p 
+                                variants={itemVariants} 
+                                className="text-white text-[17px] leading-[1.35] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] max-w-[518px]"
+                            >
+                                {movie.synopsis}
                             </motion.p>
 
                             {/* Buttons */}
-                            <motion.div variants={itemVariants} className="flex flex-wrap gap-2 sm:gap-3">
-                                <PlayButton
-                                    onClick={() => onWatch(featured)}
-                                    size="lg"
-                                    variant="secondary"
-                                    className="hover:translate-y-[-2px]"
-                                >
-                                    Assistir
-                                </PlayButton>
+                            <motion.div variants={itemVariants} className="flex items-center gap-[12px] mt-[2px]">
                                 <button
-                                    onClick={() => onMoreInfo(featured)}
-                                    className="bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-lg backdrop-blur-sm transition-all duration-200 hover:translate-y-[-2px] flex items-center"
-                                    aria-label={`More information about ${featured.title}`}
+                                    onClick={() => onWatch(movie)}
+                                    className="bg-[#1DB954] hover:bg-[#1DB954]/90 text-white flex items-center justify-center gap-2 px-[24px] h-[42px] rounded-[4px] transition-colors"
                                 >
-                                    <Info className="w-5 h-5 mr-2" />
-                                    Detalhes
+                                    <Play className="w-6 h-6 fill-white" />
+                                    <span className="text-[18px] font-bold">Assistir</span>
+                                </button>
+                                <button
+                                    onClick={() => onMoreInfo(movie)}
+                                    className="bg-[#6D6D6E]/70 hover:bg-[#6D6D6E]/80 text-white flex items-center justify-center gap-2 px-[24px] h-[42px] rounded-[4px] transition-colors backdrop-blur-md"
+                                >
+                                    <Info className="w-6 h-6" />
+                                    <span className="text-[18px] font-bold">Mais Informações</span>
                                 </button>
                             </motion.div>
                         </motion.div>
@@ -346,53 +245,28 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                 </div>
             </div>
 
-            {/* Progress Bar (Netflix style) - DESATIVADO TEMPORARIAMENTE
-            {featuredMovies?.length > 1 && (
-                <div className="absolute bottom-24 sm:bottom-28 lg:bottom-32 left-4 sm:left-6 lg:left-12 z-30">
-                    <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2">
-                        {featuredMovies.map((movie, index) => (
-                            <button
-                                key={index}
-                                onClick={() => goToSlide(index)}
-                                className="group relative h-1 overflow-hidden rounded-full transition-all duration-500"
-                                style={{ width: index === currentIndex ? '32px' : '8px' }}
-                            >
-                                <div className="absolute inset-0 bg-white/30 group-hover:bg-white/50 transition-colors" />
-                                {index === currentIndex && (
-                                    <motion.div
-                                        className="absolute inset-0 bg-white origin-left"
-                                        initial={{ scaleX: 0 }}
-                                        animate={{ scaleX: 1 }}
-                                        transition={{ duration: 16, ease: 'linear' }}
-                                    />
-                                )}
-                            </button>
-                        ))}
-                    </div>
+            {/* Rating Circle */}
+            <div className="absolute right-0 top-[492px] z-20 flex items-center h-[35px]">
+                <div className="relative w-[35px] h-[35px] mr-[8px] z-10">
+                    <svg viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                        <circle cx="17.5" cy="17.5" r="17" stroke="white" strokeOpacity="0.7"/>
+                        <path d="M21.7507 12.1205C21.9559 12.2231 22.0585 12.4284 22.2638 12.531C22.3664 12.6336 22.3664 12.6336 22.469 12.7362L20.6219 13.0441C20.1088 13.1467 19.6984 13.6598 19.801 14.2755C19.9036 14.7886 20.3141 15.0964 20.8271 15.0964C20.9298 15.0964 20.9298 15.0964 21.0324 15.0964L25.3423 14.2755C25.8554 14.1729 26.2659 13.6598 26.1632 13.0441L25.3423 8.83677C25.2397 8.32368 24.7266 7.91321 24.1109 8.01583C23.5978 8.11845 23.1873 8.63153 23.29 9.24724L23.5978 10.9917C23.3926 10.7865 23.0847 10.4786 22.8795 10.376C22.8795 10.376 22.8795 10.376 22.7769 10.376C22.6743 10.2734 22.5716 10.1708 22.469 10.1708C22.2638 9.96556 22.0585 9.86294 21.7507 9.6577C21.4428 9.45247 21.135 9.34985 20.8271 9.14462H20.7245C20.6219 9.042 20.4167 9.042 20.2114 8.93938C19.801 8.83677 19.3905 8.73415 19.0827 8.63153C18.8774 8.63153 18.6722 8.52892 18.4669 8.52892H18.3643C18.2617 8.52892 18.0565 8.52892 17.9539 8.52892C17.7486 8.52892 17.4408 8.52892 17.2355 8.52892C12.1047 8.52892 8 12.6336 8 17.7645C8 22.8953 12.1047 27 17.2355 27C22.3664 27 26.4711 22.8953 26.4711 17.7645C26.4711 17.1488 26.0606 16.7383 25.4449 16.7383C24.8292 16.7383 24.4187 17.1488 24.4187 17.7645C24.4187 21.7665 21.2376 24.9477 17.2355 24.9477C13.2335 24.9477 10.0523 21.7665 10.0523 17.7645C10.0523 13.7624 13.2335 10.5813 17.2355 10.5813C17.4408 10.5813 17.7486 10.5813 17.9539 10.5813C18.1591 10.5813 18.2617 10.5813 18.4669 10.6839C18.6722 10.6839 18.7748 10.7865 18.98 10.7865C19.0827 10.7865 19.1853 10.8891 19.2879 10.8891C20.0062 11.0943 20.7245 11.4022 21.3402 11.9153C21.4428 12.0179 21.5455 12.0179 21.6481 12.1205C21.6481 11.9153 21.7507 12.0179 21.7507 12.1205Z" fill="white"/>
+                    </svg>
                 </div>
-            )}
-            FIM - Progress Bar */}
+                <div className="flex items-center bg-[#333333]/60 border-l-[3px] border-[#DCDCDC] h-[35px] pl-[12px] pr-[58px]">
+                    <span className="text-white text-[18px] font-medium tracking-wider whitespace-nowrap">
+                        {movie.rating || '14+'}
+                    </span>
+                </div>
+            </div>
 
-            {/* Barra de Navegação Progressiva - Indicadores de Dots */}
-            {
-                backdrops.length > 1 && (
-                    <div className="absolute bottom-20 sm:bottom-24 lg:bottom-28 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-                        {backdrops.slice(0, 3).map((_, index) => (
-                            <button
-                                key={`progress-dot-${index}`}
-                                onClick={() => {
-                                    setCurrentBackdropIndex(index);
-                                    setBackdropCycle(index);
-                                }}
-                                className={`h-1.5 rounded-full transition-all duration-300 ${index === currentBackdropIndex
-                                    ? 'bg-white w-6'
-                                    : 'bg-white/40 w-1.5 hover:bg-white/60'
-                                    }`}
-                            />
-                        ))}
-                    </div>
-                )
-            }
-        </section >
+            {/* Bottom Gradient */}
+            <div 
+                className="absolute bottom-0 left-0 right-0 h-[222px] z-20 pointer-events-none"
+                style={{
+                    background: 'linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, rgba(20, 20, 20, 0.15) 12.06%, rgba(20, 20, 20, 0.35) 25.99%, rgba(20, 20, 20, 0.58) 52.22%, rgba(20, 20, 20, 1) 100%)'
+                }}
+            />
+        </section>
     );
 }

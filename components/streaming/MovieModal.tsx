@@ -1,14 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Play } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ProgressiveImage from './ProgressiveImage';
-import Illumination from './Illumination';
-import { Movie, CastMember } from '@/types/movie';
+import { X, Play, Plus, ThumbsUp, Volume2, VolumeX, Check, Star } from 'lucide-react';
+import { Movie } from '@/types/movie';
+import { cn } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
-import { useRouterPreload } from '@/hooks/useRouterPreload';
-import { useLogoStore } from '@/stores/logoStore';
 
 interface MovieModalProps {
     movie: Movie | null;
@@ -16,453 +13,399 @@ interface MovieModalProps {
     onClose: () => void;
     onWatch: (movie: Movie) => void;
     onAddToList: (movie: Movie, listType: 'favorites' | 'watch_later') => void;
-    isFavorited?: boolean;
-    isInWatchLater?: boolean;
 }
 
-interface KeywordInfo {
-    id: number;
-    name: string;
-}
+export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToList }: MovieModalProps) {
+    const [cast, setCast] = useState<any[]>([]);
+    const [similar, setSimilar] = useState<Movie[]>([]);
+    const [isMuted, setIsMuted] = useState(true);
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [logoLoading, setLogoLoading] = useState(false);
+    const [isOnNetflix, setIsOnNetflix] = useState(false);
 
-export default function MovieModal({
-    movie,
-    isOpen,
-    onClose,
-    onWatch,
-    onAddToList,
-}: MovieModalProps) {
-    const { preloadRoute } = useRouterPreload();
-    const { setLogosForMovie } = useLogoStore();
-    const [localFavorited, setLocalFavorited] = useState(false);
-    const [localLiked, setLocalLiked] = useState(false);
-    const [volume, setVolume] = useState(0);
-    const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
-
-    // Limite de caracteres para mostrar "Ler mais" - responsivo
-    const SYNOPSIS_LIMIT_MOBILE = 150;
-    const SYNOPSIS_LIMIT_DESKTOP = 300;
-
-    const [details, setDetails] = useState<{ ageRating?: string; runtime?: string; year?: number; cast?: CastMember[]; genres?: string[] }>({});
-    const [keywords, setKeywords] = useState<KeywordInfo[]>([]);
-    const [logos, setLogos] = useState<{
-        file_path: string;
-        file_type: string;
-        width: number;
-        height: number;
-        iso_639_1: string | null;
-    }[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [logoLoadError, setLogoLoadError] = useState(false);
-
-    // Preload da rota watch quando modal abre
     useEffect(() => {
         if (isOpen && movie) {
-            // Preload da página watch para navegação mais rápida
-            preloadRoute(`/watch?id=${movie.id}`);
-        }
-    }, [isOpen, movie, preloadRoute]);
+            setCast([]);
+            setSimilar([]);
+            setLogoUrl(null);
 
-    // Efeito para limpar dados quando o filme muda
-    useEffect(() => {
-        if (isOpen && movie) {
-            // Limpar dados imediatamente quando o filme mudar
-            setIsLoading(true);
-            setDetails({});
-            setKeywords([]);
-            setLogos([]);
-        }
-    }, [movie?.id]); // Apenas quando o ID do filme mudar
+            // Se há tmdb_id, iniciamos loading do logo para evitar flash
+            const hasTmdbId = !!(movie.tmdb_id || movie.id);
+            setLogoLoading(hasTmdbId);
 
-    // Efeito para buscar detalhes do filme
-    useEffect(() => {
-        const fetchDetails = async () => {
-            if (isOpen && movie?.tmdb_id) {
-                try {
-                    const isSeries = movie.type === 'series';
+            TMDBService.fetchMovieDetails(Number(movie.tmdb_id || movie.id)).then(details => {
+                if (details?.cast) setCast(details.cast.slice(0, 5));
+            });
 
-                    // Buscar keywords e logos em paralelo
-                    const [keywordsData, logosData] = await Promise.all([
-                        TMDBService.fetchMovieKeywords(movie.tmdb_id, isSeries),
-                        TMDBService.fetchMovieLogos(movie.tmdb_id, isSeries)
-                    ]);
+            TMDBService.fetchSimilar(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(similarMovies => {
+                setSimilar(similarMovies.slice(0, 3) as Movie[]);
+            });
 
-                    setKeywords(keywordsData);
-                    setLogos(logosData);
-
-                    // Salvar logos no store global para pré-carregamento
-                    if (movie.tmdb_id) {
-                        setLogosForMovie(movie.tmdb_id, logosData);
-                    }
-
-                    if (isSeries) {
-                        const seriesData = await TMDBService.fetchSeriesDetails(movie.tmdb_id);
-                        if (seriesData) {
-                            setDetails({
-                                ageRating: seriesData.ageRating,
-                                runtime: `${seriesData.number_of_seasons} Temporada${seriesData.number_of_seasons !== 1 ? 's' : ''}`,
-                                year: seriesData.first_air_date ? new Date(seriesData.first_air_date).getFullYear() : undefined,
-                                cast: seriesData.cast,
-                                genres: seriesData.genres
-                            });
-                        }
-                    } else {
-                        const movieData = await TMDBService.fetchMovieDetails(movie.tmdb_id);
-                        if (movieData) {
-                            const hours = movieData.runtime ? Math.floor(movieData.runtime / 60) : 0;
-                            const minutes = movieData.runtime ? movieData.runtime % 60 : 0;
-                            setDetails({
-                                ageRating: movieData.ageRating,
-                                runtime: movieData.runtime ? `${hours}h ${minutes}m` : undefined,
-                                year: movieData.release_date ? new Date(movieData.release_date).getFullYear() : undefined,
-                                cast: movieData.cast,
-                                genres: movieData.genres
-                            });
-                        }
-                    }
-                } finally {
-                    setIsLoading(false);
+            TMDBService.fetchMovieLogos(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(logos => {
+                if (logos && logos.length > 0) {
+                    setLogoUrl(logos[0].file_path);
+                } else {
+                    setLogoUrl(null);
                 }
-            }
-        };
-        fetchDetails();
-    }, [isOpen, movie]);
+                setLogoLoading(false);
+            }).catch(() => {
+                setLogoUrl(null);
+                setLogoLoading(false);
+            });
 
-    // Bloquear scroll da página quando o modal está aberto
-    useEffect(() => {
-        if (isOpen) {
+            TMDBService.fetchWatchProviders(Number(movie.tmdb_id || movie.id)).then(providers => {
+                if (providers?.flatrate) {
+                    const hasNetflix = providers.flatrate.some(p => 
+                        p.provider_name.toLowerCase().includes('netflix')
+                    );
+                    setIsOnNetflix(hasNetflix);
+                }
+            });
+
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen]);
-
-    // Resetar estado da sinopse quando o modal fecha ou muda de filme
-    useEffect(() => {
-        setIsSynopsisExpanded(false);
-    }, [movie?.id, isOpen]);
-
-    // Obter cast do details ou do movie
-    const castList = details.cast && details.cast.length > 0
-        ? details.cast.map(c => c.name)
-        : movie?.cast || [];
-
-    // Obter genres do details ou do movie
-    const genresList = details.genres && details.genres.length > 0
-        ? details.genres
-        : movie?.genre || [];
+    }, [isOpen, movie]);
 
     if (!movie) return null;
 
-    // Calcular porcentagem de match
-    const matchPercentage = movie.score ? Math.min(100, Math.max(0, Math.round(parseFloat(movie.score.toString()) * 10))) : 78;
+    const titleLines = movie.title.split(' ');
+    const displayTitle = titleLines.length > 2 ? [titleLines.slice(0, Math.ceil(titleLines.length/2)).join(' '), titleLines.slice(Math.ceil(titleLines.length/2)).join(' ')] : [movie.title];
 
     return (
         <AnimatePresence>
             {isOpen && (
-                <>
-                    {/* Backdrop */}
+                <div className="fixed inset-0 z-50 flex items-start justify-center p-0 sm:p-4 overflow-y-auto scrollbar-hide py-8">
+                    {/* Overlay with Radial Gradient */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/50 backdrop-blur-[6px] z-50"
+                        className="fixed inset-0 bg-[#000]/78"
+                        style={{
+                            background: 'radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.08), transparent 34%), rgba(0, 0, 0, 0.78)'
+                        }}
                     />
 
-                    {/* Modal */}
+                    {/* Modal Content */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed inset-4 sm:inset-8 lg:inset-16 z-50 overflow-y-auto scrollbar-hide
-                     rounded-2xl bg-[#1f1f1f] shadow-2xl
-                     flex flex-col max-h-[90vh] mx-auto max-w-5xl
-                     [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                        className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
                     >
-                        {isLoading ? (
-                            <div className="min-h-[45vh] sm:min-h-[38vh] lg:min-h-[60vh] flex items-center justify-center">
-                                {/* Placeholder vazio durante o carregamento para evitar flicker */}
-                                <div className="opacity-0 h-0 w-0" />
-                            </div>
-                        ) : (
-                            <div className="min-h-full">
-                                {/* Header Image */}
-                                <div className="relative h-[45vh] sm:h-[38vh] lg:h-[60vh] shrink-0">
-                                    <ProgressiveImage
-                                        src={movie.backdrop_url || movie.poster_url}
-                                        alt={movie.title}
-                                        className="w-full h-full rounded-t-2xl object-cover mask-[linear-gradient(to_bottom,black_60%,transparent_100%)]"
-                                    />
-                                    <Illumination intensity={0.18} />
-                                    <div className="absolute inset-0 bg-linear-to-t from-[#1f1f1f] via-[#1f1f1f]/50 to-transparent" />
+                        {/* Hero Section */}
+                        <div className="relative h-[478px] w-full overflow-hidden">
+                            {/* Backdrop Image Layer + Gradients */}
+                            <div 
+                                className="absolute inset-0"
+                                style={{
+                                    backgroundImage: `
+                                        linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.12) 30%, rgba(24, 24, 24, 0.92) 100%),
+                                        linear-gradient(115deg, rgba(13, 13, 13, 0.15) 18%, rgba(13, 13, 13, 0.86) 58%, rgba(13, 13, 13, 1) 100%),
+                                        radial-gradient(circle at 18% 24%, rgba(255, 235, 220, 0.22), transparent 28%),
+                                        linear-gradient(135deg, #333 0%, #1a1a1a 100%),
+                                        url("${movie.backdrop_url || movie.poster_url}")
+                                    `,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center top',
+                                    backgroundRepeat: 'no-repeat',
+                                }}
+                            />
+                            
+                            {/* Separate Layer for Screen Blending as in Reference */}
+                            <div 
+                                className="absolute inset-0 mix-blend-screen opacity-[0.4]"
+                                style={{
+                                    backgroundImage: `
+                                        linear-gradient(90deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.24) 68%, rgba(0, 0, 0, 0.58) 100%),
+                                        url("${movie.backdrop_url || movie.poster_url}")
+                                    `,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center top',
+                                }}
+                            />
 
-                                    {/* Close Button */}
+                            {/* Bottom Fade */}
+                            <div className="absolute inset-x-0 bottom-0 h-[180px] bg-linear-to-t from-[#181818] via-[#181818]/94 to-transparent z-10" />
+
+                            {/* Close Button */}
+                            <button
+                                onClick={onClose}
+                                className="absolute top-6 right-6 z-40 w-9 h-9 flex items-center justify-center bg-[#181818]/70 text-white rounded-full hover:bg-white/10 transition-colors"
+                            >
+                                <X className="w-5 h-5" strokeWidth={2.2} />
+                            </button>
+
+                            {/* Title Shadow Layer — só renderiza quando não está carregando e não há logo */}
+                            {!logoLoading && !logoUrl && (
+                                <div className="absolute left-12 bottom-[108px] z-10 select-none pointer-events-none opacity-[0.34] blur-[8px] transform-gpu">
+                                    <h1 className="text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-black">
+                                        {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
+                                    </h1>
+                                </div>
+                            )}
+
+                            {/* Main Title Area */}
+                            <div className="absolute left-12 bottom-[108px] z-20">
+                                {isOnNetflix && (
+                                    <div className="flex items-center gap-2 mb-4 opacity-[0.74]">
+                                        <img src="/assets/netflix-n.png" alt="Netflix" className="w-[18px] h-[32px] object-contain" />
+                                        <span className="text-xs font-bold uppercase tracking-[0.16em] text-white">
+                                            {movie.type === 'series' ? 'Série' : 'Filme'}
+                                        </span>
+                                    </div>
+                                )}
+                                
+                                {/* Aguarda resolução do logo antes de exibir qualquer título */}
+                                <AnimatePresence mode="wait">
+                                    {!logoLoading && (
+                                        logoUrl ? (
+                                            <motion.img
+                                                key="logo-img"
+                                                src={`https://image.tmdb.org/t/p/original${logoUrl}`}
+                                                alt={movie.title}
+                                                className="h-32 object-contain filter drop-shadow-2xl"
+                                                initial={{ opacity: 0, y: 14, scale: 0.96 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                                            />
+                                        ) : (
+                                            <motion.h1
+                                                key="logo-text"
+                                                className="text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-white"
+                                                initial={{ opacity: 0, y: 14 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                                            >
+                                                {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
+                                            </motion.h1>
+                                        )
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Actions Area matching reference SVG structure */}
+                            <div className="absolute left-12 bottom-10 z-30 flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     <button
-                                        onClick={onClose}
-                                        className="absolute top-4 right-4 p-1.5 rounded-full bg-transparent hover:bg-[#444444]/50 
-                             text-white transition-colors w-9 h-9 flex items-center justify-center"
+                                        onClick={() => onWatch(movie)}
+                                        className="bg-white hover:bg-[#e6e6e6] text-black font-bold h-[43px] px-6 rounded-[4px] transition-all flex items-center gap-2"
                                     >
-                                        <X className="w-5 h-5" />
+                                        <svg width="18" height="22" viewBox="0 0 20 24" fill="black">
+                                            <path d="M19.4951 10.5876C20.1603 10.9831 20.1436 11.9519 19.465 12.324L1.4809 22.1878C0.8145 22.5533 0 22.0711 0 21.311L0 0.7577C0 -0.01775 0.8444 -0.49812 1.5109 -0.10191L19.4951 10.5876Z" transform="translate(0, 1)"/>
+                                        </svg>
+                                        <span className="text-base font-bold">Assistir</span>
                                     </button>
 
-                                    {/* Header Content - Positioned at bottom */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-0 mb-4 sm:mb-6 lg:mb-8 px-4 sm:px-8 lg:px-12">
-                                        <div className="flex justify-between items-center w-full">
-                                            <div className="w-full">
-                                                {/* Title - Logo ou Texto */}
-                                                <div className="mb-3 sm:mb-4">
-                                                    {logos.length > 0 ? (
-                                                        <div className="flex items-center">
-                                                            <img
-                                                                src={`https://image.tmdb.org/t/p/original${logos[0].file_path}`}
-                                                                alt={movie.title}
-                                                                className="max-h-16 sm:max-h-20 lg:max-h-24 w-auto object-contain"
-                                                                style={{
-                                                                    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))',
-                                                                    maxWidth: '80%'
-                                                                }}
-                                                                onError={(e) => {
-                                                                    // Fallback para texto se a imagem falhar
-                                                                    const target = e.target as HTMLImageElement;
-                                                                    target.style.display = 'none';
-                                                                    const textFallback = target.nextElementSibling as HTMLElement;
-                                                                    if (textFallback) {
-                                                                        textFallback.style.display = 'block';
-                                                                    }
-                                                                }}
-                                                            />
-                                                            {/* Fallback de texto (inicialmente oculto) */}
-                                                            <h2
-                                                                className={`font-black text-white leading-tight ${movie.title.length > 50
-                                                                    ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
-                                                                    : movie.title.length > 30
-                                                                        ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
-                                                                        : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl'
-                                                                    }`}
-                                                                style={{ display: 'none' }}
-                                                            >
-                                                                {movie.title}
-                                                            </h2>
-                                                        </div>
-                                                    ) : (
-                                                        <h2
-                                                            className={`font-black text-white leading-tight ${movie.title.length > 50
-                                                                ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
-                                                                : movie.title.length > 30
-                                                                    ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
-                                                                    : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl'
-                                                                }`}
-                                                        >
-                                                            {movie.title}
-                                                        </h2>
-                                                    )}
-                                                </div>
-
-                                                {/* Action Buttons - Netflix Style */}
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            // Redirecionamento imediato para melhor UX
-                                                            onWatch(movie);
-                                                        }}
-                                                        className="bg-white hover:bg-gray-200 text-black font-bold py-1.5 sm:py-2 px-4 sm:px-8
-                                           rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base"
-                                                    >
-                                                        <Play className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2 fill-current" />
-                                                        Play
-                                                    </button>
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                setLocalFavorited(!localFavorited);
-                                                                onAddToList(movie, 'favorites');
-                                                            }}
-                                                            className="bg-[#333333]/60 hover:bg-[#444444] border border-[#ffffff]/70 text-white p-1.5 sm:p-2
-                                               rounded-full transition-all duration-200 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10"
-                                                        >
-                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path fillRule="evenodd" clipRule="evenodd" d="M11 2V11H2V13H11V22H13V13H22V11H13V2H11Z" fill="currentColor" />
-                                                            </svg>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setLocalLiked(!localLiked)}
-                                                            className="bg-[#333333]/60 hover:bg-[#444444] border border-[#ffffff]/70 text-white p-1.5 sm:p-2
-                                               rounded-full transition-all duration-200 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10"
-                                                        >
-                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path fillRule="evenodd" clipRule="evenodd" d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732ZM10.5 2C9.67157 2 9 2.67157 9 3.5V7.7132L7.05942 10.8181C6.92829 11.0279 6.72404 11.1817 6.48614 11.2497L4.45056 11.8313C3.59195 12.0766 3 12.8613 3 13.7543V18.5468C3 19.6255 3.87447 20.5 4.95319 20.5C5.87021 20.5 6.78124 20.6478 7.65121 20.9378L9.14427 21.4355C10.2659 21.8094 11.4405 22 12.6228 22H13H14H16.5C18.2692 22 19.7319 20.6873 19.967 18.9827C20.6039 18.3496 21 17.4709 21 16.5C21 16.4369 20.9983 16.3742 20.995 16.3118C21.3153 15.783 21.5 15.1622 21.5 14.5C21.5 13.8378 21.3153 13.217 20.995 12.6883C20.9983 12.6258 21 12.5631 21 12.5C21 10.567 19.433 9 17.5 9H15.9338C15.9752 8.6755 16 8.33974 16 8C16 6.98865 15.7788 5.80611 15.5539 4.85235C15.1401 3.09702 13.5428 2 11.8377 2H10.5Z" fill="currentColor" />
-                                                            </svg>
-                                                        </button>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => setVolume(volume === 0 ? 1 : 0)}
-                                                        className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70 text-white p-1.5 sm:p-2
-                                           rounded-full transition-all duration-200 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 ml-auto opacity-40 hover:opacity-100"
-                                                    >
-                                                        {volume === 0 ? (
-                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path fillRule="evenodd" clipRule="evenodd" d="M11 4.00003C11 3.59557 10.7564 3.23093 10.3827 3.07615C10.009 2.92137 9.57889 3.00692 9.29289 3.29292L4.58579 8.00003H1C0.447715 8.00003 0 8.44774 0 9.00003V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00003ZM5.70711 9.70714L9 6.41424V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70714ZM15.2929 9.70714L17.5858 12L15.2929 14.2929L16.7071 15.7071L19 13.4142L21.2929 15.7071L22.7071 14.2929L20.4142 12L22.7071 9.70714L21.2929 8.29292L19 10.5858L16.7071 8.29292L15.2929 9.70714Z" fill="currentColor" />
-                                                            </svg>
-                                                        ) : (
-                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path fillRule="evenodd" clipRule="evenodd" d="M24 12C24 8.28699 22.525 4.72603 19.8995 2.10052L18.4853 3.51474C20.7357 5.76517 22 8.81742 22 12C22 15.1826 20.7357 18.2349 18.4853 20.4853L19.8995 21.8995C22.525 19.274 24 15.7131 24 12ZM11 4.00001C11 3.59555 10.7564 3.23092 10.3827 3.07613C10.009 2.92135 9.57889 3.00691 9.29289 3.29291L4.58579 8.00001H1C0.447715 8.00001 0 8.44773 0 9.00001V15C0 15.5523 0.447715 16 1 16H4.58579L9.29289 20.7071C9.57889 20.9931 10.009 21.0787 10.3827 20.9239C10.7564 20.7691 11 20.4045 11 20V4.00001ZM5.70711 9.70712L9 6.41423V17.5858L5.70711 14.2929L5.41421 14H5H2V10H5H5.41421L5.70711 9.70712ZM16.0001 12C16.0001 10.4087 15.368 8.8826 14.2428 7.75739L12.8285 9.1716C13.5787 9.92174 14.0001 10.9392 14.0001 12C14.0001 13.0609 13.5787 14.0783 12.8285 14.8285L14.2428 16.2427C15.368 15.1174 16.0001 13.5913 16.0001 12ZM17.0709 4.92896C18.9462 6.80432 19.9998 9.34786 19.9998 12C19.9998 14.6522 18.9462 17.1957 17.0709 19.0711L15.6567 17.6569C17.157 16.1566 17.9998 14.1218 17.9998 12C17.9998 9.87829 17.157 7.84346 15.6567 6.34317L17.0709 4.92896Z" fill="currentColor" />
-                                                            </svg>
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <button
+                                        onClick={() => onAddToList(movie, 'watch_later')}
+                                        className="w-10 h-10 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
+                                    >
+                                        <Plus className="w-7 h-7" />
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => onAddToList(movie, 'favorites')}
+                                        className="w-10 h-10 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
+                                    >
+                                        <ThumbsUp className="w-5 h-5" />
+                                    </button>
                                 </div>
 
-                                {/* Informações abaixo da imagem de backdrop */}
-                                <div className="px-4 sm:px-8 lg:px-12 py-3 sm:py-4 bg-linear-to-b from-[#1f1f1f] to-[#1f1f1f]/90">
-                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                                        <span className="text-[#46d369] font-bold text-sm sm:text-base whitespace-nowrap">{matchPercentage}% Match</span>
-                                        <span className="text-white font-bold text-sm sm:text-base whitespace-nowrap">{details.year || movie.year}</span>
+                                <div className="fixed right-12 bottom-10">
+                                    <button
+                                        onClick={() => setIsMuted(!isMuted)}
+                                        className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-white/10 border-2 border-white/20 rounded-full text-white transition-all"
+                                    >
+                                        {isMuted ? (
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                                                <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/>
+                                            </svg>
+                                        ) : (
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                                        {/* MPAA Rating Badge */}
-                                        <div className="flex items-center justify-center bg-[#d7262d] rounded-[4px] min-w-[26px] sm:min-w-[32px] h-[26px] sm:h-[32px] px-1">
-                                            <span
-                                                className="text-white leading-none"
-                                                style={{
-                                                    fontFamily: 'var(--font-bebas-neue), "Bebas Neue", "Impact", "Arial Narrow", sans-serif',
-                                                    fontSize: 'clamp(16px, 4vw, 22px)',
-                                                    fontWeight: 400,
-                                                    letterSpacing: '1px',
-                                                }}
-                                            >
-                                                {details.ageRating === '+18' ? '18' : (details.ageRating || movie.rating || '12')}
-                                            </span>
-                                        </div>
-
-                                        <span className="text-white font-bold text-sm sm:text-base whitespace-nowrap">{details.runtime || movie.duration}</span>
-
-                                        {/* HD Badge */}
-                                        <div className="flex items-center justify-center h-[20px] sm:h-[24px] border border-[hsla(0,0%,100%,0.5)] rounded-[4px] px-[4px] sm:px-[6px]">
-                                            <span
-                                                className="text-[hsla(0,0%,100%,0.9)] leading-none"
-                                                style={{
-                                                    fontFamily: 'var(--font-bebas-neue), "Bebas Neue", "Impact", "Arial Narrow", sans-serif',
-                                                    fontSize: 'clamp(14px, 3vw, 18px)',
-                                                    fontWeight: 400,
-                                                    letterSpacing: '1px',
-                                                }}
-                                            >
-                                                HD
-                                            </span>
-                                        </div>
-
-                                        {/* Audio Channels Icon */}
-                                        <svg viewBox="0 0 58.07 24" className="w-[24px] sm:w-[30px] block">
-                                            <path fill="currentColor" d="M18.34,10.7v7.62l-4.73,0ZM.5,26.6h8l2.17-3,7.49,0s0,2.08,0,3.06h5.7V2.77H17C16.3,3.79.5,26.6.5,26.6Z" transform="translate(-0.5 -2.62)"></path>
-                                            <path fill="currentColor" d="M30.63,8.91c3.6-.13,6.1,1.8,6.48,4.9.5,4.15-2.43,6.85-6.66,6.56V9.19A.26.26,0 0,1,30.63,8.91ZM25,3V26.56c5.78.11,10.22.32,13.49-1.85a12.2,12.2,0 0,0,5.14-11.36A11.52,11.52,0 0,0,33.38,2.72c-2.76-.23-8.25,0-8.25,0A.66.66,0 0,0,25,3Z" transform="translate(-0.5 -2.62)"></path>
-                                            <path fill="currentColor" d="M43.72,3.43c1.45-.4,1.88,1.2,2.51,2.31a18.73,18.73,0 0,1-1.42,20.6h-.92a1.86,1.86,0 0,1,.42-1.11,21.39,21.39,0 0,0,2.76-10.16A22.54,22.54,0 0,0,43.72,3.43Z" transform="translate(-0.5 -2.62)"></path>
-                                            <path fill="currentColor" d="M48.66,3.43c1.43-.4,1.87,1.2,2.5,2.31a18.83,18.83,0 0,1-1.42,20.6h-.91c-.07-.42.24-.79.41-1.11A21.39,21.39,0 0,0,52,15.07,22.63,22.63,0 0,0,48.66,3.43Z" transform="translate(-0.5 -2.62)"></path>
-                                            <path fill="currentColor" d="M53.57,3.43c1.46-.4,1.9,1.2,2.54,2.31a18.58,18.58,0 0,1-1.44,20.6h-.93c-.07-.42.24-.79.42-1.11A21,21,0 0,0,57,15.07,22.26,22.26,0 0,0,53.57,3.43Z" transform="translate(-0.5 -2.62)"></path>
+                        {/* Body Section */}
+                        <div className="px-12 pb-12 pt-0 bg-[#181818]">
+                            <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
+                                {/* Left Column: Summary */}
+                                <div className="space-y-5">
+                                    {/* Meta row: 98% Match, ano, duração, classificação, HD */}
+                                    <div className="flex flex-wrap items-center gap-2 text-base">
+                                        <span className="text-[#46d369] font-bold">98% Match</span>
+                                        <span className="text-[#bcbcbc]">{movie.year}</span>
+                                        <span className="text-[#bcbcbc]">{movie.type === 'series' ? '3 Temporadas' : movie.duration}</span>
+                                        <span className="px-1.5 py-0.5 border border-[#808080] text-[11px] font-bold rounded-[4px] text-[#e5e5e5]">
+                                            {movie.rating || '14+'}
+                                        </span>
+                                        <span className="px-1.5 py-0.5 border border-white/20 text-[10px] font-bold rounded-[4px] text-white/60">HD</span>
+                                        <svg className="w-10 h-4" viewBox="0 0 39 16" fill="none" aria-label="Audiodescrição">
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M0 16L11.1999 0H15.9999V16H11.9999V14.4H7.19996L5.59997 16H0ZM11.9999 5.6L8.8 10.4H11.9999V5.6Z" fill="#BCBCBC"/>
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M16.8 0V16H24.8C26.4 15.7 29.6 14.4 29.6 8C29.3 5.3 27.7 0 23.2 0H16.8ZM20.8 11.2V4.8C24 4.8 24.8 6.9 24.8 8C24.8 10.6 23.7 11.2 23.2 11.2H20.8Z" fill="#BCBCBC"/>
+                                            <path d="M28.8 0C32 1.6 32 14.4 28.8 16H29.6C33.6 13.6 33.6 2.4 29.6 0L28.8 0Z" fill="#BCBCBC"/>
+                                            <path d="M32 0C35.2 1.6 35.2 14.4 32 16H32.8C36.8 13.6 36.8 2.4 32.8 0L32 0Z" fill="#BCBCBC"/>
                                         </svg>
                                     </div>
+
+                                    {/* Top 10 Badge — pixel-perfect do reference modal_detail/index.html */}
+                                    {movie.rank && (
+                                        <div className="flex items-center animate-in fade-in slide-in-from-left-4 duration-500">
+                                            <svg
+                                                width="245"
+                                                height="30"
+                                                viewBox="0 0 245 30"
+                                                fill="none"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                aria-label={`#${movie.rank} em ${movie.type === 'series' ? 'Séries' : 'Filmes'} hoje`}
+                                            >
+                                                {/* Quadrado vermelho do badge */}
+                                                <rect y="1.0957" width="27.8086" height="27.8086" rx="3.47608" fill="#F50723"/>
+
+                                                {/* Glifo "TOP" — paths exatos do reference */}
+                                                <path d="M7.72649 13.7028H6.16834V8.3974H4.05576V7.04955H9.83908V8.3974H7.72649V13.7028Z" fill="white"/>
+                                                <path d="M13.27 13.8557C12.7729 13.8557 12.3141 13.7697 11.903 13.5976C11.4824 13.4255 11.1192 13.1866 10.8228 12.8711C10.5169 12.5557 10.278 12.1924 10.1155 11.7622C9.94339 11.3416 9.85736 10.8828 9.85736 10.3762C9.85736 9.86951 9.94339 9.41067 10.1155 8.98051C10.278 8.5599 10.5169 8.19665 10.8228 7.8812C11.1192 7.56574 11.4824 7.32676 11.903 7.1547C12.3141 6.98263 12.7729 6.8966 13.27 6.8966C13.7766 6.8966 14.2355 6.98263 14.6561 7.1547C15.0671 7.32676 15.4304 7.56574 15.7363 7.8812C16.0422 8.19665 16.2812 8.5599 16.4532 8.98051C16.6157 9.41067 16.7018 9.86951 16.7018 10.3762C16.7018 10.8828 16.6157 11.3416 16.4532 11.7622C16.2812 12.1924 16.0422 12.5557 15.7363 12.8711C15.4304 13.1866 15.0671 13.4255 14.6561 13.5976C14.2355 13.7697 13.7766 13.8557 13.27 13.8557ZM13.27 12.4792C13.6333 12.4792 13.9583 12.3931 14.2355 12.2115C14.5127 12.0395 14.723 11.7909 14.8855 11.4755C15.048 11.16 15.1245 10.7968 15.1245 10.3762C15.1245 9.95555 15.048 9.58274 14.8855 9.26728C14.723 8.95183 14.5127 8.71285 14.2355 8.53123C13.9583 8.35916 13.6333 8.27313 13.27 8.27313C12.9163 8.27313 12.6009 8.35916 12.3236 8.53123C12.0464 8.71285 11.8266 8.95183 11.6736 9.26728C11.5111 9.58274 11.4346 9.95555 11.4346 10.3762C11.4346 10.7968 11.5111 11.16 11.6736 11.4755C11.8266 11.7909 12.0464 12.0395 12.3236 12.2115C12.6009 12.3931 12.9163 12.4792 13.27 12.4792Z" fill="white"/>
+                                                {/* "P" de TOP */}
+                                                <path d="M17.3002 13.7028V7.04955H20.0533C20.5982 7.04955 21.0761 7.14514 21.4681 7.33632C21.86 7.52751 22.1659 7.79517 22.3762 8.1393C22.5865 8.48343 22.6916 8.88492 22.6916 9.34376C22.6916 9.8026 22.5865 10.2041 22.3762 10.5482C22.1659 10.9019 21.86 11.1696 21.4681 11.3608C21.0761 11.5519 20.5982 11.6475 20.0533 11.6475H18.8584V13.7028H17.3002ZM18.8584 10.3284H19.8239C20.2732 10.3284 20.5982 10.2423 20.8085 10.0703C21.0092 9.90775 21.1144 9.65921 21.1144 9.34376C21.1144 9.0283 21.0092 8.78932 20.8085 8.61726C20.5982 8.45475 20.2732 8.36872 19.8239 8.36872H18.8584V10.3284Z" fill="white"/>
+
+                                                {/* Número do rank dinâmico */}
+                                                <text
+                                                    x="9"
+                                                    y="24"
+                                                    fill="white"
+                                                    fontSize="13"
+                                                    fontWeight="900"
+                                                    fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
+                                                >
+                                                    {movie.rank}
+                                                </text>
+
+                                                {/* Texto "#N em Séries hoje" */}
+                                                <text
+                                                    x="35"
+                                                    y="21"
+                                                    fill="white"
+                                                    fontSize="17"
+                                                    fontWeight="400"
+                                                    fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
+                                                >
+                                                    #{movie.rank} em {movie.type === 'series' ? 'Séries' : 'Filmes'} hoje
+                                                </text>
+                                            </svg>
+                                        </div>
+                                    )}
+
+                                    <p className="text-white text-[16px] leading-[26px] font-normal">
+                                        {movie.synopsis}
+                                    </p>
                                 </div>
 
-                                {/* Body Content - Netflix Style Grid */}
-                                <div className="px-4 sm:px-8 lg:px-12 pt-2 pb-6">
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        {/* Main Description */}
-                                        <div className="lg:col-span-2">
-                                            <div className="mb-6">
-                                                {/* Mobile: limite menor */}
-                                                <div className="sm:hidden">
-                                                    <p className="text-white text-[14px] leading-[1.6] wrap-break-word">
-                                                        {!isSynopsisExpanded && movie.synopsis && movie.synopsis.length > SYNOPSIS_LIMIT_MOBILE
-                                                            ? `${movie.synopsis.slice(0, SYNOPSIS_LIMIT_MOBILE)}...`
-                                                            : movie.synopsis}
-                                                    </p>
-                                                    {movie.synopsis && movie.synopsis.length > SYNOPSIS_LIMIT_MOBILE && (
-                                                        <button
-                                                            onClick={() => setIsSynopsisExpanded(!isSynopsisExpanded)}
-                                                            className="text-[#46d369] hover:text-[#5ae87a] text-sm font-medium mt-2 transition-colors"
-                                                        >
-                                                            {isSynopsisExpanded ? 'Ler menos' : 'Ler mais'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                {/* Desktop: limite maior */}
-                                                <div className="hidden sm:block">
-                                                    <p className="text-white text-[14px] leading-[1.6] wrap-break-word">
-                                                        {!isSynopsisExpanded && movie.synopsis && movie.synopsis.length > SYNOPSIS_LIMIT_DESKTOP
-                                                            ? `${movie.synopsis.slice(0, SYNOPSIS_LIMIT_DESKTOP)}...`
-                                                            : movie.synopsis}
-                                                    </p>
-                                                    {movie.synopsis && movie.synopsis.length > SYNOPSIS_LIMIT_DESKTOP && (
-                                                        <button
-                                                            onClick={() => setIsSynopsisExpanded(!isSynopsisExpanded)}
-                                                            className="text-[#46d369] hover:text-[#5ae87a] text-sm font-medium mt-2 transition-colors"
-                                                        >
-                                                            {isSynopsisExpanded ? 'Ler menos' : 'Ler mais'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                {/* Right Column: Meta */}
+                                <div className="space-y-3.5 text-sm leading-5">
+                                    <div className="flex flex-wrap gap-1">
+                                        <span className="text-[#777777]">Elenco:</span>
+                                        <span className="text-white">{cast.map(c => c.name).join(', ') || 'Informação indisponível'}</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                        <span className="text-[#777777]">Gêneros:</span>
+                                        <span className="text-white">{movie.genre?.join(', ') || 'Filmes, Séries'}</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                        <span className="text-[#777777]">Este título é:</span>
+                                        <span className="text-white">Cerebral, Inspirador, Empolgante</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                                        {/* Details Column */}
-                                        <div className="space-y-4">
-                                            {/* Cast - Estilo Netflix */}
-                                            {castList.length > 0 && (
-                                                <div className="mb-2">
-                                                    <span className="text-[#777] text-[14px] leading-[20px]">Cast: </span>
-                                                    {castList.slice(0, 5).map((actor, i) => (
-                                                        <span key={i} className="text-white text-[14px] leading-[20px] hover:underline cursor-pointer">
-                                                            {actor}{i < Math.min(castList.length, 5) - 1 ? ', ' : ''}
-                                                        </span>
-                                                    ))}
-                                                    {castList.length > 5 && (
-                                                        <span className="text-white text-[14px] leading-[20px] hover:underline cursor-pointer">, more.</span>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* Genres - Estilo Netflix */}
-                                            {genresList.length > 0 && (
-                                                <div className="mb-2">
-                                                    <span className="text-[#777] text-[14px] leading-[20px]">Genres: </span>
-                                                    <span className="text-white text-[14px] leading-[20px] hover:underline cursor-pointer">
-                                                        {genresList.join(', ')}.
+                            {/* More Like This Section */}
+                            {similar.length > 0 && (
+                                <div className="mt-12">
+                                    <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Títulos semelhantes</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
+                                        {similar.map((item, idx) => (
+                                            <div 
+                                                key={idx}
+                                                className="bg-[#232323] rounded-md overflow-hidden group cursor-pointer shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                                            >
+                                                <div className="relative h-[141px]">
+                                                    <img 
+                                                        src={item.backdrop_url || item.poster_url} 
+                                                        alt="" 
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <span className="absolute bottom-2.5 right-2.5 text-base font-semibold text-white/92 bg-black/60 px-2 py-1 rounded-[3px] shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+                                                        {item.year}
                                                     </span>
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40">
+                                                            <Play className="w-5 h-5 fill-white" />
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
-
-                                            {/* This show is - Usando keywords do TMDB */}
-                                            <div className="mb-2">
-                                                <span className="text-[#777] text-[14px] leading-[20px]">This show is: </span>
-                                                {keywords.length > 0 ? (
-                                                    keywords.slice(0, 4).map((keyword, i) => (
-                                                        <span key={keyword.id} className="text-white text-[14px] leading-[20px] hover:underline cursor-pointer">
-                                                            {keyword.name}{i < Math.min(keywords.length, 4) - 1 ? ', ' : '.'}
-                                                        </span>
-                                                    ))
-                                                ) : genresList.length > 0 ? (
-                                                    genresList.slice(0, 3).map((g, i) => (
-                                                        <span key={i} className="text-white text-[14px] leading-[20px] hover:underline cursor-pointer">
-                                                            {g}{i < Math.min(genresList.length, 3) - 1 ? ', ' : '.'}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-white text-[14px] leading-[20px]">Not specified.</span>
-                                                )}
+                                                <div className="p-4 pt-3.5 pb-4.5">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[#46d369] text-base font-bold">98% Match</span>
+                                                            <span className="px-1.5 border border-white/38 text-[13px] font-semibold rounded-[4px] text-white/88 leading-none py-1">
+                                                                {item.rating || '14+'}
+                                                            </span>
+                                                        </div>
+                                                        <button className="w-7 h-7 rounded-full border-2 border-white/62 flex items-center justify-center text-white hover:bg-white/10">
+                                                            <Plus className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-[#d2d2d2] text-[15px] line-clamp-3 leading-[1.45]">
+                                                        {item.synopsis}
+                                                    </p>
+                                                </div>
                                             </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* About Section */}
+                            <div className="mt-12 pt-6 border-t border-white/10">
+                                <h3 className="text-2xl font-bold text-white mb-6">Sobre {movie.title}</h3>
+                                <div className="grid grid-cols-[128px_1fr] gap-x-4.5 gap-y-2.5 text-[15px] leading-[1.5]">
+                                    <div className="text-white/45">Direção:</div>
+                                    <div className="text-[#d2d2d2]">Christopher Nolan</div>
+                                    
+                                    <div className="text-white/45">Elenco:</div>
+                                    <div className="text-[#d2d2d2]">{cast.map(c => c.name).join(', ')}</div>
+                                    
+                                    <div className="text-white/45">Roteiro:</div>
+                                    <div className="text-[#d2d2d2]">Jonathan Nolan</div>
+                                    
+                                    <div className="text-white/45">Gêneros:</div>
+                                    <div className="text-[#d2d2d2]">{movie.genre?.join(', ')}</div>
+                                    
+                                    <div className="text-white/45">Este título é:</div>
+                                    <div className="text-[#d2d2d2]">Cerebral, Inspirador, Empolgante</div>
+                                    
+                                    <div className="text-white/45">Classificação:</div>
+                                    <div className="text-[#d2d2d2]">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="px-2 py-0.5 border border-gray-600 rounded text-[10px] w-fit text-white">
+                                                {movie.rating || '14+'}
+                                            </span>
+                                            <span className="text-[10px] text-gray-500">recomendado para maiores de {movie.rating || '14'} anos</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </motion.div>
-                </>
+                </div>
             )}
         </AnimatePresence>
     );

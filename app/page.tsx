@@ -179,7 +179,7 @@ export default function Home() {
       />
 
       {/* Carousels */}
-      <div className="-mt-20 sm:-mt-24 lg:-mt-28 relative z-10 pb-16 space-y-2">
+      <div className="-mt-[211px] relative z-20 pb-16 space-y-8">
         {continueWatching.length > 0 && (
           <Carousel
             title="Continue Assistindo"
@@ -249,13 +249,13 @@ export default function Home() {
           />
         )}
 
-        {topRatedMovies.length > 0 && (
+        {/* {topRatedMovies.length > 0 && (
           <AutoPlaySlider
             title="Melhores Avaliados"
             movies={topRatedMovies}
             onMovieClick={handleMoreInfo}
           />
-        )}
+        )} */}
 
         {/* Show all movies if no categories */}
         {trendingMovies.length === 0 && topRatedMovies.length === 0 && movies.length > 0 && (

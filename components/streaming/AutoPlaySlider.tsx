@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { Movie } from '@/types/movie';
 import AutoPlayCarousel from '@/components/ui/AutoPlayCarousel';
-import { motion } from 'framer-motion';
-import { Play, Plus, Star, Calendar, Clock } from 'lucide-react';
+import { Play, Info, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AutoPlaySliderProps {
@@ -26,12 +24,15 @@ export default function AutoPlaySlider({ title, movies, onMovieClick }: AutoPlay
     ));
 
     return (
-        <AutoPlayCarousel
-            title={title}
-            autoPlayInterval={8000}
-        >
-            {slides}
-        </AutoPlayCarousel>
+        <div className="mb-12">
+            <AutoPlayCarousel
+                title={title}
+                autoPlayInterval={10000}
+                showIndicators={true}
+            >
+                {slides}
+            </AutoPlayCarousel>
+        </div>
     );
 }
 
@@ -42,92 +43,53 @@ interface AutoPlaySlideProps {
 }
 
 function AutoPlaySlide({ movie, onMovieClick, index }: AutoPlaySlideProps) {
-    const OVERVIEW_LIMIT = 180;
+    const backdropUrl = movie.backdrop_url || movie.poster_url;
 
     return (
-        <div className="relative mx-4 sm:mx-6 lg:mx-12 mb-8">
-            <div className="bg-[#1a1a1a] rounded-xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-[320px] lg:h-[380px]">
+        <div className="relative mx-4 sm:mx-6 lg:mx-[24px] h-[300px] sm:h-[350px] lg:h-[380px] rounded-lg overflow-hidden group">
+            {/* Background Image */}
+            <div className="absolute inset-0">
+                <img
+                    src={backdropUrl || ''}
+                    alt={movie.title}
+                    className="w-full h-full object-cover"
+                />
+                {/* Overlays - Toned down */}
+                <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/30 to-transparent" />
+            </div>
 
-                {/* Image Section */}
-                <div className="relative w-full md:w-[240px] lg:w-[280px] h-[200px] md:h-full shrink-0">
-                    <img
-                        src={movie.poster_url || movie.backdrop_url}
-                        alt={movie.title}
-                        className="w-full h-full object-cover md:hidden"
-                    />
-                    <img
-                        src={movie.poster_url}
-                        alt={movie.title}
-                        className="hidden md:block w-full h-full object-cover"
-                    />
-                    {/* Gradient Overlay for Mobile */}
-                    <div className="absolute inset-0 bg-linear-to-t from-[#1a1a1a] via-transparent to-transparent md:hidden" />
+            {/* Content Section */}
+            <div className="absolute inset-0 flex flex-col justify-center p-8 lg:p-12 max-w-2xl">
+                {/* Subtle Rating */}
+                <div className="flex items-center gap-1.5 mb-3">
+                    <Star className="w-4 h-4 text-[#1DB954] fill-[#1DB954]" />
+                    <span className="text-white font-bold text-sm">{movie.score}</span>
+                    <span className="text-gray-400 text-sm">• {movie.year}</span>
                 </div>
 
-                {/* Content Section */}
-                <div className="flex-1 p-5 sm:p-6 lg:p-8 flex flex-col justify-center relative">
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
+                    {movie.title}
+                </h3>
 
-                    {/* Title */}
-                    <h3
-                        className="text-xl sm:text-2xl lg:text-4xl font-black text-white mb-2 sm:mb-3 leading-tight cursor-pointer transition-colors"
+                <p className="text-gray-300 text-sm lg:text-base mb-6 line-clamp-2 max-w-xl">
+                    {movie.synopsis}
+                </p>
+
+                <div className="flex items-center gap-3">
+                    <button
                         onClick={() => onMovieClick(movie)}
+                        className="bg-white hover:bg-white/90 text-black font-bold px-6 py-2 rounded transition-all duration-200 flex items-center gap-2 text-sm"
                     >
-                        {movie.title}
-                    </h3>
-
-                    {/* Metadata Minimalist */}
-                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 text-xs sm:text-sm text-gray-400">
-                        {movie.score && (
-                            <div className="flex items-center gap-1 text-white font-medium">
-                                <Star className="w-3.5 h-3.5 text-[#1DB954] fill-[#1DB954]" />
-                                <span>{movie.score}</span>
-                            </div>
-                        )}
-                        <span className="w-1 h-1 rounded-full bg-gray-600" />
-                        <span>{movie.year}</span>
-                        {movie.duration && (
-                            <>
-                                <span className="w-1 h-1 rounded-full bg-gray-600" />
-                                <span>{movie.duration}</span>
-                            </>
-                        )}
-                        {movie.rating && (
-                            <>
-                                <span className="w-1 h-1 rounded-full bg-gray-600" />
-                                <span className="px-1.5 py-0.5 border border-gray-600 rounded text-[10px] sm:text-xs">
-                                    {movie.rating}
-                                </span>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Synopsis */}
-                    <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3 md:line-clamp-4 max-w-2xl hidden sm:block">
-                        {movie.synopsis || 'Sem descrição disponível.'}
-                    </p>
-
-                    {/* Synopsis Mobile */}
-                    <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-2 sm:hidden">
-                        {movie.synopsis || 'Sem descrição disponível.'}
-                    </p>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 mt-auto md:mt-0">
-                        <button
-                            onClick={() => onMovieClick(movie)}
-                            className="bg-white text-black hover:bg-gray-200 font-bold text-sm px-5 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2"
-                        >
-                            <Play className="w-4 h-4 fill-current" />
-                            Assistir
-                        </button>
-                        <button
-                            onClick={() => onMovieClick(movie)}
-                            className="bg-white/10 text-white hover:bg-white/20 font-medium text-sm px-5 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 backdrop-blur-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Minha Lista
-                        </button>
-                    </div>
+                        <Play className="w-4 h-4 fill-current" />
+                        Assistir
+                    </button>
+                    <button
+                        onClick={() => onMovieClick(movie)}
+                        className="bg-[#6D6D6E]/70 hover:bg-[#6D6D6E]/80 text-white font-bold px-6 py-2 rounded transition-all duration-200 flex items-center gap-2 backdrop-blur-md text-sm"
+                    >
+                        <Info className="w-4 h-4" />
+                        Informações
+                    </button>
                 </div>
             </div>
         </div>

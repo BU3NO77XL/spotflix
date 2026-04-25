@@ -21,7 +21,7 @@ export default function Top10Carousel({ movies, onMovieClick }: Top10CarouselPro
                     key={movie.id}
                     movie={movie}
                     rank={index + 1}
-                    onClick={onMovieClick}
+                    onClick={(m) => onMovieClick({ ...m, rank: index + 1 })}
                     index={index}
                 />
             ))}

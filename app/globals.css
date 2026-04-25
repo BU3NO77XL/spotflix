@@ -46,51 +46,6 @@ input[type="button"],
   cursor: pointer;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #121212;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #444 !important;
-}
-
-/* Firefox scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #333 #121212;
-}
-
-/* Hide scrollbar on mobile */
-@media (max-width: 768px) {
-  ::-webkit-scrollbar {
-    width: 0 !important;
-    height: 0 !important;
-    display: none !important;
-  }
-
-  * {
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-  }
-
-  html,
-  body {
-    -ms-overflow-style: none !important;
-    scrollbar-width: none !important;
-  }
-}
-
 /* Hide scrollbar for carousels */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -103,25 +58,21 @@ input[type="button"],
 
 /* Custom animations for animated carousel */
 @keyframes pulse-slow {
-
   0%,
   100% {
     opacity: 1;
   }
-
   50% {
     opacity: 0.8;
   }
 }
 
 @keyframes pulse-subtle {
-
   0%,
   100% {
     opacity: 1;
     transform: scale(1);
   }
-
   50% {
     opacity: 0.7;
     transform: scale(1.05);
@@ -129,12 +80,10 @@ input[type="button"],
 }
 
 @keyframes bounce-subtle {
-
   0%,
   100% {
     transform: translateY(0);
   }
-
   50% {
     transform: translateY(-2px);
   }
@@ -144,7 +93,6 @@ input[type="button"],
   0% {
     transform: translateX(-100%) skewX(12deg);
   }
-
   100% {
     transform: translateX(200%) skewX(12deg);
   }
@@ -171,7 +119,6 @@ input[type="button"],
   from {
     width: 0%;
   }
-
   to {
     width: 100%;
   }

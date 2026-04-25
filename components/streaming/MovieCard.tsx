@@ -33,14 +33,13 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
             {/* Poster Container */}
             <div className="relative aspect-2/3 rounded-lg lg:rounded-xl overflow-hidden 
                     bg-[#1f1f1f] transition-all duration-300 
-                    group-hover:scale-105 group-hover:z-10 
+                    group-hover:z-10 
                     shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
                 {/* Image */}
                 <img
                     src={movie.poster_url}
                     alt={`${movie.title} poster`}
-                    className="w-full h-full object-cover transition-transform duration-700 
-                   group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700"
                 />
 
                 {/* Gradient Overlay */}

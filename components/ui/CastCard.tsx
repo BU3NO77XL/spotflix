@@ -24,7 +24,7 @@ export default function CastCard({ member, onClick, index = 0 }: CastCardProps) 
       onClick={() => onClick?.(member)}
     >
       <div className="bg-[#1f1f1f] rounded-lg p-3 
-              transition-all duration-300 hover:bg-[#222] hover:scale-[1.02]">
+              transition-all duration-300 hover:bg-[#222]">
 
         {/* Profile Image */}
         <div className="aspect-3/4 overflow-hidden">
