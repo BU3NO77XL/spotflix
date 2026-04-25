@@ -190,7 +190,6 @@ function WatchContent() {
     const [seasonDetails, setSeasonDetails] = useState<{ episodes: { id: number; episode_number: number; name: string; overview: string; air_date: string; runtime: number; still_path: string; vote_average: number }[] } | null>(null);
     const [selectedSeason, setSelectedSeason] = useState<number>(1);
     const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
-    const [selectedSource, setSelectedSource] = useState<'vidsrc.me' | 'megaembed'>('megaembed');
     const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
     const [trailers, setTrailers] = useState<{ key: string; name: string; type: string }[]>([]);
     const [keywords, setKeywords] = useState<{ id: number; name: string }[]>([]);
@@ -1311,13 +1310,9 @@ function WatchContent() {
                         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
                             <iframe
                                 src={
-                                    selectedSource === 'vidsrc.me'
-                                        ? isSeries
-                                            ? `https://vidsrc.me/embed/tv?tmdb=${movie.tmdb_id}&s=${selectedSeason}&e=${selectedEpisode}`
-                                            : `https://vidsrc.me/embed/movie?tmdb=${movie.tmdb_id}`
-                                        : isSeries
-                                            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                                            : `https://megaembed.com/embed/${movie.tmdb_id}`
+                                    isSeries
+                                        ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                                        : `https://megaembed.com/embed/${movie.tmdb_id}`
                                 }
                                 width="100%"
                                 height="100%"
@@ -1328,26 +1323,7 @@ function WatchContent() {
                             />
                         </div>
 
-                        {/* Seletor de Servidores */}
-                        <div className="mt-4 flex items-center justify-center gap-2 relative z-10">
-                            {[
-                                { id: 'vidsrc.me', label: 'Servidor 1' },
-                                { id: 'megaembed', label: 'Servidor 2' }
-                            ].map((source) => (
-                                <button
-                                    key={source.id}
-                                    onClick={() => setSelectedSource(source.id as any)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded text-xs font-medium transition-all duration-200",
-                                        selectedSource === source.id
-                                            ? "bg-white/10 text-white"
-                                            : "text-gray-500 hover:text-gray-300"
-                                    )}
-                                >
-                                    {source.label}
-                                </button>
-                            ))}
-                        </div>
+
 
                         {/* Player Original (Comentado)
                         <VideoPlayer

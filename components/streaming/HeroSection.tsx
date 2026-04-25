@@ -96,7 +96,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
         const interval = setInterval(() => {
             setDirection(1);
             setCurrentIndex((prev) => (prev + 1) % featuredMovies.length);
-        }, 12000); // Relaxed interval for better UX
+        }, 300000); // 5 minutes interval for relaxed UX
 
         return () => clearInterval(interval);
     }, [featuredMovies?.length]);
@@ -190,7 +190,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
 
             {/* Content Layer */}
             <div className="absolute inset-0 z-20 flex items-start justify-start">
-                <div className="w-full h-full px-[38px] pt-[154px]">
+                <div className="w-full h-full px-4 md:px-[38px] pt-[154px]">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={`content-${movie.id}`}
@@ -206,10 +206,10 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                                     <img 
                                         src={logo} 
                                         alt={movie.title} 
-                                        className="max-w-[518px] max-h-[207px] object-contain object-left"
+                                        className="w-[80%] md:w-auto md:max-w-[518px] max-h-[120px] md:max-h-[207px] object-contain object-left"
                                     />
                                 ) : (
-                                    <h1 className="text-white font-black text-5xl leading-tight tracking-tighter uppercase drop-shadow-lg">
+                                    <h1 className="text-white font-black text-3xl md:text-5xl leading-tight tracking-tighter uppercase drop-shadow-lg">
                                         {movie.title}
                                     </h1>
                                 )}
@@ -218,26 +218,27 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                             {/* Synopsis */}
                             <motion.p 
                                 variants={itemVariants} 
-                                className="text-white text-[17px] leading-[1.35] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] max-w-[518px]"
+                                className="text-white text-[17px] leading-[1.35] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] max-w-[518px] line-clamp-3 md:line-clamp-none"
                             >
                                 {movie.synopsis}
                             </motion.p>
 
                             {/* Buttons */}
-                            <motion.div variants={itemVariants} className="flex items-center gap-[12px] mt-[2px]">
+                            <motion.div variants={itemVariants} className="flex items-center gap-2 md:gap-[12px] mt-[2px]">
                                 <button
                                     onClick={() => onWatch(movie)}
-                                    className="bg-[#1DB954] hover:bg-[#1DB954]/90 text-white flex items-center justify-center gap-2 px-[24px] h-[42px] rounded-[4px] transition-colors"
+                                    className="bg-[#1DB954] hover:bg-[#1DB954]/90 text-white flex items-center justify-center gap-1 md:gap-2 px-4 md:px-[24px] h-[42px] rounded-[4px] transition-colors"
                                 >
-                                    <Play className="w-6 h-6 fill-white" />
-                                    <span className="text-[18px] font-bold">Assistir</span>
+                                    <Play className="w-5 h-5 md:w-6 md:h-6 fill-white" />
+                                    <span className="text-[16px] md:text-[18px] font-bold">Assistir</span>
                                 </button>
                                 <button
                                     onClick={() => onMoreInfo(movie)}
-                                    className="bg-[#6D6D6E]/70 hover:bg-[#6D6D6E]/80 text-white flex items-center justify-center gap-2 px-[24px] h-[42px] rounded-[4px] transition-colors backdrop-blur-md"
+                                    className="bg-[#6D6D6E]/70 hover:bg-[#6D6D6E]/80 text-white flex items-center justify-center gap-1 md:gap-2 px-4 md:px-[24px] h-[42px] rounded-[4px] transition-colors backdrop-blur-md"
                                 >
-                                    <Info className="w-6 h-6" />
-                                    <span className="text-[18px] font-bold">Mais Informações</span>
+                                    <Info className="w-5 h-5 md:w-6 md:h-6" />
+                                    <span className="text-[16px] md:text-[18px] font-bold hidden md:block">Mais Informações</span>
+                                    <span className="text-[16px] font-bold md:hidden">Informação</span>
                                 </button>
                             </motion.div>
                         </motion.div>
@@ -246,7 +247,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             </div>
 
             {/* Rating Circle */}
-            <div className="absolute right-0 top-[492px] z-20 flex items-center h-[35px]">
+            <div className="absolute right-0 top-[580px] md:top-[492px] z-20 flex items-center h-[35px]">
                 <div className="relative w-[35px] h-[35px] mr-[8px] z-10">
                     <svg viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                         <circle cx="17.5" cy="17.5" r="17" stroke="white" strokeOpacity="0.7"/>

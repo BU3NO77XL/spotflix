@@ -413,20 +413,22 @@ export const TMDBService = {
     },
 
     // Fetch watch providers (where to stream)
-    async fetchWatchProviders(tmdbId: number, region: string = 'BR'): Promise<{
+    async fetchWatchProviders(tmdbId: number, isSeries: boolean = false, region: string = 'BR'): Promise<{
         flatrate?: { provider_name: string; logo_path: string }[];
         rent?: { provider_name: string; logo_path: string }[];
         buy?: { provider_name: string; logo_path: string }[];
     } | null> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/movie/${tmdbId}/watch/providers?language=pt-BR`
-            );
+            const endpoint = isSeries
+                ? `${TMDB_BASE_URL}/tv/${tmdbId}/watch/providers?language=pt-BR`
+                : `${TMDB_BASE_URL}/movie/${tmdbId}/watch/providers?language=pt-BR`;
+
+            const response = await fetch(endpoint);
 
             // Verificar se a resposta é válida
             if (!response.ok) {
                 if (response.status === 404) {
-                    console.warn(`Movie with ID ${tmdbId} not found for watch providers`);
+                    console.warn(`${isSeries ? 'Series' : 'Movie'} with ID ${tmdbId} not found for watch providers`);
                     return null;
                 }
                 throw new Error(`HTTP error! status: ${response.status}`);

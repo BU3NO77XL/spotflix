@@ -33,7 +33,11 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
             const hasTmdbId = !!(movie.tmdb_id || movie.id);
             setLogoLoading(hasTmdbId);
 
-            TMDBService.fetchMovieDetails(Number(movie.tmdb_id || movie.id)).then(details => {
+            const detailsPromise = movie.type === 'series'
+                ? TMDBService.fetchSeriesDetails(Number(movie.tmdb_id || movie.id))
+                : TMDBService.fetchMovieDetails(Number(movie.tmdb_id || movie.id));
+
+            detailsPromise.then(details => {
                 if (details?.cast) setCast(details.cast.slice(0, 5));
             });
 
@@ -53,7 +57,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                 setLogoLoading(false);
             });
 
-            TMDBService.fetchWatchProviders(Number(movie.tmdb_id || movie.id)).then(providers => {
+            TMDBService.fetchWatchProviders(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(providers => {
                 if (providers?.flatrate) {
                     const hasNetflix = providers.flatrate.some(p => 
                         p.provider_name.toLowerCase().includes('netflix')
@@ -76,7 +80,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center p-0 sm:p-4 overflow-y-auto scrollbar-hide py-8">
+                <div className="fixed inset-0 z-50 flex items-start justify-center px-4 py-8 md:p-8 overflow-y-auto scrollbar-hide">
                     {/* Overlay with Radial Gradient */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -141,15 +145,15 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
                             {/* Title Shadow Layer — só renderiza quando não está carregando e não há logo */}
                             {!logoLoading && !logoUrl && (
-                                <div className="absolute left-12 bottom-[108px] z-10 select-none pointer-events-none opacity-[0.34] blur-[8px] transform-gpu">
-                                    <h1 className="text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-black">
+                                <div className="absolute left-6 md:left-12 bottom-[108px] z-10 select-none pointer-events-none opacity-[0.34] blur-[8px] transform-gpu">
+                                    <h1 className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-black">
                                         {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
                                     </h1>
                                 </div>
                             )}
 
                             {/* Main Title Area */}
-                            <div className="absolute left-12 bottom-[108px] z-20">
+                            <div className="absolute left-6 md:left-12 bottom-[108px] z-20">
                                 {isOnNetflix && (
                                     <div className="flex items-center gap-2 mb-4 opacity-[0.74]">
                                         <img src="/assets/netflix-n.png" alt="Netflix" className="w-[18px] h-[32px] object-contain" />
@@ -167,7 +171,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                 key="logo-img"
                                                 src={`https://image.tmdb.org/t/p/original${logoUrl}`}
                                                 alt={movie.title}
-                                                className="h-32 object-contain filter drop-shadow-2xl"
+                                                className="h-20 md:h-32 object-contain filter drop-shadow-2xl max-w-[80vw] md:max-w-none"
                                                 initial={{ opacity: 0, y: 14, scale: 0.96 }}
                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -175,7 +179,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         ) : (
                                             <motion.h1
                                                 key="logo-text"
-                                                className="text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-white"
+                                                className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-white max-w-[80vw] md:max-w-none"
                                                 initial={{ opacity: 0, y: 14 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
@@ -188,7 +192,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             </div>
 
                             {/* Actions Area matching reference SVG structure */}
-                            <div className="absolute left-12 bottom-10 z-30 flex items-center gap-3">
+                            <div className="absolute left-6 md:left-12 bottom-10 z-30 flex items-center gap-3">
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => onWatch(movie)}
@@ -214,29 +218,30 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         <ThumbsUp className="w-5 h-5" />
                                     </button>
                                 </div>
+                            </div>
 
-                                <div className="fixed right-12 bottom-10">
-                                    <button
-                                        onClick={() => setIsMuted(!isMuted)}
-                                        className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-white/10 border-2 border-white/20 rounded-full text-white transition-all"
-                                    >
-                                        {isMuted ? (
-                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
-                                                <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/>
-                                            </svg>
-                                        ) : (
-                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
-                                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                                            </svg>
-                                        )}
-                                    </button>
-                                </div>
+                            {/* Volume Button - Positioned absolutely to the right */}
+                            <div className="absolute right-6 md:right-12 bottom-10 z-30">
+                                <button
+                                    onClick={() => setIsMuted(!isMuted)}
+                                    className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-white/10 border-2 border-white/20 rounded-full text-white transition-all"
+                                >
+                                    {isMuted ? (
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                                            <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/>
+                                        </svg>
+                                    ) : (
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                        </svg>
+                                    )}
+                                </button>
                             </div>
                         </div>
 
                         {/* Body Section */}
-                        <div className="px-12 pb-12 pt-0 bg-[#181818]">
+                        <div className="px-6 md:px-12 pb-12 pt-0 bg-[#181818]">
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
                                 {/* Left Column: Summary */}
                                 <div className="space-y-5">
