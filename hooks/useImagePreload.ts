@@ -62,11 +62,7 @@ export function useMultipleImagePreload(urls: string[]) {
   }, []);
 
   useEffect(() => {
-    if (urls.length === 0) {
-      setLoadedImages(prev => prev.size > 0 ? new Set() : prev);
-      setErrorImages(prev => prev.size > 0 ? new Set() : prev);
-      return;
-    }
+    if (urls.length === 0) return;
 
     // Reset states
     setLoadedImages(new Set());

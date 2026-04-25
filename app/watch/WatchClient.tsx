@@ -354,7 +354,7 @@ function WatchContent() {
         }, CREATOR_AUTO_PLAY_INTERVAL);
 
         return () => clearInterval(interval);
-    }, [isCreatorPaused, creatorSeries.length, CREATOR_AUTO_PLAY_INTERVAL]);
+    }, [isCreatorPaused, creatorSeries.length]);
 
     // Limpar timeout ao desmontar
     useEffect(() => {
@@ -437,12 +437,12 @@ function WatchContent() {
 
             // Busca dados básicos do TMDB via proxy
             const response = await fetch(`/api/content/${endpoint}/${tmdbIdNum}?language=pt-BR`);
-            if (!response.ok) return {} as Movie; // Retorna objeto vazio tipado em vez de any
+            if (!response.ok) return {} as any; // Retorna objeto vazio em vez de null para evitar erro do React Query
             const tmdbData = await response.json();
 
             // Verificar se temos dados válidos
             if (!tmdbData || Object.keys(tmdbData).length === 0) {
-                return {} as Movie;
+                return {} as any;
             }
 
             const title = tmdbData.title || tmdbData.name || 'Untitled';
@@ -499,7 +499,7 @@ function WatchContent() {
     const imagesToPreload = movie ? [
         movie.backdrop_url,
         movie.poster_url
-    ].filter((url): url is string => !!url) : [];
+    ].filter(Boolean) : [];
 
     const preloadedImages = useImagePreload(imagesToPreload);
 
@@ -552,7 +552,7 @@ function WatchContent() {
                     TMDBService.fetchSimilar(movie.tmdb_id, true),
                     TMDBService.fetchMovieVideos(movie.tmdb_id, true),
                     TMDBService.fetchMovieKeywords(movie.tmdb_id, true),
-                    TMDBService.fetchSeriesFullDetails(movie.tmdb_id),
+                    (TMDBService as any).fetchSeriesFullDetails ? (TMDBService as any).fetchSeriesFullDetails(movie.tmdb_id) : Promise.resolve(null),
                     TMDBService.fetchMovieLogos(movie.tmdb_id, true)
                 ]);
 
@@ -565,12 +565,14 @@ function WatchContent() {
                     }
                 }
 
-                let creatorSeriesData: Movie[] = [];
+                let creatorSeriesData = [];
                 let creatorInfoData = null;
                 if (fullDetails?.created_by && fullDetails.created_by.length > 0) {
                     creatorInfoData = fullDetails.created_by[0];
-                    const cs = await TMDBService.fetchSeriesByCreator(creatorInfoData.id, movie.tmdb_id);
-                    creatorSeriesData = cs.map((s, i) => ({ ...s, id: `creator-${i}` }));
+                    if ((TMDBService as any).fetchSeriesByCreator) {
+                        const cs = await (TMDBService as any).fetchSeriesByCreator(creatorInfoData.id, movie.tmdb_id);
+                        creatorSeriesData = cs.map((s: any, i: number) => ({ ...s, id: `creator-${i}` }));
+                    }
                 }
 
                 return {
@@ -579,7 +581,7 @@ function WatchContent() {
                     seasonData,
                     creatorInfoData,
                     creatorSeriesData,
-                    similar: similar.map((s, i) => ({ ...s, id: `similar-${i}` })),
+                    similar: similar.map((s: any, i: number) => ({ ...s, id: `similar-${i}` })),
                     videos,
                     keywordsData,
                     logosData
@@ -602,7 +604,7 @@ function WatchContent() {
                     isSeries: false,
                     details,
                     collectionData,
-                    similar: similar.map((s, i) => ({ ...s, id: `similar-${i}` })),
+                    similar: similar.map((s: any, i: number) => ({ ...s, id: `similar-${i}` })),
                     videos,
                     keywordsData,
                     logosData
@@ -620,8 +622,8 @@ function WatchContent() {
         if (fetchedDetails.isSeries) {
             if (fetchedDetails.seriesData) setSeriesDetails(fetchedDetails.seriesData);
             if (fetchedDetails.seasonData) {
-                const { season_number, ...seasonData } = fetchedDetails.seasonData;
-                setSeasonDetails(seasonData as any); // Type assertion for seasonDetails state
+                const { season_number, ...seasonData } = fetchedDetails.seasonData as any;
+                setSeasonDetails(seasonData);
                 setSelectedSeason(season_number);
                 setSelectedEpisode(1);
             }
@@ -707,7 +709,6 @@ function WatchContent() {
         if (!movie?.tmdb_id) return;
 
         const fetchBackdrops = async () => {
-            if (!movie?.tmdb_id) return;
             const images = await TMDBService.fetchMovieImages(movie.tmdb_id, movie.type === 'series');
             if (images.length > 0) {
                 setBackdrops(images);
