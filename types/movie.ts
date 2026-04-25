@@ -17,6 +17,7 @@ export interface Movie {
     category?: 'trending' | 'trending_today' | 'top_rated' | 'coming_soon' | 'recommended' | 'top_10' | 'action' | 'family' | 'scifi' | 'critics';
     tmdb_id?: number;
     listItemId?: string;
+    rank?: number;
 }
 
 export interface UserListItem {

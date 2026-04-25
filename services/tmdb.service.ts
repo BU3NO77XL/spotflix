@@ -2,13 +2,13 @@
 export class TMDBApiService {
   private static readonly BASE_URL = '/api/content';
 
-  private static async fetchFromTMDB(endpoint: string): Promise<any> {
+  private static async fetchFromTMDB<T = unknown>(endpoint: string): Promise<T> {
     try {
       const response = await fetch(`${this.BASE_URL}${endpoint}`);
       if (!response.ok) {
         throw new Error(`TMDB API error: ${response.status}`);
       }
-      return await response.json();
+      return await response.json() as T;
     } catch (error) {
       console.error('TMDB API call failed:', error);
       throw error;
