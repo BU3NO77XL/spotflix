@@ -1282,7 +1282,7 @@ function WatchContent() {
 
                     {/* Seletor de temporadas e carrossel de episódios para séries */}
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
-                        <section className="py-8">
+                        <section className="py-8 border-t border-white/10">
 
                             {/* Cabeçalho da seção */}
                             <div className="mb-6">
@@ -1441,51 +1441,58 @@ function WatchContent() {
 
                     {/* Quick Info para SÉRIES - aparece DEPOIS dos episódios */}
                     {isSeries && (
-                        <section className="py-6 border-t border-white/10">
-                            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
+                        <section className="py-6 border-b border-white/10">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
 
                                 {seriesDetails?.director && (
-                                    <span>Criação: <span className="text-gray-300">{seriesDetails.director}</span></span>
+                                    <>
+                                        <span>Criação: <span className="text-gray-300">{seriesDetails.director}</span></span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
+                                    </>
                                 )}
 
                                 {/* Star Rating based on Score */}
                                 {(movie.score ?? 0) > 0 && (
-                                    <div className="flex items-center gap-2" title={`Avaliação: ${movie.score}/10`}>
-                                        <span>Avaliação do público:</span>
-                                        <div className="flex relative">
-                                            {[1, 2, 3, 4, 5].map((star) => {
-                                                const ratingValue = (movie.score ?? 0) / 2; // Convert 0-10 to 0-5
-                                                const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
+                                    <>
+                                        <div className="flex items-center gap-2" title={`Avaliação: ${movie.score}/10`}>
+                                            <span>Avaliação:</span>
+                                            <div className="flex relative">
+                                                {[1, 2, 3, 4, 5].map((star) => {
+                                                    const ratingValue = (movie.score ?? 0) / 2; // Convert 0-10 to 0-5
+                                                    const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
 
-                                                return (
-                                                    <div key={star} className="relative w-4 h-4 mr-0.5">
-                                                        <svg
-                                                            className="w-full h-full"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <defs>
-                                                                <linearGradient id={`starGradient-series-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="white" />
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
-                                                                </linearGradient>
-                                                            </defs>
-                                                            <path
-                                                                fill={`url(#starGradient-series-${star}-${movie.id})`}
-                                                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                );
-                                            })}
+                                                    return (
+                                                        <div key={star} className="relative w-4 h-4 mr-0.5">
+                                                            <svg
+                                                                className="w-full h-full"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <defs>
+                                                                    <linearGradient id={`starGradient-series-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                        <stop offset={`${fillPercentage}%`} stopColor="white" />
+                                                                        <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
+                                                                    </linearGradient>
+                                                                </defs>
+                                                                <path
+                                                                    fill={`url(#starGradient-series-${star}-${movie.id})`}
+                                                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
                                         </div>
-                                        <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
-                                    </div>
+                                        <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
+                                    </>
                                 )}
 
                                 {/* Informações adicionais para séries */}
                                 {seriesDetails && (
                                     <>
                                         <span>Data de lançamento: <span className="text-gray-300">{seriesDetails.first_air_date}</span></span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
                                         <span>Última data: <span className="text-gray-300">{seriesDetails.last_air_date}</span></span>
                                     </>
                                 )}
@@ -1825,7 +1832,7 @@ function WatchContent() {
                         <CastSkeleton />
                     ) : cast.length > 0 && (
                         <section
-                            className="py-8"
+                            className="py-8 border-t border-b border-white/10"
                             aria-label="Elenco principal do filme"
                         >
                             <CastSlider cast={cast} />
