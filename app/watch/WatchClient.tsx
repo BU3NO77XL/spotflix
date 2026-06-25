@@ -1233,6 +1233,7 @@ function WatchContent() {
 
                     {/* Synopsis */}
                     <section className="py-8">
+                        <h2 className="text-white text-xl font-semibold mb-3">Descrição</h2>
                         <p className="text-gray-200 text-base sm:text-base leading-relaxed max-w-4xl">
                             {!isSynopsisExpanded && synopsis.length > SYNOPSIS_LIMIT
                                 ? `${synopsis.slice(0, SYNOPSIS_LIMIT)}...`
@@ -1478,6 +1479,7 @@ function WatchContent() {
                     {/* Quick Info para SÉRIES - aparece DEPOIS dos episódios */}
                     {isSeries && (
                         <section className="py-6 border-b border-white/10">
+                            <h2 className="text-white text-xl font-semibold mb-4">Detalhes</h2>
                             <div className="flex flex-col lg:flex-col gap-3 text-sm text-gray-500">
 
                                 {seriesDetails?.director && (
