@@ -571,11 +571,16 @@ function WatchContent() {
     });
 
     const movie = movieById || movieByTmdb;
+    
     // Se temos um override local (clique na Coleção), usar os dados básicos dele
     // enquanto o React Query busca os dados completos em background
     const isLoading = localOverride
         ? false  // com override local, nunca mostra loading — dados básicos já disponíveis
         : (isLoadingById || isLoadingByTmdb);
+
+    // Se não estamos carregando mas também não temos filme, algo deu errado
+    const hasValidData = movie && Object.keys(movie).length > 0 && movie.tmdb_id;
+    const shouldShowError = !isLoading && !hasValidData && isMounted;
 
     // Determinar se é série ou filme (precisa estar antes dos useEffects que usam)
     const isSeries = movie && movie.type === 'series';
@@ -940,6 +945,24 @@ function WatchContent() {
     if (!isMounted || isLoading || !movie || Object.keys(movie).length === 0) {
         console.log(`%c[WATCH PERF] ⏳ Mostrando WatchLoading — isMounted=${isMounted} isLoading=${isLoading} movie=${!!movie} (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#f80;font-weight:bold');
         return <WatchLoading />;
+    }
+
+    // Se não está carregando mas também não tem dados válidos, mostrar erro
+    if (shouldShowError) {
+        return (
+            <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
+                <div className="text-center max-w-md">
+                    <h1 className="text-white text-2xl font-bold mb-4">Conteúdo não encontrado</h1>
+                    <p className="text-gray-400 mb-6">Não foi possível carregar as informações deste título.</p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="bg-white text-black px-6 py-2 rounded font-semibold hover:bg-gray-200 transition"
+                    >
+                        Voltar para Home
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     // Dados derivados de série ou filme
