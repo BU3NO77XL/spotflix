@@ -349,6 +349,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         {similar.map((item, idx) => (
                                             <div 
                                                 key={idx}
+                                                onClick={() => onWatch(item)}
                                                 className="bg-[#232323] rounded-md overflow-hidden group cursor-pointer shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                                             >
                                                 <div className="relative h-[141px]">

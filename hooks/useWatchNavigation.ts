@@ -1,18 +1,22 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Movie } from '@/types/movie';
 
 /**
  * Hook centralizado para navegar para /watch sem round-trip ao servidor.
- * - Pré-popula o cache React Query com os dados que já temos
- * - Invalida para forçar revalidação em background (score, duration, etc.)
- * - Usa router.push apenas para atualizar a URL no histórico do browser
+ * 
+ * ESTRATÉGIA:
+ * - Se já estiver em /watch: usa localOverride (troca instantânea via state, zero latência)
+ * - Se vier de fora (home, my-list): pré-popula cache + router.push (latência reduzida)
+ * 
+ * O localOverride elimina completamente o round-trip ao servidor em produção.
  */
-export function useWatchNavigation() {
+export function useWatchNavigation(setLocalOverride?: (override: any) => void) {
     const router = useRouter();
+    const pathname = usePathname();
     const queryClient = useQueryClient();
 
     const navigateToWatch = useCallback((movie: Movie) => {
@@ -28,13 +32,32 @@ export function useWatchNavigation() {
         //    (score real, duration, ageRating, backdrop_url)
         queryClient.invalidateQueries({ queryKey: key });
 
-        // 3. Navegar — com cache pré-populado, isLoading=false instantaneamente
-        const url = movie.id && !movie.id.startsWith('search-') && !movie.id.startsWith('tmdb-') && !movie.id.startsWith('similar-') && !movie.id.startsWith('creator-')
-            ? `/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${type}`
-            : `/watch?ref=${movie.tmdb_id}&type=${type}`;
+        // 3. Decidir estratégia de navegação baseado no contexto
+        const isAlreadyOnWatchPage = pathname === '/watch';
 
-        router.push(url);
-    }, [router, queryClient]);
+        if (isAlreadyOnWatchPage && setLocalOverride) {
+            // FAST PATH: já estamos em /watch, trocar via state local (zero servidor)
+            setLocalOverride({
+                tmdbId: String(movie.tmdb_id),
+                mediaType: type,
+                title: movie.title,
+                poster_url: movie.poster_url,
+                backdrop_url: movie.backdrop_url,
+                year: movie.year
+            });
+
+            // Atualizar URL sem recarregar (para histórico do browser funcionar)
+            const url = `/watch?ref=${movie.tmdb_id}&type=${type}`;
+            window.history.replaceState(null, '', url);
+        } else {
+            // SLOW PATH: vindo de outra página, usar router.push (com cache já populado)
+            const url = movie.id && !movie.id.startsWith('search-') && !movie.id.startsWith('tmdb-') && !movie.id.startsWith('similar-') && !movie.id.startsWith('creator-')
+                ? `/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${type}`
+                : `/watch?ref=${movie.tmdb_id}&type=${type}`;
+
+            router.push(url);
+        }
+    }, [router, pathname, queryClient, setLocalOverride]);
 
     return { navigateToWatch };
 }

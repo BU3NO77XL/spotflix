@@ -19,6 +19,7 @@ import VideoPlayer from '@/components/streaming/VideoPlayer';
 import MovieTitle from '@/components/streaming/MovieTitle';
 import { cn } from '@/lib/utils';
 import { useWatchNavigation } from '@/hooks/useWatchNavigation';
+import { useLogoStore } from '@/stores/logoStore';
 import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 
 // Hook para preload de imagens
@@ -163,8 +164,6 @@ function WatchLoading() {
 function WatchContent() {
     const queryClient = useQueryClient();
     const router = useRouter();
-    const { navigateToWatch } = useWatchNavigation();
-    const { getLogosForMovie } = useLogoStore();
     const searchParams = useSearchParams();
     const movieId = searchParams.get('id');
     const urlTmdbId = searchParams.get('ref');
@@ -180,6 +179,11 @@ function WatchContent() {
         backdrop_url: string;
         year: number;
     } | null>(null);
+
+    // Hook de navegação otimizada (recebe setLocalOverride para fast-path)
+    const { navigateToWatch } = useWatchNavigation(setLocalOverride);
+    
+    const { getLogosForMovie } = useLogoStore();
 
     // Valores ativos (override local tem prioridade sobre URL)
     const tmdbId = localOverride?.tmdbId ?? urlTmdbId;
@@ -927,7 +931,8 @@ function WatchContent() {
     const handleSimilarMovieClick = (similarMovie: Movie) => {
         // Verificar se temos um filme válido
         if (similarMovie && Object.keys(similarMovie).length > 0) {
-            setSelectedModalMovie(similarMovie);
+            // Navegação direta (fast-path via localOverride se já em /watch)
+            navigateToWatch(similarMovie);
         }
     };
 
