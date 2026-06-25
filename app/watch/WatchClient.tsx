@@ -576,11 +576,21 @@ function WatchContent() {
     // enquanto o React Query busca os dados completos em background
     const isLoading = localOverride
         ? false  // com override local, nunca mostra loading — dados básicos já disponíveis
-        : (isLoadingById || isLoadingByTmdb);
+        : movieId
+            ? isLoadingById  // tem movieId: só espera a query por ID
+            : isLoadingByTmdb; // só tmdbId: espera a query por tmdb
+
+    // Timeout de segurança: se demorar mais de 8s e ainda não tiver dados, mostrar erro
+    const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+    useEffect(() => {
+        if (!isLoading) { setLoadingTimedOut(false); return; }
+        const t = setTimeout(() => setLoadingTimedOut(true), 8000);
+        return () => clearTimeout(t);
+    }, [isLoading, tmdbId, movieId]);
 
     // Se não estamos carregando mas também não temos filme, algo deu errado
     const hasValidData = movie && Object.keys(movie).length > 0 && movie.tmdb_id;
-    const shouldShowError = !isLoading && !hasValidData && isMounted;
+    const shouldShowError = ((!isLoading && !hasValidData) || loadingTimedOut) && isMounted;
 
     // Determinar se é série ou filme (precisa estar antes dos useEffects que usam)
     const isSeries = movie && movie.type === 'series';

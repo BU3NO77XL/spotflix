@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/dataClient';
@@ -112,6 +112,17 @@ export default function Home() {
 
   const featuredMovies = movies.filter((m: Movie) => m.is_featured);
   const trendingTodayMovies = movies.filter((m: Movie) => m.category === 'trending_today');
+
+  // Embaralha uma vez quando os filmes carregam, varia o backdrop inicial a cada visita
+  const shuffledHeroMovies = useMemo(() => {
+    const pool = trendingTodayMovies.length > 0
+      ? trendingTodayMovies
+      : featuredMovies.length > 0
+        ? featuredMovies
+        : movies.slice(0, 10);
+    return [...pool].sort(() => Math.random() - 0.5);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movies.length]); // só re-embaralha quando a lista de filmes muda
   const trendingMovies = movies.filter((m: Movie) => m.category === 'trending');
   const topRatedMovies = movies.filter((m: Movie) => m.category === 'top_rated');
   const comingSoonMovies = movies.filter((m: Movie) => m.category === 'coming_soon');
@@ -167,13 +178,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#121212]">
       {/* Hero - Prioriza filmes em alta do dia */}
       <HeroSection
-        featuredMovies={
-          trendingTodayMovies.length > 0
-            ? trendingTodayMovies
-            : featuredMovies.length > 0
-              ? featuredMovies
-              : movies.slice(0, 3)
-        }
+        featuredMovies={shuffledHeroMovies.length > 0 ? shuffledHeroMovies : movies.slice(0, 3)}
         onWatch={handleWatch}
         onMoreInfo={handleMoreInfo}
       />
