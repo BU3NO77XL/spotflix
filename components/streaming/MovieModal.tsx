@@ -6,6 +6,7 @@ import { X, Play, Plus, ThumbsUp, Volume2, VolumeX, Check, Star } from 'lucide-r
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
+import LoginRequiredModal from './LoginRequiredModal';
 
 interface MovieModalProps {
     movie: Movie | null;
@@ -22,6 +23,17 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoLoading, setLogoLoading] = useState(false);
     const [isOnNetflix, setIsOnNetflix] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+
+    const handleAddToListGuarded = (movie: Movie, listType: 'favorites' | 'watch_later') => {
+        // Verificação de autenticação: se não houver sessão, exibe o modal de login
+        const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
+        if (!isAuthenticated) {
+            setShowLoginModal(true);
+            return;
+        }
+        onAddToList(movie, listType);
+    };
 
     useEffect(() => {
         if (isOpen && movie) {
@@ -78,6 +90,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const displayTitle = titleLines.length > 2 ? [titleLines.slice(0, Math.ceil(titleLines.length/2)).join(' '), titleLines.slice(Math.ceil(titleLines.length/2)).join(' ')] : [movie.title];
 
     return (
+        <>
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-start justify-center px-4 py-8 md:p-8 overflow-y-auto scrollbar-hide">
@@ -205,14 +218,14 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </button>
 
                                     <button
-                                        onClick={() => onAddToList(movie, 'watch_later')}
+                                        onClick={() => handleAddToListGuarded(movie, 'watch_later')}
                                         className="w-10 h-10 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
                                     >
                                         <Plus className="w-7 h-7" />
                                     </button>
                                     
                                     <button
-                                        onClick={() => onAddToList(movie, 'favorites')}
+                                        onClick={() => handleAddToListGuarded(movie, 'favorites')}
                                         className="w-10 h-10 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
                                     >
                                         <ThumbsUp className="w-5 h-5" />
@@ -413,5 +426,12 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                 </div>
             )}
         </AnimatePresence>
+
+        {/* Modal de Login Necessário */}
+        <LoginRequiredModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+        />
+        </>
     );
 }
