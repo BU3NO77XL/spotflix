@@ -24,7 +24,13 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#121212",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+    { media: "(prefers-color-scheme: light)", color: "#121212" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -54,10 +60,11 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#121212" />
         {/* iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
         <meta name="apple-mobile-web-app-title" content="WEBFLIX" />
-        {/* Android */}
+        {/* Android - força navbar virtual escura */}
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
