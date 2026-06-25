@@ -640,21 +640,44 @@ function WatchContent() {
         setCreatorInfo(null);
     }, [movieId, tmdbId]);
 
-    const { data: fetchedDetails, isLoading: isLoadingDetailsQuery } = useQuery({
-        queryKey: ['watchDetails', movie?.tmdb_id, movie?.type],
+    // Query rápida só para logos — resolve antes dos outros detalhes
+    // Isso faz o título personalizado aparecer sem esperar todos os fetches
+    const { data: quickLogosData } = useQuery({
+        queryKey: ['watchLogos', movie?.tmdb_id, movie?.type],
+        queryFn: async () => {
+            if (!movie?.tmdb_id) return [];
+            return TMDBService.fetchMovieLogos(Number(movie.tmdb_id), movie.type === 'series');
+        },
+        enabled: !!movie?.tmdb_id,
+        staleTime: 1000 * 60 * 60, // logos mudam raramente — cache 1h
+    });
+
+    // Aplicar logos rápidos assim que chegarem (antes do fetchedDetails completo)
+    useEffect(() => {
+        if (quickLogosData && quickLogosData.length > 0 && logos.length === 0) {
+            setLogos(quickLogosData);
+        }
+    }, [quickLogosData, logos.length]);
+
+    const { data: fetchedDetails, isLoading: isLoadingDetailsQuery } = useQuery({        queryKey: ['watchDetails', movie?.tmdb_id, movie?.type],
         queryFn: async () => {
             if (!movie?.tmdb_id) return null;
             const tmdbIdNum = Number(movie.tmdb_id);
             const isSeriesType = movie.type === 'series';
 
             if (isSeriesType) {
-                const [seriesData, similar, videos, keywordsData, fullDetails, logosData] = await Promise.all([
+                // ── FASE 1: crítico (logos + detalhes básicos) em paralelo
+                const [seriesData, logosData] = await Promise.all([
                     TMDBService.fetchSeriesDetails(tmdbIdNum),
+                    TMDBService.fetchMovieLogos(tmdbIdNum, true),
+                ]);
+
+                // ── FASE 2: secundário em paralelo (não bloqueia fase 1)
+                const [similar, videos, keywordsData, fullDetails] = await Promise.all([
                     TMDBService.fetchSimilar(tmdbIdNum, true),
                     TMDBService.fetchMovieVideos(tmdbIdNum, true),
                     TMDBService.fetchMovieKeywords(tmdbIdNum, true),
                     (TMDBService as any).fetchSeriesFullDetails ? (TMDBService as any).fetchSeriesFullDetails(tmdbIdNum) : Promise.resolve(null),
-                    TMDBService.fetchMovieLogos(tmdbIdNum, true)
                 ]);
 
                 let seasonData = null;
@@ -666,7 +689,7 @@ function WatchContent() {
                     }
                 }
 
-                let creatorSeriesData = [];
+                let creatorSeriesData: any[] = [];
                 let creatorInfoData = null;
                 if (fullDetails?.created_by && fullDetails.created_by.length > 0) {
                     creatorInfoData = fullDetails.created_by[0];
@@ -688,12 +711,17 @@ function WatchContent() {
                     logosData
                 };
             } else {
-                const [details, similar, videos, keywordsData, logosData] = await Promise.all([
+                // ── FASE 1: crítico (logos + detalhes básicos) em paralelo
+                const [details, logosData] = await Promise.all([
                     TMDBService.fetchMovieDetails(tmdbIdNum),
+                    TMDBService.fetchMovieLogos(tmdbIdNum, false),
+                ]);
+
+                // ── FASE 2: secundário em paralelo
+                const [similar, videos, keywordsData] = await Promise.all([
                     TMDBService.fetchSimilar(tmdbIdNum, false),
                     TMDBService.fetchMovieVideos(tmdbIdNum, false),
                     TMDBService.fetchMovieKeywords(tmdbIdNum, false),
-                    TMDBService.fetchMovieLogos(tmdbIdNum, false)
                 ]);
 
                 let collectionData = null;
@@ -718,8 +746,10 @@ function WatchContent() {
 
     useEffect(() => {
         if (!fetchedDetails) return;
-        
-        setIsLoadingDetails(true);
+
+        // Aplicar logos imediatamente (aparecem antes do resto)
+        if (fetchedDetails.logosData) setLogos(fetchedDetails.logosData);
+
         if (fetchedDetails.isSeries) {
             if (fetchedDetails.seriesData) setSeriesDetails(fetchedDetails.seriesData);
             if (fetchedDetails.seasonData) {
@@ -733,14 +763,12 @@ function WatchContent() {
             setSimilarMovies(fetchedDetails.similar);
             setTrailers(fetchedDetails.videos);
             setKeywords(fetchedDetails.keywordsData);
-            setLogos(fetchedDetails.logosData);
         } else {
             if (fetchedDetails.details) setMovieDetails(fetchedDetails.details);
             if (fetchedDetails.collectionData) setCollection(fetchedDetails.collectionData);
             setSimilarMovies(fetchedDetails.similar);
             setTrailers(fetchedDetails.videos);
             setKeywords(fetchedDetails.keywordsData);
-            setLogos(fetchedDetails.logosData);
         }
         setIsLoadingDetails(false);
     }, [fetchedDetails]);
@@ -1161,7 +1189,7 @@ function WatchContent() {
                             <MovieTitle
                                 title={movie.title}
                                 logos={logos}
-                                isLoading={isLoadingDetails}
+                                isLoading={isLoadingDetails && logos.length === 0}
                             />
                         </div>
 
