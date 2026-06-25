@@ -13,30 +13,30 @@ export default function Footer() {
     const sections = [
         {
             links: [
-                { label: 'Audio Description', href: '#' },
-                { label: 'Investor Relations', href: '#' },
-                { label: 'Legal Notices', href: '#' },
+                { label: 'Audiodescrição', href: '#' },
+                { label: 'Relações com Investidores', href: '#' },
+                { label: 'Avisos Legais', href: '#' },
             ]
         },
         {
             links: [
-                { label: 'Help Center', href: '#' },
-                { label: 'Jobs', href: '#' },
-                { label: 'Cookie Preferences', href: '#' },
+                { label: 'Central de Ajuda', href: '#' },
+                { label: 'Carreiras', href: '#' },
+                { label: 'Preferências de Cookies', href: '#' },
             ]
         },
         {
             links: [
-                { label: 'Gift Cards', href: '#' },
-                { label: 'Terms of Use', href: '#' },
-                { label: 'Corporate Information', href: '#' },
+                { label: 'Vale-presente', href: '#' },
+                { label: 'Termos de Uso', href: '#' },
+                { label: 'Informações Corporativas', href: '#' },
             ]
         },
         {
             links: [
-                { label: 'Media Center', href: '#' },
-                { label: 'Privacy', href: '#' },
-                { label: 'Contact Us', href: '#' },
+                { label: 'Central de Imprensa', href: '#' },
+                { label: 'Privacidade', href: '#' },
+                { label: 'Fale Conosco', href: '#' },
             ]
         }
     ];
@@ -81,17 +81,18 @@ export default function Footer() {
                 {/* Service Code Button */}
                 <div className="mb-6">
                     <button className="border border-[#808080] text-[#808080] text-[13px] px-2 py-1.5 hover:text-white hover:border-white transition-colors">
-                        Service Code
+                        Código de Serviço
                     </button>
                 </div>
 
                 {/* Copyright & Developed By */}
                 <div className="text-[#808080] text-[11px] space-y-4">
-                    <p>© 2025-{new Date().getFullYear()} SpotFlix, Inc.</p>
+                    <p>© 2025-{new Date().getFullYear()} RAVEFLIX, Inc.</p>
                     <div className="flex items-center gap-2">
-                        <span>Developed from</span>
+                        <span>Desenvolvido a partir de</span>
                         <span className="text-blue-500 font-medium">BUENO77XL</span>
                     </div>
+                    <p className="text-[#555] text-[11px]">este site não armazena mídias no servidor</p>
                 </div>
             </div>
         </footer>

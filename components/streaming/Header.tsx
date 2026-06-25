@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, User, Menu, X, Play, Star, Film, Tv, Settings, CreditCard, LogOut } from 'lucide-react';
+import { Search, User, Menu, X, Play, Star, Film, Tv, Settings, CreditCard, LogOut, Home, Flame, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import NetflixAvatar from '../NetflixAvatar';
@@ -14,12 +14,12 @@ import SearchOverlay from './SearchOverlay';
 import InstallButton from './InstallButton';
 
 const HEADER_ITEMS = [
-    { label: 'Home', href: '/' },
-    { label: 'TV Shows', href: '/?filter=series' },
-    { label: 'Movies', href: '/?filter=movie' },
-    { label: 'New & Popular', href: '/' },
-    { label: 'My List', href: '/my-list' },
-    { label: 'Browse by Languages', href: '/' },
+    { label: 'Início', href: '/' },
+    { label: 'Séries', href: '/?filter=series' },
+    { label: 'Filmes', href: '/?filter=movie' },
+    { label: 'Novidades', href: '/' },
+    { label: 'Minha Lista', href: '/my-list' },
+    { label: 'Idiomas', href: '/' },
 ];
 
 export default function Header() {
@@ -102,14 +102,18 @@ export default function Header() {
 
     const renderIcon = (label: string) => {
         switch (label) {
-            case 'Home':
-                return <Play className="w-5 h-5 text-gray-400" />;
-            case 'TV Shows':
+            case 'Início':
+                return <Home className="w-5 h-5 text-gray-400" />;
+            case 'Séries':
                 return <Tv className="w-5 h-5 text-gray-400" />;
-            case 'Movies':
+            case 'Filmes':
                 return <Film className="w-5 h-5 text-gray-400" />;
-            case 'My List':
+            case 'Novidades':
+                return <Flame className="w-5 h-5 text-gray-400" />;
+            case 'Minha Lista':
                 return <Star className="w-5 h-5 text-gray-400" />;
+            case 'Idiomas':
+                return <Globe className="w-5 h-5 text-gray-400" />;
             default:
                 return <Play className="w-5 h-5 text-gray-400" />;
         }
@@ -161,7 +165,7 @@ export default function Header() {
                                     <div className="w-[25px] h-[25px] rounded-sm bg-[#1DB954] flex items-center justify-center">
                                         <Play className="w-[14px] h-[14px] text-white fill-white" />
                                     </div>
-                                    <span className="hidden lg:inline text-[22px] tracking-tight font-bold">Spotflix</span>
+                                    <span className="text-[20px] md:text-[22px] tracking-tight font-bold">RAVEFLIX</span>
                                 </h1>
                             </Link>
 
