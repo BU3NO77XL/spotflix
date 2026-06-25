@@ -1742,7 +1742,7 @@ function WatchContent() {
                                                                     year: part.release_date ? new Date(part.release_date).getFullYear() : new Date().getFullYear(),
                                                                 });
 
-                                                                // Pre-popular o cache React Query
+                                                                // Pre-popular o cache React Query com dados básicos para renderização imediata
                                                                 const partData = {
                                                                     id: `tmdb-${part.id}`,
                                                                     title: part.title,
@@ -1761,6 +1761,8 @@ function WatchContent() {
                                                                     category: 'trending' as const,
                                                                 };
                                                                 queryClient.setQueryData(['movie', 'tmdb', String(part.id), 'movie'], partData);
+                                                                // Invalidar para forçar busca dos dados reais (score, duration, etc.) em background
+                                                                queryClient.invalidateQueries({ queryKey: ['movie', 'tmdb', String(part.id), 'movie'] });
 
                                                                 // Atualizar URL sem navegar (apenas para bookmarking/compartilhamento)
                                                                 window.history.replaceState(null, '', `/watch?ref=${part.id}`);
@@ -1770,9 +1772,35 @@ function WatchContent() {
                                                         }}
                                                         onMouseEnter={() => {
                                                             if (!isCurrentMovie) {
-                                                                // Prefetch da rota em produção + preload da API
+                                                                // Prefetch da rota + pré-carregar dados do filme para ter score/duration prontos no clique
                                                                 router.prefetch(`/watch?ref=${part.id}`);
-                                                                fetch(`/api/content/movie/${part.id}?language=pt-BR`).catch(() => {});
+                                                                // Pre-aquecer o cache React Query com dados reais no hover
+                                                                if (!queryClient.getQueryData(['movie', 'tmdb', String(part.id), 'movie'])) {
+                                                                    fetch(`/api/content/movie/${part.id}?language=pt-BR`)
+                                                                        .then(r => r.json())
+                                                                        .then(data => {
+                                                                            if (data?.id) {
+                                                                                queryClient.setQueryData(['movie', 'tmdb', String(part.id), 'movie'], {
+                                                                                    id: `tmdb-${part.id}`,
+                                                                                    title: data.title || part.title,
+                                                                                    type: 'movie' as const,
+                                                                                    year: data.release_date ? new Date(data.release_date).getFullYear() : new Date().getFullYear(),
+                                                                                    rating: 'NR',
+                                                                                    duration: data.runtime ? `${Math.floor(data.runtime / 60)}h ${data.runtime % 60}m` : '',
+                                                                                    genre: data.genres?.map((g: any) => g.name) || [],
+                                                                                    synopsis: data.overview || '',
+                                                                                    cast: [],
+                                                                                    director: '',
+                                                                                    poster_url: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : part.poster_path ? `https://image.tmdb.org/t/p/w500${part.poster_path}` : '',
+                                                                                    backdrop_url: data.backdrop_path ? `https://image.tmdb.org/t/p/original${data.backdrop_path}` : '',
+                                                                                    score: data.vote_average ? parseFloat(data.vote_average.toFixed(1)) : 0,
+                                                                                    tmdb_id: part.id,
+                                                                                    category: 'trending' as const,
+                                                                                });
+                                                                            }
+                                                                        })
+                                                                        .catch(() => {});
+                                                                }
                                                             }
                                                         }}
                                                         className={`shrink-0 group ${isCurrentMovie ? 'cursor-default' : 'cursor-pointer'} hover:scale-103 hover:-translate-y-1 transition-all duration-200`}
