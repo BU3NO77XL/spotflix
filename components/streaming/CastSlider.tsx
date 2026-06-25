@@ -336,8 +336,7 @@ export default function CastSlider({ cast }: CastSliderProps) {
                                     <div className="space-y-8">
                                         {actorDetails.biography && (
                                             <div>
-                                                <h4 className="text-white font-semibold text-lg mb-3 flex items-center gap-2">
-                                                    <div className="w-1 h-5 bg-[#1DB954] rounded-full"></div>
+                                                <h4 className="text-white font-semibold text-lg mb-3">
                                                     Biografia
                                                 </h4>
                                                 <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line bg-white/5 p-4 rounded-xl">
@@ -358,8 +357,7 @@ export default function CastSlider({ cast }: CastSliderProps) {
 
                                         {actorDetails.known_for && actorDetails.known_for.length > 0 && (
                                             <div>
-                                                <h4 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
-                                                    <div className="w-1 h-5 bg-[#1DB954] rounded-full"></div>
+                                                <h4 className="text-white font-semibold text-lg mb-4">
                                                     Conhecido por
                                                 </h4>
                                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
