@@ -19,6 +19,7 @@ import VideoPlayer from '@/components/streaming/VideoPlayer';
 import MovieTitle from '@/components/streaming/MovieTitle';
 import { cn } from '@/lib/utils';
 import { useLogoStore } from '@/stores/logoStore';
+import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 
 // Hook para preload de imagens
 const useImagePreload = (urls: string[]) => {
@@ -231,6 +232,7 @@ function WatchContent() {
     const [localFavorited, setLocalFavorited] = useState(false);
     const [localLiked, setLocalLiked] = useState(false);
     const [volume, setVolume] = useState(0);
+    const [showLoginModal, setShowLoginModal] = useState(false);
     const backdropVideoRef = useRef<HTMLVideoElement>(null);
     const episodesScrollRef = useRef<HTMLDivElement>(null);
     const collectionScrollRef = useRef<HTMLDivElement>(null);
@@ -771,7 +773,23 @@ function WatchContent() {
     const handleAddToList = () => {
         // Verificar se temos um filme válido
         if (!movie || Object.keys(movie).length === 0) return;
+        // Guard de autenticação
+        const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
+        if (!isAuthenticated) {
+            setShowLoginModal(true);
+            return;
+        }
         addToListMutation.mutate({ movie_id: movie.id, list_type: 'watch_later' });
+    };
+
+    const handleLikeAction = () => {
+        // Guard de autenticação para o botão de curtir
+        const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
+        if (!isAuthenticated) {
+            setShowLoginModal(true);
+            return;
+        }
+        setLocalLiked(!localLiked);
     };
 
     const handleSimilarMovieClick = (similarMovie: Movie) => {
@@ -933,8 +951,10 @@ function WatchContent() {
                         >
                             <button
                                 onClick={() => {
-                                    const playerSection = document.getElementById('player-section');
-                                    playerSection?.scrollIntoView({ behavior: 'smooth' });
+                                    const playerUrl = isSeries
+                                        ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                                        : `https://megaembed.com/embed/${movie.tmdb_id}`;
+                                    window.open(playerUrl, '_blank');
                                 }}
                                 className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 sm:px-8
                                     rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base
@@ -960,7 +980,7 @@ function WatchContent() {
                                     </svg>
                                 </button>
                                 <button
-                                    onClick={() => setLocalLiked(!localLiked)}
+                                    onClick={handleLikeAction}
                                     className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70 text-white p-2
                                         rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10
                                         focus:outline-none focus:ring-0"
@@ -1282,14 +1302,22 @@ function WatchContent() {
 
                     )}
 
-                    {/* Video Player */}
+                    {/* ═══════════════════════════════════════════════════════════
+                         PLAYER SECTION — DESATIVADO (comentado em 25/06/2026)
+                         
+                         Para REATIVAR o player com backdrop e iframe:
+                         1. Descomente todo o bloco abaixo (remova as barras e asteriscos)
+                         2. E remova a linha: const playerUrl = ...
+                         3. O botão "Assistir" acima controla a abertura do vídeo
+                         
+                         Código original comentado abaixo:
+                    ═══════════════════════════════════════════════════════════ */}
+                    {/* 
                     <section
                         id="player-section"
                         className="relative py-12"
                         aria-label="Video Player"
                     >
-
-                        {/* Backdrop Cinematográfico Artístico - Full Width */}
                         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
                             <img
                                 src={(movie.backdrop_url && movie.backdrop_url !== '')
@@ -1301,11 +1329,8 @@ function WatchContent() {
                                 className="w-full h-full object-cover grayscale brightness-50"
                                 aria-hidden="true"
                             />
-                            {/* Gradiente suave nas bordas para integrar com o fundo */}
                             <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
                         </div>
-
-
 
                         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
                             <iframe
@@ -1323,9 +1348,6 @@ function WatchContent() {
                             />
                         </div>
 
-
-
-                        {/* Player Original (Comentado)
                         <VideoPlayer
                             title={movie.title}
                             posterUrl={movie.poster_url}
@@ -1334,8 +1356,8 @@ function WatchContent() {
                             onPlay={() => setIsPlaying(true)}
                             onPause={() => setIsPlaying(false)}
                         />
-                        */}
                     </section>
+                    */}
 
 
                     {/* Collection/Franchise */}
@@ -1798,6 +1820,11 @@ function WatchContent() {
                     router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}`);
                 }}
                 onAddToList={() => { }}
+            />
+            {/* Modal de Login Necessário */}
+            <LoginRequiredModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
             />
         </div >
     );
