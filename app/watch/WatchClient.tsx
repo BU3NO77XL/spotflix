@@ -1096,7 +1096,17 @@ function WatchContent() {
                             </p>
                             */}
                             <button
-                                onClick={() => setIsPlaying(true)}
+                                onClick={() => {
+                                    console.log('Botão Assistir clicado, setIsPlaying(true)');
+                                    setIsPlaying(true);
+                                    // Scroll para o player após um pequeno delay
+                                    setTimeout(() => {
+                                        const playerSection = document.getElementById('player-section');
+                                        if (playerSection) {
+                                            playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }
+                                    }, 100);
+                                }}
                                 className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 sm:px-8
                                     rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base
                                     focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
@@ -1493,11 +1503,13 @@ function WatchContent() {
 
                     {/* Player Section */}
                     {isPlaying && (
-                        <section
-                            id="player-section"
-                            className="relative py-12"
-                            aria-label="Video Player"
-                        >
+                        <>
+                            {console.log('Player renderizando! isPlaying =', isPlaying)}
+                            <section
+                                id="player-section"
+                                className="relative py-12"
+                                aria-label="Video Player"
+                            >
                             <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
                                 <img
                                     src={(movie.backdrop_url && movie.backdrop_url !== '')
@@ -1528,6 +1540,7 @@ function WatchContent() {
                                 />
                             </div>
                         </section>
+                        </>
                     )}
 
                     {/* Collection/Franchise */}
