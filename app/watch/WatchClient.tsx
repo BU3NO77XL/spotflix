@@ -591,11 +591,11 @@ function WatchContent() {
     }, [movieId, tmdbId]);
 
     const { data: fetchedDetails, isLoading: isLoadingDetailsQuery } = useQuery({
-        queryKey: ['watchDetails', tmdbId, mediaType],
+        queryKey: ['watchDetails', movie?.tmdb_id, movie?.type],
         queryFn: async () => {
-            if (!tmdbId) return null;
-            const tmdbIdNum = Number(tmdbId);
-            const isSeriesType = mediaType === 'series';
+            if (!movie?.tmdb_id) return null;
+            const tmdbIdNum = Number(movie.tmdb_id);
+            const isSeriesType = movie.type === 'series';
 
             if (isSeriesType) {
                 const [seriesData, similar, videos, keywordsData, fullDetails, logosData] = await Promise.all([
@@ -662,7 +662,7 @@ function WatchContent() {
                 };
             }
         },
-        enabled: !!tmdbId,
+        enabled: !!movie?.tmdb_id,
         staleTime: 1000 * 60 * 30, // 30 minutes
     });
 
