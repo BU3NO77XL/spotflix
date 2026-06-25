@@ -203,12 +203,12 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
                             {/* Actions Area matching reference SVG structure */}
                             <div className="absolute left-6 md:left-12 bottom-10 z-30 flex items-center gap-3">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => onWatch(movie)}
-                                        className="bg-white hover:bg-[#e6e6e6] text-black font-bold h-[43px] px-6 rounded-[4px] transition-all flex items-center gap-2"
+                                        className="bg-white hover:bg-[#e6e6e6] text-black font-bold h-[48px] px-7 rounded-[4px] transition-all flex items-center gap-2"
                                     >
-                                        <svg width="18" height="22" viewBox="0 0 20 24" fill="black">
+                                        <svg width="20" height="24" viewBox="0 0 20 24" fill="black">
                                             <path d="M19.4951 10.5876C20.1603 10.9831 20.1436 11.9519 19.465 12.324L1.4809 22.1878C0.8145 22.5533 0 22.0711 0 21.311L0 0.7577C0 -0.01775 0.8444 -0.49812 1.5109 -0.10191L19.4951 10.5876Z" transform="translate(0, 1)"/>
                                         </svg>
                                         <span className="text-base font-bold">Assistir</span>
@@ -216,16 +216,16 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
                                     <button
                                         onClick={() => handleAddToListGuarded(movie, 'watch_later')}
-                                        className="w-10 h-10 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
+                                        className="w-12 h-12 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
                                     >
                                         <Plus className="w-7 h-7" />
                                     </button>
                                     
                                     <button
                                         onClick={() => handleAddToListGuarded(movie, 'favorites')}
-                                        className="w-10 h-10 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
+                                        className="w-12 h-12 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
                                     >
-                                        <ThumbsUp className="w-5 h-5" />
+                                        <ThumbsUp className="w-6 h-6" />
                                     </button>
                                 </div>
                             </div>
@@ -234,14 +234,14 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             <div className="absolute right-6 md:right-12 bottom-10 z-30">
                                 <button
                                     onClick={() => setIsMuted(!isMuted)}
-                                    className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-white/10 border-2 border-white/20 rounded-full text-white transition-all"
+                                    className="w-12 h-12 flex items-center justify-center bg-transparent hover:bg-white/10 border-2 border-white/20 rounded-full text-white transition-all"
                                 >
                                     {isMuted ? (
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
                                             <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/>
                                         </svg>
                                     ) : (
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
                                             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                                             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
                                         </svg>
