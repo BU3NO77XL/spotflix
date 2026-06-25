@@ -1703,6 +1703,8 @@ function WatchContent() {
                                                         }}
                                                         onMouseEnter={() => {
                                                             if (!isCurrentMovie) {
+                                                                // Prefetch da rota em produção + preload da API
+                                                                router.prefetch(`/watch?ref=${part.id}`);
                                                                 fetch(`/api/content/movie/${part.id}?language=pt-BR`).catch(() => {});
                                                             }
                                                         }}

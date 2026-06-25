@@ -1,16 +1,14 @@
 import { Metadata } from 'next';
 import WatchClient from './WatchClient';
-import { TMDBService } from '@/components/streaming/TMDBIntegration';
 
-export const revalidate = 3600; // Cache da página por 1 hora
+export const revalidate = 3600;
 
-type Props = {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
-
-export async function generateMetadata(props: Props): Promise<Metadata> {
+// generateMetadata com timeout para não bloquear a navegação em produção
+// Se a API demorar mais de 2s, retorna metadados genéricos e não segura o usuário
+export async function generateMetadata(
+    props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }
+): Promise<Metadata> {
     const searchParams = await props.searchParams;
-    const id = searchParams.id as string;
     const tmdbId = searchParams.ref as string;
     const mediaType = (searchParams.type as string) || 'movie';
 
@@ -21,22 +19,42 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         };
     }
 
-    try {
-        const data = (mediaType === 'series'
-            ? await TMDBService.fetchSeriesDetails(Number(tmdbId))
-            : await TMDBService.fetchMovieDetails(Number(tmdbId))) as any;
+    const embedUrl = mediaType === 'series'
+        ? `https://megaembed.com/embed/${tmdbId}/1/1`
+        : `https://megaembed.com/embed/${tmdbId}`;
 
+    const fallback: Metadata = {
+        title: 'Assistir - WEBFLIX',
+        description: 'Assista online com qualidade no WEBFLIX.',
+        other: {
+            'og:video': embedUrl,
+            'og:video:url': embedUrl,
+            'og:video:secure_url': embedUrl,
+        }
+    };
+
+    try {
+        // Timeout de 1.5s — se a API demorar mais, usa fallback e não bloqueia
+        const endpoint = mediaType === 'series'
+            ? `https://api.themoviedb.org/3/tv/${tmdbId}?language=pt-BR&api_key=${process.env.TMDB_API_KEY}`
+            : `https://api.themoviedb.org/3/movie/${tmdbId}?language=pt-BR&api_key=${process.env.TMDB_API_KEY}`;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1500);
+
+        const response = await fetch(endpoint, {
+            signal: controller.signal,
+            next: { revalidate: 3600 }
+        });
+        clearTimeout(timeout);
+
+        if (!response.ok) return fallback;
+
+        const data = await response.json();
         const title = data?.title || data?.name || 'Assistir';
-        const description = data?.overview || 'Assista online com qualidade no WEBFLIX.';
-        
-        // Prioridade: Backdrop -> Poster
+        const description = data?.overview || `Assista ${title} online com qualidade no WEBFLIX.`;
         const imagePath = data?.backdrop_path || data?.poster_path;
         const ogImage = imagePath ? `https://image.tmdb.org/t/p/w1280${imagePath}` : undefined;
-
-        // URL do embed para o RAVE
-        const embedUrl = mediaType === 'series'
-            ? `https://megaembed.com/embed/${tmdbId}/1/1`
-            : `https://megaembed.com/embed/${tmdbId}`;
 
         return {
             title: `${title} - WEBFLIX`,
@@ -46,15 +64,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
                 description,
                 type: mediaType === 'series' ? 'video.tv_show' : 'video.movie',
                 images: ogImage ? [{ url: ogImage, width: 1280, height: 720 }] : [],
-                videos: [
-                    {
-                        url: embedUrl,
-                        secureUrl: embedUrl,
-                        type: 'text/html',
-                        width: 1280,
-                        height: 720,
-                    }
-                ],
+                videos: [{ url: embedUrl, secureUrl: embedUrl, type: 'text/html', width: 1280, height: 720 }],
             },
             twitter: {
                 card: 'summary_large_image',
@@ -71,23 +81,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
                 'og:video:height': '720',
             }
         };
-    } catch (error) {
-        console.error('Error fetching metadata:', error);
-        
-        // Fallback caso a API do TMDB falhe
-        const embedUrl = mediaType === 'series'
-            ? `https://megaembed.com/embed/${tmdbId}/1/1`
-            : `https://megaembed.com/embed/${tmdbId}`;
-            
-        return {
-            title: 'Assistir - WEBFLIX',
-            description: 'Assista online com qualidade no WEBFLIX.',
-            other: {
-                'og:video': embedUrl,
-                'og:video:url': embedUrl,
-                'og:video:secure_url': embedUrl,
-            }
-        };
+    } catch {
+        return fallback;
     }
 }
 
