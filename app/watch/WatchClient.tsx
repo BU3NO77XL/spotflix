@@ -943,8 +943,6 @@ function WatchContent() {
         return <WatchLoading />;
     }
 
-    console.log(`%c[WATCH PERF] 🎬 CONTEÚDO RENDERIZANDO — movie="${(movie as any).title}" (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0f0;font-weight:bold;font-size:14px');
-
     // Dados derivados de série ou filme
     const cast = isSeries ? seriesDetails?.cast || [] : movieDetails?.cast || [];
     const synopsis = isSeries ? seriesDetails?.overview || movie.synopsis || '' : movieDetails?.overview || movie.synopsis || '';
