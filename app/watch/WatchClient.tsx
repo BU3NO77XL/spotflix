@@ -936,52 +936,6 @@ function WatchContent() {
         }
     };
 
-    // Efeito para tentar comunicar com o RAVE se estiver presente
-    useEffect(() => {
-        // Só roda no cliente
-        if (typeof window === 'undefined' || !movie) return;
-
-        // Detecta se está rodando dentro do RAVE
-        const isRave = navigator.userAgent.includes('Rave') || 
-                       (window as any).RaveApp;
-
-        if (isRave) {
-            const embedUrl = isSeries
-                ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                : `https://megaembed.com/embed/${movie.tmdb_id}`;
-
-            const videoInfo = {
-                url: embedUrl,
-                title: movie.title,
-                thumbnail: movie.backdrop_url || movie.poster_url,
-                type: 'iframe'
-            };
-
-            // Tenta diferentes métodos de comunicação com o RAVE
-            try {
-                // Método 1: API direta do RAVE (se disponível)
-                if ((window as any).RaveApp?.setVideo) {
-                    (window as any).RaveApp.setVideo(videoInfo);
-                }
-
-                // Método 2: postMessage
-                window.postMessage({ 
-                    type: 'RAVE_VIDEO_DETECTED', 
-                    data: videoInfo 
-                }, '*');
-
-                // Método 3: CustomEvent
-                window.dispatchEvent(new CustomEvent('rave:video-detected', {
-                    detail: videoInfo
-                }));
-
-                console.log('RAVE detection executed:', videoInfo);
-            } catch (e) {
-                console.log('RAVE detection attempt failed:', e);
-            }
-        }
-    }, [movie, isSeries, selectedSeason, selectedEpisode]);
-
     // Verificar se temos um filme válido antes de renderizar
     // Removida a verificação de isLogoReady para evitar que a página fique travada no loading
     if (!isMounted || isLoading || !movie || Object.keys(movie).length === 0) {
@@ -1018,86 +972,8 @@ function WatchContent() {
     const animatedBackdropUrl = animatedBackdrop?.url || null;
     const hasBackdropAudio = animatedBackdrop?.hasAudio || false;
 
-    // URL do player embed
-    const embedUrl = isSeries
-        ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-        : `https://megaembed.com/embed/${movie.tmdb_id}`;
-
-    // Schema.org VideoObject para compatibilidade com RAVE
-    const videoObjectSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'VideoObject',
-        'name': movie.title,
-        'description': synopsis,
-        'thumbnailUrl': movie.poster_url ? `https://image.tmdb.org/t/p/original${movie.poster_url.replace('https://image.tmdb.org/t/p/w500', '')}` : undefined,
-        'uploadDate': isSeries ? seriesDetails?.first_air_date : movieDetails?.overview ? new Date().toISOString() : undefined,
-        'duration': movie.duration ? `PT${Math.floor(Number(movie.duration.replace('h', '').replace('m', '').split('h')[0]) * 60 + Number(movie.duration.replace('h', '').replace('m', '').split('h')[1] || 0))}M` : undefined,
-        'contentUrl': embedUrl,
-        'embedUrl': embedUrl,
-        'interactionStatistic': {
-            '@type': 'InteractionCounter',
-            'interactionType': { '@type': 'WatchAction' },
-            'userInteractionCount': Math.floor(Math.random() * 10000) + 1000
-        },
-        'potentialAction': {
-            '@type': 'WatchAction',
-            'target': {
-                '@type': 'EntryPoint',
-                'urlTemplate': embedUrl,
-                'actionPlatform': [
-                    'http://schema.org/DesktopWebPlatform',
-                    'http://schema.org/MobileWebPlatform',
-                    'http://schema.org/IOSPlatform',
-                    'http://schema.org/AndroidPlatform'
-                ]
-            }
-        }
-    };
-
     return (
         <div className="min-h-screen bg-[#121212]">
-            {/* Schema.org VideoObject para RAVE detectar o vídeo */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(videoObjectSchema) }}
-            />
-            
-            {/* Iframe oculto para o RAVE detectar - NÃO REMOVER */}
-            <iframe
-                src={embedUrl}
-                style={{
-                    position: 'fixed',
-                    top: '-9999px',
-                    left: '-9999px',
-                    width: '1px',
-                    height: '1px',
-                    opacity: 0,
-                    pointerEvents: 'none',
-                    visibility: 'hidden'
-                }}
-                title="RAVE Video Source"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-            />
-            
-            {/* Elemento de vídeo fake para ajudar o RAVE a detectar */}
-            <video
-                style={{
-                    position: 'fixed',
-                    top: '-9999px',
-                    left: '-9999px',
-                    width: '1px',
-                    height: '1px',
-                    opacity: 0,
-                    pointerEvents: 'none',
-                    visibility: 'hidden'
-                }}
-                src={embedUrl}
-                poster={movie.backdrop_url || movie.poster_url}
-                title={movie.title}
-                data-rave-video="true"
-            />
-            
             {/* Hero Section - Similar to MovieModal */}
             <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh] overflow-hidden">
                 {/* Backdrop - Video animado ou Imagem */}
@@ -1220,12 +1096,7 @@ function WatchContent() {
                             </p>
                             */}
                             <button
-                                onClick={() => {
-                                    const playerUrl = isSeries
-                                        ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                                        : `https://megaembed.com/embed/${movie.tmdb_id}`;
-                                    window.location.href = playerUrl;
-                                }}
+                                onClick={() => setIsPlaying(true)}
                                 className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 sm:px-8
                                     rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base
                                     focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
@@ -1620,63 +1491,44 @@ function WatchContent() {
                         </section>
                     )}
 
-                    {/* ═══════════════════════════════════════════════════════════
-                         PLAYER SECTION — DESATIVADO (comentado em 25/06/2026)
-                         
-                         Para REATIVAR o player com backdrop e iframe:
-                         1. Descomente todo o bloco abaixo (remova as barras e asteriscos)
-                         2. E remova a linha: const playerUrl = ...
-                         3. O botão "Assistir" acima controla a abertura do vídeo
-                         
-                         Código original comentado abaixo:
-                    ═══════════════════════════════════════════════════════════ */}
-                    {/* 
-                    <section
-                        id="player-section"
-                        className="relative py-12"
-                        aria-label="Video Player"
-                    >
-                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
-                            <img
-                                src={(movie.backdrop_url && movie.backdrop_url !== '')
-                                    ? movie.backdrop_url
-                                    : (movie.poster_url && movie.poster_url !== '')
-                                        ? movie.poster_url
-                                        : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=1920&h=1080&fit=crop'}
-                                alt=""
-                                className="w-full h-full object-cover grayscale brightness-50"
-                                aria-hidden="true"
-                            />
-                            <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
-                        </div>
+                    {/* Player Section */}
+                    {isPlaying && (
+                        <section
+                            id="player-section"
+                            className="relative py-12"
+                            aria-label="Video Player"
+                        >
+                            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
+                                <img
+                                    src={(movie.backdrop_url && movie.backdrop_url !== '')
+                                        ? movie.backdrop_url
+                                        : (movie.poster_url && movie.poster_url !== '')
+                                            ? movie.poster_url
+                                            : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=1920&h=1080&fit=crop'}
+                                    alt=""
+                                    className="w-full h-full object-cover grayscale brightness-50"
+                                    aria-hidden="true"
+                                />
+                                <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
+                            </div>
 
-                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
-                            <iframe
-                                src={
-                                    isSeries
-                                        ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                                        : `https://megaembed.com/embed/${movie.tmdb_id}`
-                                }
-                                width="100%"
-                                height="100%"
-                                frameBorder="0"
-                                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                                allowFullScreen
-                                className="w-full h-full"
-                            />
-                        </div>
-
-                        <VideoPlayer
-                            title={movie.title}
-                            posterUrl={movie.poster_url}
-                            backdropUrl={movie.backdrop_url}
-                            duration={movie.duration}
-                            onPlay={() => setIsPlaying(true)}
-                            onPause={() => setIsPlaying(false)}
-                        />
-                    </section>
-                    */}
-
+                            <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
+                                <iframe
+                                    src={
+                                        isSeries
+                                            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                                            : `https://megaembed.com/embed/${movie.tmdb_id}`
+                                    }
+                                    width="100%"
+                                    height="100%"
+                                    frameBorder="0"
+                                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                                    allowFullScreen
+                                    className="w-full h-full"
+                                />
+                            </div>
+                        </section>
+                    )}
 
                     {/* Collection/Franchise */}
                     {collection && collection.parts.length > 1 && (
