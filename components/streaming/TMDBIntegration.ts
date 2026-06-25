@@ -797,7 +797,6 @@ export const TMDBService = {
 
             const response = await fetch(endpoint);
 
-            // Verificar se a resposta é válida
             if (!response.ok) {
                 if (response.status === 404) {
                     console.warn(`Category ${category} not found for carousel backdrop`);
@@ -807,17 +806,15 @@ export const TMDBService = {
             }
 
             const data = await response.json();
-            const firstMovie = data.results?.[0];
+            const results = data.results || [];
 
-            if (!firstMovie) {
-                return null;
+            for (const movie of results) {
+                if (movie.backdrop_path) {
+                    return `${TMDB_IMAGE_BASE}/original${movie.backdrop_path}`;
+                }
             }
 
-            const backdropUrl = firstMovie?.backdrop_path
-                ? `${TMDB_IMAGE_BASE}/original${firstMovie.backdrop_path}`
-                : null;
-
-            return backdropUrl;
+            return null;
         } catch (error) {
             console.error('Error fetching carousel backdrop:', error);
             return null;
