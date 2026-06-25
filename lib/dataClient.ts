@@ -2,8 +2,8 @@ import { Movie, UserListItem } from '@/types/movie';
 
 // Simple localStorage-based storage for movies and user lists
 const STORAGE_KEYS = {
-    MOVIES: 'spotflix_movies',
-    USER_LIST: 'spotflix_user_list',
+    MOVIES: 'raveflix_movies',
+    USER_LIST: 'raveflix_user_list',
 };
 
 // Generate unique ID

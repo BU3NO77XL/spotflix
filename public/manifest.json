@@ -1,6 +1,6 @@
 {
-    "name": "SpotFlix",
-    "short_name": "SpotFlix",
+    "name": "RAVEFLIX",
+    "short_name": "RAVEFLIX",
     "description": "Your premier destination for movies and series.",
     "start_url": "/",
     "display": "standalone",

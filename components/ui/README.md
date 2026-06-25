@@ -1,6 +1,6 @@
-# 🎨 SpotFlix UI Components
+# 🎨 RAVEFLIX UI Components
 
-Sistema de componentes reutilizáveis para o SpotFlix, eliminando duplicação de código e garantindo consistência visual.
+Sistema de componentes reutilizáveis para o RAVEFLIX, eliminando duplicação de código e garantindo consistência visual.
 
 ## 📦 Componentes Disponíveis
 
@@ -64,7 +64,7 @@ Botão de reprodução configurável.
 ```
 
 **Variantes:**
-- `primary`: Verde SpotFlix (#1DB954)
+- `primary`: Verde RAVEFLIX (#1DB954)
 - `secondary`: Branco com texto preto
 - `ghost`: Transparente com borda
 
@@ -208,7 +208,7 @@ import Top10Card from '@/components/ui/Top10Card';
 // Azul para ficção científica
 <MiniCard accentColor="#3498DB" />
 
-// Verde padrão SpotFlix
+// Verde padrão RAVEFLIX
 <MiniCard accentColor="#1DB954" />
 ```
 

@@ -16,7 +16,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
     if (!tmdbId) {
         return {
-            title: 'Assistir - Spotflix',
+            title: 'Assistir - RAVEFLIX',
             description: 'Assista a milhares de filmes e séries online.',
         };
     }
@@ -27,31 +27,31 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
             : await TMDBService.fetchMovieDetails(Number(tmdbId))) as any;
 
         const title = data?.title || data?.name || 'Assistir';
-        const description = data?.overview || 'Assista online com qualidade no Spotflix.';
+        const description = data?.overview || 'Assista online com qualidade no RAVEFLIX.';
         
         // Prioridade: Backdrop -> Poster
         const imagePath = data?.backdrop_path || data?.poster_path;
         const ogImage = imagePath ? `https://image.tmdb.org/t/p/w1280${imagePath}` : undefined;
 
         return {
-            title: `${title} - Spotflix`,
+            title: `${title} - RAVEFLIX`,
             description,
             openGraph: {
-                title: `${title} - Spotflix`,
+                title: `${title} - RAVEFLIX`,
                 description,
                 type: mediaType === 'series' ? 'video.tv_show' : 'video.movie',
                 images: ogImage ? [{ url: ogImage, width: 1280, height: 720 }] : [],
             },
             twitter: {
                 card: 'summary_large_image',
-                title: `${title} - Spotflix`,
+                title: `${title} - RAVEFLIX`,
                 description,
                 images: ogImage ? [ogImage] : [],
             }
         };
     } catch (e) {
         return {
-            title: 'Assistir - Spotflix',
+            title: 'Assistir - RAVEFLIX',
         };
     }
 }

@@ -78,7 +78,7 @@ export default function LoginPage() {
 
     setTimeout(() => {
       setIsLoading(false);
-      toast.success('Login realizado com sucesso! Bem-vindo ao SpotFlix.');
+      toast.success('Login realizado com sucesso! Bem-vindo ao RAVEFLIX.');
       router.push('/');
     }, 2000);
   };
@@ -158,8 +158,8 @@ export default function LoginPage() {
                 <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white fill-white" />
               </div>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tighter leading-none">
-                <span className="text-white">Spot</span>
-                <span className="text-white">Flix</span>
+                <span className="text-white">RAVE</span>
+                <span className="text-white">FLIX</span>
               </h1>
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function LoginPage() {
         {/* Footer abaixo do formulário */}
         <div className="mt-6 text-center">
           <p className="text-xs mb-2" style={{ color: '#888' }}>
-            © 2025 SpotFlix Entertainment Inc.
+            © 2025 RAVEFLIX Entertainment Inc.
           </p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <a href="#" className="transition-colors hover:opacity-80 hover:underline" style={{ color: '#888' }}>
