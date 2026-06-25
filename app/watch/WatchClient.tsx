@@ -227,6 +227,8 @@ function WatchContent() {
     const [showRightEpisodeArrow, setShowRightEpisodeArrow] = useState(true);
     const [showLeftCollectionArrow, setShowLeftCollectionArrow] = useState(false);
     const [showRightCollectionArrow, setShowRightCollectionArrow] = useState(false);
+    // Ref para dados da coleção ao navegar entre itens (evita loading ao clicar em poster)
+    const pendingNavigationRef = useRef<{ id: number; title: string; poster_path: string; release_date: string } | null>(null);
     const [showLeftTrailersArrow, setShowLeftTrailersArrow] = useState(false);
     const [showRightTrailersArrow, setShowRightTrailersArrow] = useState(false);
     const [selectedModalMovie, setSelectedModalMovie] = useState<Movie | null>(null);
@@ -247,6 +249,8 @@ function WatchContent() {
     const trailersScrollRef = useRef<HTMLDivElement>(null);
     const creatorScrollRef = useRef<HTMLDivElement>(null);
     const creatorPauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Guarda dados do item clicado na coleção para renderização instantânea
+    const pendingNavRef = useRef<{ id: number; title: string; poster_path: string; release_date: string } | null>(null);
     const handleEpisodeScroll = () => {
         if (episodesScrollRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = episodesScrollRef.current;
@@ -488,6 +492,33 @@ function WatchContent() {
         enabled: !!tmdbId,
         staleTime: 1000 * 60 * 30, // 30 minutos
         gcTime: 1000 * 60 * 60, // 1 hora
+        // Renderização instantânea ao navegar entre itens da mesma coleção
+        initialData: () => {
+            const nav = pendingNavRef.current;
+            if (nav?.id === Number(tmdbId)) {
+                pendingNavRef.current = null;
+                return {
+                    id: `tmdb-${nav.id}`,
+                    title: nav.title,
+                    type: 'movie' as const,
+                    year: nav.release_date ? new Date(nav.release_date).getFullYear() : new Date().getFullYear(),
+                    rating: 'NR',
+                    duration: '',
+                    genre: [],
+                    synopsis: '',
+                    cast: [],
+                    director: '',
+                    poster_url: nav.poster_path ? `https://image.tmdb.org/t/p/w500${nav.poster_path}` : '',
+                    backdrop_url: '',
+                    score: 0,
+                    tmdb_id: nav.id,
+                    category: 'trending' as const,
+                };
+            }
+            return undefined;
+        },
+        // Forçar stale imediatamente para buscar dados reais em background
+        initialDataUpdatedAt: 0,
     });
 
     const movie = movieById || movieByTmdb;
@@ -560,26 +591,27 @@ function WatchContent() {
     }, [movieId, tmdbId]);
 
     const { data: fetchedDetails, isLoading: isLoadingDetailsQuery } = useQuery({
-        queryKey: ['watchDetails', movie?.tmdb_id, movie?.type],
+        queryKey: ['watchDetails', tmdbId, mediaType],
         queryFn: async () => {
-            if (!movie?.tmdb_id) return null;
-            const isSeries = movie.type === 'series';
+            if (!tmdbId) return null;
+            const tmdbIdNum = Number(tmdbId);
+            const isSeriesType = mediaType === 'series';
 
-            if (isSeries) {
+            if (isSeriesType) {
                 const [seriesData, similar, videos, keywordsData, fullDetails, logosData] = await Promise.all([
-                    TMDBService.fetchSeriesDetails(movie.tmdb_id),
-                    TMDBService.fetchSimilar(movie.tmdb_id, true),
-                    TMDBService.fetchMovieVideos(movie.tmdb_id, true),
-                    TMDBService.fetchMovieKeywords(movie.tmdb_id, true),
-                    (TMDBService as any).fetchSeriesFullDetails ? (TMDBService as any).fetchSeriesFullDetails(movie.tmdb_id) : Promise.resolve(null),
-                    TMDBService.fetchMovieLogos(movie.tmdb_id, true)
+                    TMDBService.fetchSeriesDetails(tmdbIdNum),
+                    TMDBService.fetchSimilar(tmdbIdNum, true),
+                    TMDBService.fetchMovieVideos(tmdbIdNum, true),
+                    TMDBService.fetchMovieKeywords(tmdbIdNum, true),
+                    (TMDBService as any).fetchSeriesFullDetails ? (TMDBService as any).fetchSeriesFullDetails(tmdbIdNum) : Promise.resolve(null),
+                    TMDBService.fetchMovieLogos(tmdbIdNum, true)
                 ]);
 
                 let seasonData = null;
                 if (seriesData?.seasons && seriesData.seasons.length > 0) {
                     const firstSeason = seriesData.seasons.find((s: any) => s.season_number === 1) || seriesData.seasons[0];
                     if (firstSeason) {
-                        seasonData = await TMDBService.fetchSeasonDetails(movie.tmdb_id, firstSeason.season_number);
+                        seasonData = await TMDBService.fetchSeasonDetails(tmdbIdNum, firstSeason.season_number);
                         seasonData = { ...seasonData, season_number: firstSeason.season_number };
                     }
                 }
@@ -589,7 +621,7 @@ function WatchContent() {
                 if (fullDetails?.created_by && fullDetails.created_by.length > 0) {
                     creatorInfoData = fullDetails.created_by[0];
                     if ((TMDBService as any).fetchSeriesByCreator) {
-                        const cs = await (TMDBService as any).fetchSeriesByCreator(creatorInfoData.id, movie.tmdb_id);
+                        const cs = await (TMDBService as any).fetchSeriesByCreator(creatorInfoData.id, tmdbIdNum);
                         creatorSeriesData = cs.map((s: any, i: number) => ({ ...s, id: `creator-${i}` }));
                     }
                 }
@@ -607,11 +639,11 @@ function WatchContent() {
                 };
             } else {
                 const [details, similar, videos, keywordsData, logosData] = await Promise.all([
-                    TMDBService.fetchMovieDetails(movie.tmdb_id),
-                    TMDBService.fetchSimilar(movie.tmdb_id, false),
-                    TMDBService.fetchMovieVideos(movie.tmdb_id, false),
-                    TMDBService.fetchMovieKeywords(movie.tmdb_id, false),
-                    TMDBService.fetchMovieLogos(movie.tmdb_id, false)
+                    TMDBService.fetchMovieDetails(tmdbIdNum),
+                    TMDBService.fetchSimilar(tmdbIdNum, false),
+                    TMDBService.fetchMovieVideos(tmdbIdNum, false),
+                    TMDBService.fetchMovieKeywords(tmdbIdNum, false),
+                    TMDBService.fetchMovieLogos(tmdbIdNum, false)
                 ]);
 
                 let collectionData = null;
@@ -630,7 +662,7 @@ function WatchContent() {
                 };
             }
         },
-        enabled: !!movie?.tmdb_id,
+        enabled: !!tmdbId,
         staleTime: 1000 * 60 * 30, // 30 minutes
     });
 
@@ -1614,7 +1646,17 @@ function WatchContent() {
                                                 return (
                                                     <div
                                                         key={part.id}
-                                                        onClick={() => !isCurrentMovie && router.push(`/watch?ref=${part.id}`)}
+                                                        onClick={() => {
+                                                            if (!isCurrentMovie) {
+                                                                pendingNavRef.current = { id: part.id, title: part.title, poster_path: part.poster_path, release_date: part.release_date };
+                                                                router.push(`/watch?ref=${part.id}`);
+                                                            }
+                                                        }}
+                                                        onMouseEnter={() => {
+                                                            if (!isCurrentMovie) {
+                                                                fetch(`/api/content/movie/${part.id}?language=pt-BR`).catch(() => {});
+                                                            }
+                                                        }}
                                                         className={`shrink-0 group ${isCurrentMovie ? 'cursor-default' : 'cursor-pointer'} hover:scale-103 hover:-translate-y-1 transition-all duration-200`}
                                                     >
 
