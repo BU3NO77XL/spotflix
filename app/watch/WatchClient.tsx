@@ -166,8 +166,30 @@ function WatchContent() {
     const { getLogosForMovie } = useLogoStore();
     const searchParams = useSearchParams();
     const movieId = searchParams.get('id');
-    const tmdbId = searchParams.get('ref');
-    const mediaType = searchParams.get('type') || 'movie'; // 'movie' ou 'series'
+    const urlTmdbId = searchParams.get('ref');
+    const urlMediaType = searchParams.get('type') || 'movie';
+
+    // Override local — ao clicar em item da Coleção, troca o filme SEM navegar
+    // Isso elimina o round-trip ao servidor em produção
+    const [localOverride, setLocalOverride] = useState<{
+        tmdbId: string;
+        mediaType: string;
+        title: string;
+        poster_url: string;
+        backdrop_url: string;
+        year: number;
+    } | null>(null);
+
+    // Valores ativos (override local tem prioridade sobre URL)
+    const tmdbId = localOverride?.tmdbId ?? urlTmdbId;
+    const mediaType = localOverride?.mediaType ?? urlMediaType;
+
+    // Limpar override se a URL mudar externamente (ex: botão voltar do browser)
+    useEffect(() => {
+        if (localOverride && urlTmdbId !== localOverride.tmdbId) {
+            setLocalOverride(null);
+        }
+    }, [urlTmdbId, localOverride]);
 
     // ── DEBUG: marca o momento em que o componente renderiza com novo tmdbId
     const navStartRef = useRef<number>(0);
@@ -545,7 +567,11 @@ function WatchContent() {
     });
 
     const movie = movieById || movieByTmdb;
-    const isLoading = isLoadingById || isLoadingByTmdb;
+    // Se temos um override local (clique na Coleção), usar os dados básicos dele
+    // enquanto o React Query busca os dados completos em background
+    const isLoading = localOverride
+        ? false  // com override local, nunca mostra loading — dados básicos já disponíveis
+        : (isLoadingById || isLoadingByTmdb);
 
     // Determinar se é série ou filme (precisa estar antes dos useEffects que usam)
     const isSeries = movie && movie.type === 'series';
@@ -601,7 +627,7 @@ function WatchContent() {
 
     // Resetar logos e coleção quando mudar de filme/série
     useEffect(() => {
-        console.log(`%c[WATCH PERF] 🔄 Reset de estados (tmdbId mudou para ${tmdbId}) (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#fa0');
+        console.log(`%c[WATCH PERF] 🔄 Reset de estados (tmdbId=${tmdbId}) (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#fa0');
         setLogos([]);
         setIsLogoReady(false);
         setIsLoadingDetails(true);
@@ -1677,7 +1703,18 @@ function WatchContent() {
                                                             if (!isCurrentMovie) {
                                                                 const clickTime = performance.now();
                                                                 console.log(`%c[WATCH PERF] 🖱️ CLIQUE no poster da coleção: "${part.title}" (tmdb_id=${part.id})`, 'color:#f0f;font-weight:bold;font-size:13px');
-                                                                // Pre-popular o cache com dados básicos para navegação instantânea
+
+                                                                // Troca o filme LOCALMENTE — zero round-trip ao servidor
+                                                                setLocalOverride({
+                                                                    tmdbId: String(part.id),
+                                                                    mediaType: 'movie',
+                                                                    title: part.title,
+                                                                    poster_url: part.poster_path ? `https://image.tmdb.org/t/p/w500${part.poster_path}` : '',
+                                                                    backdrop_url: '',
+                                                                    year: part.release_date ? new Date(part.release_date).getFullYear() : new Date().getFullYear(),
+                                                                });
+
+                                                                // Pre-popular o cache React Query
                                                                 const partData = {
                                                                     id: `tmdb-${part.id}`,
                                                                     title: part.title,
@@ -1696,9 +1733,11 @@ function WatchContent() {
                                                                     category: 'trending' as const,
                                                                 };
                                                                 queryClient.setQueryData(['movie', 'tmdb', String(part.id), 'movie'], partData);
-                                                                console.log(`%c[WATCH PERF] ✅ setQueryData OK — router.push iniciando (t=+${(performance.now() - clickTime).toFixed(1)}ms desde clique)`, 'color:#f0f');
-                                                                router.push(`/watch?ref=${part.id}`);
-                                                                console.log(`%c[WATCH PERF] ✅ router.push chamado (t=+${(performance.now() - clickTime).toFixed(1)}ms desde clique)`, 'color:#f0f');
+
+                                                                // Atualizar URL sem navegar (apenas para bookmarking/compartilhamento)
+                                                                window.history.replaceState(null, '', `/watch?ref=${part.id}`);
+
+                                                                console.log(`%c[WATCH PERF] ✅ override local setado (t=+${(performance.now() - clickTime).toFixed(1)}ms desde clique)`, 'color:#f0f');
                                                             }
                                                         }}
                                                         onMouseEnter={() => {
