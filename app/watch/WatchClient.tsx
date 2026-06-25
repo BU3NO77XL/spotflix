@@ -1163,24 +1163,24 @@ function WatchContent() {
 
 
                         {/* Movie/Series Info */}
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-base">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-base mt-1">
                             {movie.score && (
-                                <span className="text-[#46d369] font-bold">{Math.round(Number(movie.score) * 10)}% Match</span>
+                                <span className="text-[#46d369] font-bold text-base sm:text-base">{Math.round(Number(movie.score) * 10)}% Match</span>
                             )}
-                            <span className="text-white font-bold">{displayYear}</span>
+                            <span className="text-white font-bold text-base sm:text-base">{displayYear}</span>
 
                             {/* Age Rating Badge - Estilo Netflix */}
                             {(isSeries ? seriesDetails?.ageRating : movieDetails?.ageRating) && (
-                                <div className="flex items-center justify-center bg-[#d7262d] rounded-[3px] min-w-[26px] sm:min-w-[32px] h-[26px] sm:h-[32px] px-1 shadow-sm overflow-hidden">
+                                <div className="flex items-center justify-center bg-[#d7262d] rounded-[3px] min-w-[30px] sm:min-w-[32px] h-[30px] sm:h-[32px] px-1 shadow-sm overflow-hidden">
                                     <span
                                         className="text-white block"
                                         style={{
                                             fontFamily: '"Arial Black", "Arial", sans-serif',
-                                            fontSize: 'clamp(13px, 3.5vw, 16px)',
+                                            fontSize: 'clamp(14px, 3.5vw, 16px)',
                                             fontWeight: 900,
                                             lineHeight: 'normal',
                                             letterSpacing: '-0.5px',
-                                            transform: 'translateY(-1px)' // Levanta o texto ligeiramente para compensar a base da fonte
+                                            transform: 'translateY(-1px)'
                                         }}
                                     >
                                         {(isSeries ? (seriesDetails?.ageRating === '+18' ? '18' : seriesDetails?.ageRating) : (movieDetails?.ageRating === '+18' ? '18' : movieDetails?.ageRating))}
@@ -1188,23 +1188,23 @@ function WatchContent() {
                                 </div>
                             )}
 
-                            <span className="text-white font-bold">{displayDuration}</span>
+                            <span className="text-white font-bold text-base sm:text-base">{displayDuration}</span>
                             {(() => {
                                 const genres = (isSeries ? seriesDetails?.genres : movieDetails?.genres) || movie.genre || [];
                                 if (genres.length >= 2) {
                                     return (
                                         <>
                                             <span className="w-1 h-1 rounded-full bg-gray-500" />
-                                            <span className="text-gray-400">{genres[0]}</span>
+                                            <span className="text-gray-400 text-base sm:text-base">{genres[0]}</span>
                                             <span className="w-1 h-1 rounded-full bg-gray-500" />
-                                            <span className="text-gray-400">{genres[1]}</span>
+                                            <span className="text-gray-400 text-base sm:text-base">{genres[1]}</span>
                                         </>
                                     );
                                 } else if (genres.length === 1) {
                                     return (
                                         <>
                                             <span className="w-1 h-1 rounded-full bg-gray-500" />
-                                            <span className="text-gray-400">{genres[0]}</span>
+                                            <span className="text-gray-400 text-base sm:text-base">{genres[0]}</span>
                                         </>
                                     );
                                 }
@@ -1223,7 +1223,7 @@ function WatchContent() {
 
                     {/* Synopsis */}
                     <section className="py-8">
-                        <p className="text-gray-200 text-sm sm:text-base leading-relaxed max-w-4xl">
+                        <p className="text-gray-200 text-base sm:text-base leading-relaxed max-w-4xl">
                             {!isSynopsisExpanded && synopsis.length > SYNOPSIS_LIMIT
                                 ? `${synopsis.slice(0, SYNOPSIS_LIMIT)}...`
                                 : synopsis}

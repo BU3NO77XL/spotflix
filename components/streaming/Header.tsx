@@ -162,10 +162,10 @@ export default function Header() {
                             {/* Logo matching rdesign dimensions */}
                             <Link href="/" className="shrink-0 flex items-center gap-1">
                                 <h1 className="text-2xl font-black tracking-tighter uppercase text-white flex items-center gap-1">
-                                    <div className="w-[25px] h-[25px] rounded-sm bg-[#1DB954] flex items-center justify-center">
-                                        <Play className="w-[14px] h-[14px] text-white fill-white" />
+                                    <div className="w-[28px] h-[28px] md:w-[25px] md:h-[25px] rounded-sm bg-[#1DB954] flex items-center justify-center">
+                                        <Play className="w-[16px] h-[16px] md:w-[14px] md:h-[14px] text-white fill-white" />
                                     </div>
-                                    <span className="text-[20px] md:text-[22px] tracking-tight font-bold">WEBFLIX</span>
+                                    <span className="text-[22px] md:text-[22px] tracking-tight font-bold">WEBFLIX</span>
                                 </h1>
                             </Link>
 
@@ -207,7 +207,7 @@ export default function Header() {
                                 className="p-1 text-white hover:opacity-80 transition-opacity"
                                 aria-label="Open search"
                             >
-                                <Search className="w-5 h-5" />
+                                <Search className="w-6 h-6 md:w-5 md:h-5" />
                             </button>
 
                             {/* User Dropdown */}
@@ -220,7 +220,7 @@ export default function Header() {
                                     }}
                                     className="flex items-center gap-2"
                                 >
-                                    <NetflixAvatar name={demoName} size={32} />
+                                    <NetflixAvatar name={demoName} size={36} />
                                     <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
                                 </button>
 
@@ -272,7 +272,7 @@ export default function Header() {
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                             >
-                                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                                {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
                             </button>
                         </div>
                     </div>
@@ -306,7 +306,7 @@ export default function Header() {
                                                 key={link.label}
                                                 href={link.href}
                                                 onClick={() => setMobileMenuOpen(false)}
-                                                className="flex items-center gap-3 px-4 py-3 rounded text-white hover:bg-white/5 transition-colors font-medium"
+                                                className="flex items-center gap-4 px-4 py-4 rounded text-white hover:bg-white/5 transition-colors font-medium text-lg"
                                             >
                                                 <span aria-hidden>{renderIcon(link.label)}</span>
                                                 <span>{link.label}</span>
