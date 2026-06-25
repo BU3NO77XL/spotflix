@@ -1537,8 +1537,6 @@ function WatchContent() {
                             </div>
                         </>
                     )}
-                        </>
-                    )}
 
                     {/* Collection/Franchise */}
                     {collection && collection.parts.length > 1 && (
