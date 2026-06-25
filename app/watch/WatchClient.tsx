@@ -231,7 +231,6 @@ function WatchContent() {
         }
     }, [movieId, tmdbId]);
 
-    const [isPlaying, setIsPlaying] = useState(false);
     const [comment, setComment] = useState('');
     const [movieDetails, setMovieDetails] = useState<{ overview?: string; budget?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null>(null);
     const [seriesDetails, setSeriesDetails] = useState<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null>(null);
@@ -1095,8 +1094,10 @@ function WatchContent() {
                             */}
                             <button
                                 onClick={() => {
-                                    console.log('Botão Assistir clicado, setIsPlaying(true)');
-                                    setIsPlaying(true);
+                                    const embedUrl = isSeries
+                                        ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                                        : `https://megaembed.com/embed/${movie.tmdb_id}`;
+                                    window.location.href = embedUrl;
                                 }}
                                 className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 sm:px-8
                                     rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base
@@ -1490,41 +1491,6 @@ function WatchContent() {
                                 )}
                             </div>
                         </section>
-                    )}
-
-                    {/* Player Section - Fullscreen */}
-                    {isPlaying && (
-                        <>
-                            {console.log('Player renderizando! isPlaying =', isPlaying)}
-                            <div className="fixed inset-0 z-50 bg-black">
-                                {/* Botão de fechar */}
-                                <button
-                                    onClick={() => setIsPlaying(false)}
-                                    className="absolute top-4 right-4 z-[60] w-12 h-12 flex items-center justify-center rounded-full bg-black/80 hover:bg-black text-white transition-colors shadow-lg"
-                                    aria-label="Fechar player"
-                                >
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                </button>
-
-                                {/* Iframe fullscreen */}
-                                <iframe
-                                    src={
-                                        isSeries
-                                            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                                            : `https://megaembed.com/embed/${movie.tmdb_id}`
-                                    }
-                                    className="w-full h-full"
-                                    style={{ border: 'none', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                                    frameBorder="0"
-                                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                                    allowFullScreen
-                                    webkitallowfullscreen="true"
-                                    mozallowfullscreen="true"
-                                />
-                            </div>
-                        </>
                     )}
 
                     {/* Collection/Franchise */}
