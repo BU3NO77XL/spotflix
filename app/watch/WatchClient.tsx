@@ -1307,27 +1307,30 @@ function WatchContent() {
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
                         <section className="py-8 border-t border-white/10">
 
-                            {/* Cabeçalho da seção */}
-                            <div className="mb-6">
-                                <h2 className="text-white text-xl font-semibold mb-2">Episódios</h2>
-                                {seriesDetails && (
-                                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                                        <span>{seriesDetails.number_of_seasons} Temporadas</span>
-                                        <span className="w-1 h-1 rounded-full bg-gray-500" />
-                                        <span>{seriesDetails.number_of_episodes} Episódios</span>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Cabeçalho da seção - Desktop: lado a lado, Mobile: empilhado */}
+                            <div className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                
+                                {/* Lado esquerdo: Título e contador de episódios */}
+                                <div>
+                                    <h2 className="text-white text-xl font-semibold mb-2">Episódios</h2>
+                                    {seriesDetails && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                                            <span>{seriesDetails.number_of_seasons} Temporadas</span>
+                                            <span className="w-1 h-1 rounded-full bg-gray-500" />
+                                            <span>{seriesDetails.number_of_episodes} Episódios</span>
+                                        </div>
+                                    )}
+                                </div>
 
-                            {/* Seletor de temporadas - Dropdown compacto */}
-                            <div className="flex items-center gap-3 mb-6">
-                                <span className="text-white font-medium">Temporada:</span>
-                                <div className="relative">
-                                    <select
-                                        value={selectedSeason}
-                                        onChange={(e: any) => fetchSeasonDetails(Number(e.target.value))}
-                                        className="bg-[#1f1f1f] text-white border border-white/20 rounded-lg py-2 pl-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:border-transparent cursor-pointer"
-                                    >
+                                {/* Lado direito: Seletor de temporadas */}
+                                <div className="flex items-center gap-3">
+                                    <span className="text-white font-medium">Temporada:</span>
+                                    <div className="relative">
+                                        <select
+                                            value={selectedSeason}
+                                            onChange={(e: any) => fetchSeasonDetails(Number(e.target.value))}
+                                            className="bg-[#1f1f1f] text-white border border-white/20 rounded-lg py-2 pl-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:border-transparent cursor-pointer"
+                                        >
                                         {seriesDetails.seasons
                                             .filter(season => season.season_number !== 0) // Excluir temporada especial
                                             .map((season) => (
@@ -1349,6 +1352,7 @@ function WatchContent() {
                                 <span className="text-gray-400 text-sm">
                                     de {seriesDetails.seasons.filter(s => s.season_number !== 0).length}
                                 </span>
+                                </div>
                             </div>
 
                             {/* Carrossel de episódios */}
