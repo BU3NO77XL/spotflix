@@ -844,6 +844,11 @@ function WatchContent() {
     const animatedBackdropUrl = animatedBackdrop?.url || null;
     const hasBackdropAudio = animatedBackdrop?.hasAudio || false;
 
+    // URL do player embed
+    const embedUrl = isSeries
+        ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+        : `https://megaembed.com/embed/${movie.tmdb_id}`;
+
     // Schema.org VideoObject para compatibilidade com RAVE
     const videoObjectSchema = {
         '@context': 'https://schema.org',
@@ -853,12 +858,8 @@ function WatchContent() {
         'thumbnailUrl': movie.poster_url ? `https://image.tmdb.org/t/p/original${movie.poster_url.replace('https://image.tmdb.org/t/p/w500', '')}` : undefined,
         'uploadDate': isSeries ? seriesDetails?.first_air_date : movieDetails?.overview ? new Date().toISOString() : undefined,
         'duration': movie.duration ? `PT${Math.floor(Number(movie.duration.replace('h', '').replace('m', '').split('h')[0]) * 60 + Number(movie.duration.replace('h', '').replace('m', '').split('h')[1] || 0))}M` : undefined,
-        'contentUrl': isSeries
-            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-            : `https://megaembed.com/embed/${movie.tmdb_id}`,
-        'embedUrl': isSeries
-            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-            : `https://megaembed.com/embed/${movie.tmdb_id}`,
+        'contentUrl': embedUrl,
+        'embedUrl': embedUrl,
         'interactionStatistic': {
             '@type': 'InteractionCounter',
             'interactionType': { '@type': 'WatchAction' },
@@ -868,9 +869,7 @@ function WatchContent() {
             '@type': 'WatchAction',
             'target': {
                 '@type': 'EntryPoint',
-                'urlTemplate': isSeries
-                    ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                    : `https://megaembed.com/embed/${movie.tmdb_id}`,
+                'urlTemplate': embedUrl,
                 'actionPlatform': [
                     'http://schema.org/DesktopWebPlatform',
                     'http://schema.org/MobileWebPlatform',
@@ -888,6 +887,82 @@ function WatchContent() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(videoObjectSchema) }}
             />
+            
+            {/* Meta tags adicionais para o RAVE */}
+            <meta property="og:type" content="video.other" />
+            <meta property="og:video" content={embedUrl} />
+            <meta property="og:video:url" content={embedUrl} />
+            <meta property="og:video:secure_url" content={embedUrl} />
+            <meta property="og:video:type" content="text/html" />
+            <meta property="og:video:width" content="1280" />
+            <meta property="og:video:height" content="720" />
+            
+            {/* Iframe oculto para o RAVE detectar - NÃO REMOVER */}
+            <iframe
+                src={embedUrl}
+                style={{
+                    position: 'fixed',
+                    top: '-9999px',
+                    left: '-9999px',
+                    width: '1px',
+                    height: '1px',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                    visibility: 'hidden'
+                }}
+                title="RAVE Video Source"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+            />
+            
+            {/* Elemento de vídeo fake para ajudar o RAVE a detectar */}
+            <video
+                style={{
+                    position: 'fixed',
+                    top: '-9999px',
+                    left: '-9999px',
+                    width: '1px',
+                    height: '1px',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                    visibility: 'hidden'
+                }}
+                src={embedUrl}
+                poster={movie.backdrop_url || movie.poster_url}
+                title={movie.title}
+                data-rave-video="true"
+            />
+            
+            {/* Script para forçar detecção do RAVE */}
+            <script
+                dangerouslySetInnerHTML={{
+                    __html: `
+                        // Tenta comunicar com o RAVE se estiver presente
+                        if (window.RaveApp || navigator.userAgent.includes('Rave')) {
+                            const embedUrl = ${JSON.stringify(embedUrl)};
+                            const videoInfo = {
+                                url: embedUrl,
+                                title: ${JSON.stringify(movie.title)},
+                                thumbnail: ${JSON.stringify(movie.backdrop_url || movie.poster_url)},
+                                type: 'iframe'
+                            };
+                            
+                            // Tenta diferentes métodos de comunicação com o RAVE
+                            try {
+                                if (window.RaveApp && window.RaveApp.setVideo) {
+                                    window.RaveApp.setVideo(videoInfo);
+                                }
+                                if (window.postMessage) {
+                                    window.postMessage({ type: 'RAVE_VIDEO_DETECTED', data: videoInfo }, '*');
+                                }
+                            } catch (e) {
+                                console.log('RAVE detection attempt:', e);
+                            }
+                        }
+                    `
+                }}
+            />
+            
             {/* Hero Section - Similar to MovieModal */}
             <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh] overflow-hidden">
                 {/* Backdrop - Video animado ou Imagem */}
