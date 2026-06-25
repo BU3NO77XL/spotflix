@@ -27,18 +27,16 @@ export default function MovieTitle({ title, logos, className = '' }: MovieTitleP
   // Mostrar logo apenas quando totalmente carregado e sem erros
   const showLogo = logoUrl && logoLoaded && !logoError;
 
-  // Ocultar texto se houver logo (carregando ou carregado) e não houver erro
-  // Isso evita o flash do texto enquanto o logo carrega
-  const hideText = logoUrl && !logoError;
+  // Sempre mostrar o título como fallback - nunca deixar vazio
+  const showTitle = !showLogo;
 
   return (
     <div className={`relative ${className}`}>
       {/* Logo - mostrado apenas quando carregado */}
-      <div
-        className={`flex items-center transition-opacity duration-300 ${showLogo ? 'opacity-100' : 'opacity-0 absolute'}`}
-        aria-hidden={!showLogo || undefined}
-      >
-        {logoUrl && (
+      {showLogo && (
+        <div
+          className="flex items-center transition-opacity duration-300 opacity-100"
+        >
           <img
             src={logoUrl}
             alt={title}
@@ -48,16 +46,15 @@ export default function MovieTitle({ title, logos, className = '' }: MovieTitleP
               maxWidth: '90%'
             }}
           />
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Título de texto - visível APENAS se não houver logo ou se o logo falhar */}
-      <h1
-        className={`${titleClasses} transition-opacity duration-300 ${hideText ? 'opacity-0 absolute pointer-events-none hidden' : 'opacity-100'}`}
-        aria-hidden={hideText || undefined}
-      >
-        {title}
-      </h1>
+      {/* Título de texto - visível quando não há logo ou enquanto logo carrega */}
+      {showTitle && (
+        <h1 className={titleClasses}>
+          {title}
+        </h1>
+      )}
     </div>
   );
 }

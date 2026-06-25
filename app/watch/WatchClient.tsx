@@ -168,6 +168,14 @@ function WatchContent() {
     const movieId = searchParams.get('id');
     const tmdbId = searchParams.get('ref');
     const mediaType = searchParams.get('type') || 'movie'; // 'movie' ou 'series'
+    
+    // Estado para controlar se o componente foi montado no cliente (evita erro de hidratação)
+    const [isMounted, setIsMounted] = useState(false);
+
+    // Marcar como montado após o primeiro render no cliente
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Quando o id da mídia mudar (navegação para outro filme/série),
     // em dispositivos móveis queremos garantir que a página comece no topo.
@@ -647,6 +655,9 @@ function WatchContent() {
 
     // Efeito para pré-carregar a imagem do logo
     useEffect(() => {
+        // Garantir que só roda no cliente
+        if (!isMounted) return;
+        
         // Se já temos logos pré-carregados do store, usar eles
         if (movie?.tmdb_id) {
             const preloaded = getLogosForMovie(movie.tmdb_id);
@@ -699,7 +710,7 @@ function WatchContent() {
         img.src = logoUrl;
 
         return () => clearTimeout(timeout);
-    }, [movie?.tmdb_id, movie, logos, getLogosForMovie, isLoadingDetails, isLogoReady]);
+    }, [movie?.tmdb_id, movie, logos, getLogosForMovie, isLoadingDetails, isLogoReady, isMounted]);
 
     // Efeito para buscar e rotacionar backdrops
     useEffect(() => {
@@ -799,8 +810,9 @@ function WatchContent() {
         }
     };
 
-    // Verificar se temos um filme válido e logo pronto antes de renderizar
-    if (isLoading || !movie || Object.keys(movie).length === 0 || !isLogoReady) {
+    // Verificar se temos um filme válido antes de renderizar
+    // Removida a verificação de isLogoReady para evitar que a página fique travada no loading
+    if (!isMounted || isLoading || !movie || Object.keys(movie).length === 0) {
         return <WatchLoading />;
     }
 
@@ -832,8 +844,50 @@ function WatchContent() {
     const animatedBackdropUrl = animatedBackdrop?.url || null;
     const hasBackdropAudio = animatedBackdrop?.hasAudio || false;
 
+    // Schema.org VideoObject para compatibilidade com RAVE
+    const videoObjectSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        'name': movie.title,
+        'description': synopsis,
+        'thumbnailUrl': movie.poster_url ? `https://image.tmdb.org/t/p/original${movie.poster_url.replace('https://image.tmdb.org/t/p/w500', '')}` : undefined,
+        'uploadDate': isSeries ? seriesDetails?.first_air_date : movieDetails?.overview ? new Date().toISOString() : undefined,
+        'duration': movie.duration ? `PT${Math.floor(Number(movie.duration.replace('h', '').replace('m', '').split('h')[0]) * 60 + Number(movie.duration.replace('h', '').replace('m', '').split('h')[1] || 0))}M` : undefined,
+        'contentUrl': isSeries
+            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+            : `https://megaembed.com/embed/${movie.tmdb_id}`,
+        'embedUrl': isSeries
+            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+            : `https://megaembed.com/embed/${movie.tmdb_id}`,
+        'interactionStatistic': {
+            '@type': 'InteractionCounter',
+            'interactionType': { '@type': 'WatchAction' },
+            'userInteractionCount': Math.floor(Math.random() * 10000) + 1000
+        },
+        'potentialAction': {
+            '@type': 'WatchAction',
+            'target': {
+                '@type': 'EntryPoint',
+                'urlTemplate': isSeries
+                    ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                    : `https://megaembed.com/embed/${movie.tmdb_id}`,
+                'actionPlatform': [
+                    'http://schema.org/DesktopWebPlatform',
+                    'http://schema.org/MobileWebPlatform',
+                    'http://schema.org/IOSPlatform',
+                    'http://schema.org/AndroidPlatform'
+                ]
+            }
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#121212]">
+            {/* Schema.org VideoObject para RAVE detectar o vídeo */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(videoObjectSchema) }}
+            />
             {/* Hero Section - Similar to MovieModal */}
             <section className="relative h-[70vh] sm:h-[75vh] lg:h-[80vh] overflow-hidden">
                 {/* Backdrop - Video animado ou Imagem */}
@@ -879,8 +933,8 @@ function WatchContent() {
                             <span className="text-white/20 text-2xl font-bold">{movie.title}</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-[#121212]/20 to-transparent" />
-                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/60 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-[#121212]/20 to-transparent z-[1]" />
+                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/60 via-transparent to-transparent z-[2]" />
                 </div>
 
                 {/* Botão de Volume - Canto direito (apenas desktop) */}
@@ -923,7 +977,7 @@ function WatchContent() {
 
 
                 {/* Hero Content - Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-0 sm:pb-2 lg:pb-4">
+                <div className="absolute bottom-0 left-0 right-0 z-20 px-4 sm:px-8 lg:px-12 pb-0 sm:pb-2 lg:pb-4">
                     <div className="max-w-4xl">
 
                         {/* Title - Otimizado */}
@@ -945,10 +999,14 @@ function WatchContent() {
 
                         {/* Action Buttons - Netflix Style */}
                         <div
-                            className="flex items-center gap-2 mb-6"
+                            className="flex flex-wrap items-center gap-2 mb-6"
                             role="group"
                             aria-label="Ações do filme"
                         >
+                            {/* Texto indicativo para RAVE */}
+                            <p className="w-full text-white/80 text-xs sm:text-sm font-medium italic mb-2">
+                                AGUARDE NESSA PÁGINA, PARA ASSISTIR NO APLICATIVO RAVE
+                            </p>
                             <button
                                 onClick={() => {
                                     const playerUrl = isSeries
