@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "RAVEFLIX - Streaming",
+  title: "WEBFLIX - Streaming",
   description: "Your premier destination for movies and series. Stream unlimited entertainment anytime, anywhere.",
 };
 
@@ -53,7 +53,7 @@ export default function RootLayout({
         {/* iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-        <meta name="apple-mobile-web-app-title" content="RAVEFLIX" />
+        <meta name="apple-mobile-web-app-title" content="WEBFLIX" />
         {/* Android */}
         <meta name="mobile-web-app-capable" content="yes" />
         <script

@@ -87,10 +87,10 @@ export default function Footer() {
 
                 {/* Copyright & Developed By */}
                 <div className="text-[#808080] text-[11px] space-y-4">
-                    <p>© 2025-{new Date().getFullYear()} RAVEFLIX, Inc.</p>
+                    <p>© 2025-{new Date().getFullYear()} WEBFLIX, Inc.</p>
                     <div className="flex items-center gap-2">
                         <span>Desenvolvido a partir de</span>
-                        <span className="text-blue-500 font-medium">BUENO77XL</span>
+                        <span className="text-white font-medium">BUENO77XL</span>
                     </div>
                     <p className="text-[#555] text-[11px]">este site não armazena mídias no servidor</p>
                 </div>

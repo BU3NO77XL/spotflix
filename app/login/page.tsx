@@ -61,14 +61,12 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate email
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
       toast.error(emailValidation.error);
       return;
     }
 
-    // Validate password
     if (!password) {
       toast.error('Por favor, preencha a senha.');
       return;
@@ -78,36 +76,39 @@ export default function LoginPage() {
 
     setTimeout(() => {
       setIsLoading(false);
-      toast.success('Login realizado com sucesso! Bem-vindo ao RAVEFLIX.');
+      // Salvar sessão simulada no localStorage
+      localStorage.setItem('sb-session', JSON.stringify({ email, name: email.split('@')[0] }));
+      localStorage.setItem('userBasicInfo', JSON.stringify({ name: email.split('@')[0], email }));
+      toast.success('Login realizado com sucesso! Bem-vindo ao WEBFLIX.');
       router.push('/');
-    }, 2000);
+    }, 1500);
   };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate name
     const nameValidation = validateName(name);
     if (!nameValidation.isValid) {
       toast.error(nameValidation.error);
       return;
     }
 
-    // Validate email
     const emailValidation = validateEmail(signupEmail);
     if (!emailValidation.isValid) {
       toast.error(emailValidation.error);
       return;
     }
 
-    // Validate password
-    const passwordValidation = validatePassword(signupPassword);
-    if (!passwordValidation.isValid) {
-      toast.error(passwordValidation.error);
+    if (!signupPassword) {
+      toast.error('Por favor, crie uma senha.');
       return;
     }
 
-    // Validate password match
+    if (signupPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
     const matchValidation = validatePasswordMatch(signupPassword, confirmPassword);
     if (!matchValidation.isValid) {
       toast.error(matchValidation.error);
@@ -118,14 +119,12 @@ export default function LoginPage() {
 
     setTimeout(() => {
       setIsLoading(false);
-      localStorage.setItem('userBasicInfo', JSON.stringify({
-        name,
-        email: signupEmail
-      }));
-
+      // Salvar sessão e dados do usuário
+      localStorage.setItem('sb-session', JSON.stringify({ email: signupEmail, name }));
+      localStorage.setItem('userBasicInfo', JSON.stringify({ name, email: signupEmail }));
       toast.success('Conta criada com sucesso!');
       router.push('/signup/preferences');
-    }, 2000);
+    }, 1500);
   };
 
   return (
@@ -158,7 +157,7 @@ export default function LoginPage() {
                 <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white fill-white" />
               </div>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tighter leading-none">
-                <span className="text-white">RAVE</span>
+                <span className="text-white">WEB</span>
                 <span className="text-white">FLIX</span>
               </h1>
             </div>
@@ -170,7 +169,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => setIsSignup(false)}
               className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${!isSignup
-                  ? 'bg-[#1DB954] text-white'
+                  ? 'bg-white text-black'
                   : 'text-gray-400 hover:text-white'
                 }`}
             >
@@ -180,7 +179,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => setIsSignup(true)}
               className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${isSignup
-                  ? 'bg-[#1DB954] text-white'
+                  ? 'bg-white text-black'
                   : 'text-gray-400 hover:text-white'
                 }`}
             >
@@ -239,7 +238,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#1DB954] hover:bg-[#1ed760] disabled:bg-[#1DB954]/50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
+                className="w-full bg-white hover:bg-gray-100 disabled:bg-white/50 disabled:cursor-not-allowed text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
               >
                 {isLoading ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -347,7 +346,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#1DB954] hover:bg-[#1ed760] disabled:bg-[#1DB954]/50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
+                className="w-full bg-white hover:bg-gray-100 disabled:bg-white/50 disabled:cursor-not-allowed text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
               >
                 {isLoading ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -371,12 +370,12 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
-                  <button type="button" className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 transition-all">
+              <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => toast.error('Login social não disponível.')} className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 transition-all">
                     <GoogleLogo className="w-5 h-5 text-white" />
                     <span className="text-white text-sm font-medium">Google</span>
                   </button>
-                  <button type="button" className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 transition-all">
+                  <button type="button" onClick={() => toast.error('Login social não disponível.')} className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 transition-all">
                     <AppleLogo className="w-5 h-5 text-white" />
                     <span className="text-white text-sm font-medium">Apple</span>
                   </button>
@@ -389,7 +388,7 @@ export default function LoginPage() {
         {/* Footer abaixo do formulário */}
         <div className="mt-6 text-center">
           <p className="text-xs mb-2" style={{ color: '#888' }}>
-            © 2025 RAVEFLIX Entertainment Inc.
+            © 2025 WEBFLIX Entertainment Inc.
           </p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <a href="#" className="transition-colors hover:opacity-80 hover:underline" style={{ color: '#888' }}>

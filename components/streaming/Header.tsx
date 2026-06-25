@@ -165,7 +165,7 @@ export default function Header() {
                                     <div className="w-[25px] h-[25px] rounded-sm bg-[#1DB954] flex items-center justify-center">
                                         <Play className="w-[14px] h-[14px] text-white fill-white" />
                                     </div>
-                                    <span className="text-[20px] md:text-[22px] tracking-tight font-bold">RAVEFLIX</span>
+                                    <span className="text-[20px] md:text-[22px] tracking-tight font-bold">WEBFLIX</span>
                                 </h1>
                             </Link>
 

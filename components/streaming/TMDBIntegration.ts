@@ -1,7 +1,7 @@
 import { Movie, CastMember } from '@/types/movie';
 
 const isServer = typeof window === 'undefined';
-const TMDB_API_KEY = isServer ? (process.env.TMDB_API_KEY || '') : 'hidden'; // Oculto no cliente
+const TMDB_API_KEY = isServer ? (process.env.TMDB_API_KEY || '') : '';
 const TMDB_BASE_URL = isServer ? 'https://api.themoviedb.org/3' : '/api/content';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
@@ -14,14 +14,25 @@ if (isServer) {
     }
 }
 
+// Helper: monta URL de fetch garantindo que a api_key é incluída no servidor
+function tmdbUrl(path: string, extraParams: Record<string, string> = {}): string {
+    const base = `${TMDB_BASE_URL}${path}`;
+    const params = new URLSearchParams(extraParams);
+    if (isServer && TMDB_API_KEY) {
+        params.set('api_key', TMDB_API_KEY);
+    }
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+}
+
 export const TMDBService = {
     // Search movies and TV shows
     async search(query: string): Promise<Omit<Movie, 'id'>[]> {
         if (!query.trim()) return [];
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(query)}&include_adult=false&language=pt-BR`,
-                { next: { revalidate: 600 } } // Cache search for 10 mins on server
+                tmdbUrl('/search/multi', { query: encodeURIComponent(query), include_adult: 'false', language: 'pt-BR' }),
+                { next: { revalidate: 600 } }
             );
 
             if (!response.ok) {
@@ -45,257 +56,127 @@ export const TMDBService = {
     async fetchTrending(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/trending/all/week?language=pt-BR`,
-                { next: { revalidate: 3600 } } // Cache 1 hour
+                tmdbUrl('/trending/all/week', { language: 'pt-BR' }),
+                { next: { revalidate: 3600 } }
             );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching trending content: ${response.status}`);
-                return [];
-            }
-
+            if (!response.ok) { console.warn(`Error fetching trending content: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'trending');
-        } catch (error) {
-            console.error('Error fetching trending:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching trending:', error); return []; }
     },
 
     // Fetch trending content for today (daily) - para o hero
     async fetchTrendingToday(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                `${TMDB_BASE_URL}/trending/all/day?language=pt-BR`,
-                { next: { revalidate: 1800 } } // Cache 30 minutos (mais frequente para conteúdo diário)
+                tmdbUrl('/trending/all/day', { language: 'pt-BR' }),
+                { next: { revalidate: 1800 } }
             );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching daily trending content: ${response.status}`);
-                return [];
-            }
-
+            if (!response.ok) { console.warn(`Error fetching daily trending content: ${response.status}`); return []; }
             const data = await response.json();
-            // Marcar como featured para aparecer no hero
             return this.transformTMDBData(data.results?.slice(0, 8) || [], 'trending_today');
-        } catch (error) {
-            console.error('Error fetching daily trending:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching daily trending:', error); return []; }
     },
 
     // Fetch top rated movies
     async fetchTopRatedMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/movie/top_rated?page=1&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching top rated movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/movie/top_rated', { page: '1', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching top rated movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'top_rated', 'movie');
-        } catch (error) {
-            console.error('Error fetching top rated movies:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching top rated movies:', error); return []; }
     },
 
     // Fetch upcoming movies (coming soon to theaters)
     async fetchUpcoming(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/movie/upcoming?page=1&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching upcoming movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/movie/upcoming', { page: '1', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching upcoming movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'coming_soon', 'movie');
-        } catch (error) {
-            console.error('Error fetching upcoming:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching upcoming:', error); return []; }
     },
 
     // Fetch popular for Top 10
     async fetchTop10(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/movie/popular?page=1&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching top 10 movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/movie/popular', { page: '1', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching top 10 movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 10) || [], 'top_10', 'movie');
-        } catch (error) {
-            console.error('Error fetching top 10:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching top 10:', error); return []; }
     },
 
     // Fetch recommended content
     async fetchRecommended(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/movie/popular?page=2&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching recommended movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/movie/popular', { page: '2', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching recommended movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'recommended');
-        } catch (error) {
-            console.error('Error fetching recommended:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching recommended:', error); return []; }
     },
 
     // Fetch action movies
     async fetchActionMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/discover/movie?with_genres=28&sort_by=popularity.desc&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching action movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/discover/movie', { with_genres: '28', sort_by: 'popularity.desc', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching action movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'action', 'movie');
-        } catch (error) {
-            console.error('Error fetching action:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching action:', error); return []; }
     },
 
     // Fetch family movies
     async fetchFamilyMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/discover/movie?with_genres=10751&sort_by=popularity.desc&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching family movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/discover/movie', { with_genres: '10751', sort_by: 'popularity.desc', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching family movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'family', 'movie');
-        } catch (error) {
-            console.error('Error fetching family:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching family:', error); return []; }
     },
 
     // Fetch sci-fi movies
     async fetchSciFiMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/discover/movie?with_genres=878&sort_by=popularity.desc&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching sci-fi movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/discover/movie', { with_genres: '878', sort_by: 'popularity.desc', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching sci-fi movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'scifi', 'movie');
-        } catch (error) {
-            console.error('Error fetching sci-fi:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching sci-fi:', error); return []; }
     },
 
     // Fetch critically acclaimed
     async fetchCriticsMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/movie/top_rated?page=2&language=pt-BR`,
-                { next: { revalidate: 3600 } }
-            );
-
-            // Verificar se a resposta é válida
-            if (!response.ok) {
-                console.warn(`Error fetching critics picks movies: ${response.status}`);
-                return [];
-            }
-
+            const response = await fetch(tmdbUrl('/movie/top_rated', { page: '2', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching critics picks movies: ${response.status}`); return []; }
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'critics', 'movie');
-        } catch (error) {
-            console.error('Error fetching critics picks:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching critics picks:', error); return []; }
     },
 
     // Fetch similar movies
     async fetchSimilar(movieId: number, isSeries: boolean = false): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${movieId}/recommendations?language=pt-BR`
-                : `${TMDB_BASE_URL}/movie/${movieId}/recommendations?language=pt-BR`;
-
-            const response = await fetch(endpoint);
-
-            // Verificar se a resposta é válida
+            const path = isSeries ? `/tv/${movieId}/recommendations` : `/movie/${movieId}/recommendations`;
+            const response = await fetch(tmdbUrl(path, { language: 'pt-BR' }));
             if (!response.ok) {
-                if (response.status === 404) {
-                    console.warn(`Movie/TV show with ID ${movieId} not found for similar content`);
-                    return [];
-                }
+                if (response.status === 404) { console.warn(`Movie/TV show with ID ${movieId} not found for similar content`); return []; }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'recommended');
-        } catch (error) {
-            console.error('Error fetching similar:', error);
-            return [];
-        }
+        } catch (error) { console.error('Error fetching similar:', error); return []; }
     },
 
     // Fetch movie videos (trailers) - Prioriza trailers oficiais em HD
     async fetchMovieVideos(tmdbId: number, isSeries: boolean = false): Promise<{ key: string; name: string; type: string; site: string; official: boolean; size: number }[]> {
         try {
-            const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/videos`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/videos`;
-
-            const response = await fetch(endpoint);
+            const path = isSeries ? `/tv/${tmdbId}/videos` : `/movie/${tmdbId}/videos`;
+            const response = await fetch(tmdbUrl(path));
 
             // Verificar se a resposta é válida
             if (!response.ok) {
@@ -366,9 +247,9 @@ export const TMDBService = {
     } | null> {
         try {
             const [personResponse, creditsResponse, externalIdsResponse] = await Promise.all([
-                fetch(`${TMDB_BASE_URL}/person/${actorId}?language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/person/${actorId}/movie_credits`),
-                fetch(`${TMDB_BASE_URL}/person/${actorId}/external_ids`)
+                fetch(tmdbUrl(`/person/${actorId}`, { language: 'pt-BR' })),
+                fetch(tmdbUrl(`/person/${actorId}/movie_credits`)),
+                fetch(tmdbUrl(`/person/${actorId}/external_ids`))
             ]);
 
             // Verificar se as respostas são válidas
@@ -423,11 +304,8 @@ export const TMDBService = {
         buy?: { provider_name: string; logo_path: string }[];
     } | null> {
         try {
-            const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/watch/providers?language=pt-BR`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/watch/providers?language=pt-BR`;
-
-            const response = await fetch(endpoint);
+            const path = isSeries ? `/tv/${tmdbId}/watch/providers` : `/movie/${tmdbId}/watch/providers`;
+            const response = await fetch(tmdbUrl(path, { language: 'pt-BR' }));
 
             // Verificar se a resposta é válida
             if (!response.ok) {
@@ -449,11 +327,8 @@ export const TMDBService = {
     // Fetch movie keywords/tags
     async fetchMovieKeywords(tmdbId: number, isSeries: boolean = false): Promise<{ id: number; name: string }[]> {
         try {
-            const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/keywords?language=pt-BR`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/keywords?language=pt-BR`;
-
-            const response = await fetch(endpoint);
+            const path = isSeries ? `/tv/${tmdbId}/keywords` : `/movie/${tmdbId}/keywords`;
+            const response = await fetch(tmdbUrl(path, { language: 'pt-BR' }));
 
             // Verificar se a resposta é válida
             if (!response.ok) {
@@ -482,9 +357,7 @@ export const TMDBService = {
         parts: { id: number; title: string; poster_path: string; release_date: string }[];
     } | null> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/collection/${collectionId}?language=pt-BR`
-            );
+            const response = await fetch(tmdbUrl(`/collection/${collectionId}`, { language: 'pt-BR' }));
 
             // Verificar se a resposta é válida
             if (!response.ok) {
@@ -546,9 +419,9 @@ export const TMDBService = {
     async fetchMovieDetails(tmdbId: number): Promise<{ overview?: string; budget?: number; revenue?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; release_date?: string; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null> {
         try {
             const [movieResponse, creditsResponse, releaseDatesResponse] = await Promise.all([
-                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}?language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/credits?language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/movie/${tmdbId}/release_dates`)
+                fetch(tmdbUrl(`/movie/${tmdbId}`, { language: 'pt-BR' })),
+                fetch(tmdbUrl(`/movie/${tmdbId}/credits`, { language: 'pt-BR' })),
+                fetch(tmdbUrl(`/movie/${tmdbId}/release_dates`))
             ]);
 
             // Verificar se as respostas são válidas
@@ -600,9 +473,9 @@ export const TMDBService = {
     async fetchSeriesDetails(tmdbId: number): Promise<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null> {
         try {
             const [seriesResponse, creditsResponse, contentRatingsResponse] = await Promise.all([
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/content_ratings?api_key=${TMDB_API_KEY}`)
+                fetch(tmdbUrl(`/tv/${tmdbId}`, { language: 'pt-BR' })),
+                fetch(tmdbUrl(`/tv/${tmdbId}/credits`, { language: 'pt-BR' })),
+                fetch(tmdbUrl(`/tv/${tmdbId}/content_ratings`))
             ]);
 
             // Verificar se as respostas são válidas
@@ -663,9 +536,7 @@ export const TMDBService = {
     // Fetch season details with episodes
     async fetchSeasonDetails(seriesId: number, seasonNumber: number): Promise<{ episodes: { id: number; episode_number: number; name: string; overview: string; air_date: string; runtime: number; still_path: string; vote_average: number }[] } | null> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/tv/${seriesId}/season/${seasonNumber}?language=pt-BR`
-            );
+            const response = await fetch(tmdbUrl(`/tv/${seriesId}/season/${seasonNumber}`, { language: 'pt-BR' }));
 
             // Verificar se a resposta é válida
             if (!response.ok) {
@@ -700,11 +571,8 @@ export const TMDBService = {
     async fetchMovieImages(tmdbId: number, isSeries: boolean = false): Promise<string[]> {
         try {
             // Fetch specifically 'xx' (no language/text-less) images
-            const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images?include_image_language=xx`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/images?include_image_language=xx`;
-
-            const response = await fetch(endpoint);
+            const path = isSeries ? `/tv/${tmdbId}/images` : `/movie/${tmdbId}/images`;
+            const response = await fetch(tmdbUrl(path, { include_image_language: 'xx' }));
 
             if (!response.ok) {
                 return [];
@@ -730,11 +598,8 @@ export const TMDBService = {
         iso_639_1: string | null;
     }[]> {
         try {
-            const endpoint = isSeries
-                ? `${TMDB_BASE_URL}/tv/${tmdbId}/images`
-                : `${TMDB_BASE_URL}/movie/${tmdbId}/images`;
-
-            const response = await fetch(endpoint);
+            const path = isSeries ? `/tv/${tmdbId}/images` : `/movie/${tmdbId}/images`;
+            const response = await fetch(tmdbUrl(path));
 
             if (!response.ok) {
                 return [];
@@ -791,16 +656,15 @@ export const TMDBService = {
     // Get backdrop URL for carousel
     async getCarouselBackdrop(category: string): Promise<string | null> {
         try {
-            let endpoint = '';
+            let path = '';
             if (category === 'top_rated') {
-                endpoint = `${TMDB_BASE_URL}/movie/top_rated?page=1&language=pt-BR`;
+                path = '/movie/top_rated';
             } else if (category === 'coming_soon') {
-                endpoint = `${TMDB_BASE_URL}/movie/upcoming?page=1&language=pt-BR`;
+                path = '/movie/upcoming';
             } else {
                 return null;
             }
-
-            const response = await fetch(endpoint);
+            const response = await fetch(tmdbUrl(path, { page: '1', language: 'pt-BR' }));
 
             if (!response.ok) {
                 if (response.status === 404) {
@@ -897,7 +761,7 @@ export const TMDBService = {
         try {
             // Buscar créditos de TV da pessoa
             const response = await fetch(
-                `${TMDB_BASE_URL}/person/${creatorId}/tv_credits?api_key=${TMDB_API_KEY}&language=pt-BR`
+                tmdbUrl(`/person/${creatorId}/tv_credits`, { language: 'pt-BR' })
             );
 
             if (!response.ok) {
@@ -962,9 +826,7 @@ export const TMDBService = {
         created_by?: { id: number; name: string; profile_path: string }[];
     } | null> {
         try {
-            const response = await fetch(
-                `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`
-            );
+            const response = await fetch(tmdbUrl(`/tv/${tmdbId}`, { language: 'pt-BR' }));
 
             if (!response.ok) {
                 if (response.status === 404) {

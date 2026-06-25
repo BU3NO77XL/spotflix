@@ -10,10 +10,11 @@ interface MovieTitleProps {
     width: number;
     height: number;
   }>;
+  isLoading?: boolean;
   className?: string;
 }
 
-export default function MovieTitle({ title, logos, className = '' }: MovieTitleProps) {
+export default function MovieTitle({ title, logos, isLoading = false, className = '' }: MovieTitleProps) {
   const logoUrl = logos.length > 0 ? `https://image.tmdb.org/t/p/original${logos[0]?.file_path}` : null;
   const { loaded: logoLoaded, error: logoError } = useImagePreload(logoUrl);
 
@@ -24,19 +25,24 @@ export default function MovieTitle({ title, logos, className = '' }: MovieTitleP
       : 'text-3xl sm:text-5xl lg:text-6xl'
     }`;
 
+  // Enquanto os detalhes ainda estão carregando, não renderizar nada
+  // (evita mostrar o título sem personalização para depois trocar pelo logo)
+  if (isLoading) {
+    return <div className={`relative min-h-[3rem] ${className}`} />;
+  }
+
   // Mostrar logo apenas quando totalmente carregado e sem erros
   const showLogo = logoUrl && logoLoaded && !logoError;
 
-  // Sempre mostrar o título como fallback - nunca deixar vazio
-  const showTitle = !showLogo;
+  // Enquanto o logo está baixando (logoUrl existe mas ainda não carregou),
+  // também não mostra nada — só quando confirmar que não há logo ou deu erro
+  const showTitle = !logoUrl || logoError;
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Logo - mostrado apenas quando carregado */}
+    <div className={`relative min-h-[3rem] ${className}`}>
+      {/* Logo — mostrado apenas quando totalmente carregado */}
       {showLogo && (
-        <div
-          className="flex items-center transition-opacity duration-300 opacity-100"
-        >
+        <div className="flex items-center">
           <img
             src={logoUrl}
             alt={title}
@@ -49,7 +55,7 @@ export default function MovieTitle({ title, logos, className = '' }: MovieTitleP
         </div>
       )}
 
-      {/* Título de texto - visível quando não há logo ou enquanto logo carrega */}
+      {/* Título de texto — só quando não há logo ou logo deu erro */}
       {showTitle && (
         <h1 className={titleClasses}>
           {title}

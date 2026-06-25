@@ -16,7 +16,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
     if (!tmdbId) {
         return {
-            title: 'Assistir - RAVEFLIX',
+            title: 'Assistir - WEBFLIX',
             description: 'Assista a milhares de filmes e séries online.',
         };
     }
@@ -27,7 +27,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
             : await TMDBService.fetchMovieDetails(Number(tmdbId))) as any;
 
         const title = data?.title || data?.name || 'Assistir';
-        const description = data?.overview || 'Assista online com qualidade no RAVEFLIX.';
+        const description = data?.overview || 'Assista online com qualidade no WEBFLIX.';
         
         // Prioridade: Backdrop -> Poster
         const imagePath = data?.backdrop_path || data?.poster_path;
@@ -39,10 +39,10 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
             : `https://megaembed.com/embed/${tmdbId}`;
 
         return {
-            title: `${title} - RAVEFLIX`,
+            title: `${title} - WEBFLIX`,
             description,
             openGraph: {
-                title: `${title} - RAVEFLIX`,
+                title: `${title} - WEBFLIX`,
                 description,
                 type: mediaType === 'series' ? 'video.tv_show' : 'video.movie',
                 images: ogImage ? [{ url: ogImage, width: 1280, height: 720 }] : [],
@@ -58,7 +58,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
             },
             twitter: {
                 card: 'summary_large_image',
-                title: `${title} - RAVEFLIX`,
+                title: `${title} - WEBFLIX`,
                 description,
                 images: ogImage ? [ogImage] : [],
             },
@@ -80,8 +80,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
             : `https://megaembed.com/embed/${tmdbId}`;
             
         return {
-            title: 'Assistir - RAVEFLIX',
-            description: 'Assista online com qualidade no RAVEFLIX.',
+            title: 'Assistir - WEBFLIX',
+            description: 'Assista online com qualidade no WEBFLIX.',
             other: {
                 'og:video': embedUrl,
                 'og:video:url': embedUrl,

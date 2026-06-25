@@ -1,6 +1,6 @@
 {
-    "name": "RAVEFLIX",
-    "short_name": "RAVEFLIX",
+    "name": "WEBFLIX",
+    "short_name": "WEBFLIX",
     "description": "Your premier destination for movies and series.",
     "start_url": "/",
     "display": "standalone",

@@ -52,7 +52,7 @@ export default function PreferencesPage() {
       genres: selectedGenres
     }));
 
-    toast.success('Preferências salvas! Bem-vindo ao RAVEFLIX.');
+    toast.success('Preferências salvas! Bem-vindo ao WEBFLIX.');
     router.push('/');
   };
 
@@ -180,7 +180,7 @@ export default function PreferencesPage() {
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs uppercase tracking-[0.2em]" style={{ color: '#888' }}>
-                © 2026 RAVEFLIX Entertainment Inc.
+                © 2026 WEBFLIX Entertainment Inc.
               </p>
               <div className="flex items-center gap-4">
                 <a href="#" className="text-sm transition-colors hover:opacity-80 hover:underline" style={{ color: '#888' }}>

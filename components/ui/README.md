@@ -1,6 +1,6 @@
-# 🎨 RAVEFLIX UI Components
+# 🎨 WEBFLIX UI Components
 
-Sistema de componentes reutilizáveis para o RAVEFLIX, eliminando duplicação de código e garantindo consistência visual.
+Sistema de componentes reutilizáveis para o WEBFLIX, eliminando duplicação de código e garantindo consistência visual.
 
 ## 📦 Componentes Disponíveis
 
@@ -64,7 +64,7 @@ Botão de reprodução configurável.
 ```
 
 **Variantes:**
-- `primary`: Verde RAVEFLIX (#1DB954)
+- `primary`: Verde WEBFLIX (#1DB954)
 - `secondary`: Branco com texto preto
 - `ghost`: Transparente com borda
 
@@ -208,7 +208,7 @@ import Top10Card from '@/components/ui/Top10Card';
 // Azul para ficção científica
 <MiniCard accentColor="#3498DB" />
 
-// Verde padrão RAVEFLIX
+// Verde padrão WEBFLIX
 <MiniCard accentColor="#1DB954" />
 ```
 

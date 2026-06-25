@@ -21,7 +21,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [similar, setSimilar] = useState<Movie[]>([]);
     const [isMuted, setIsMuted] = useState(true);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
-    const [logoLoading, setLogoLoading] = useState(false);
+    const [logoLoading, setLogoLoading] = useState(true);
     const [isOnNetflix, setIsOnNetflix] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -40,10 +40,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
             setCast([]);
             setSimilar([]);
             setLogoUrl(null);
-
-            // Se há tmdb_id, iniciamos loading do logo para evitar flash
-            const hasTmdbId = !!(movie.tmdb_id || movie.id);
-            setLogoLoading(hasTmdbId);
+            setLogoLoading(true); // sempre bloquear título antes de resolver o logo
 
             const detailsPromise = movie.type === 'series'
                 ? TMDBService.fetchSeriesDetails(Number(movie.tmdb_id || movie.id))

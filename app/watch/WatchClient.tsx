@@ -545,12 +545,19 @@ function WatchContent() {
         fetchSeriesDetails();
     }, [movie?.id, movie?.type, movie?.tmdb_id, updatedSeriesDetails]);
 
-    // Resetar logos quando mudar de filme/série
+    // Resetar logos e coleção quando mudar de filme/série
     useEffect(() => {
         setLogos([]);
         setIsLogoReady(false);
         setIsLoadingDetails(true); // Garantir que isLoadingDetails seja true ao mudar
-    }, [tmdbId]);
+        setCollection(null); // Limpar coleção do filme anterior
+        setMovieDetails(null); // Limpar detalhes do filme anterior
+        setSeriesDetails(null); // Limpar detalhes da série anterior
+        setSimilarMovies([]); // Limpar similares
+        setTrailers([]); // Limpar trailers
+        setCreatorSeries([]); // Limpar séries do criador
+        setCreatorInfo(null); // Limpar info do criador
+    }, [movieId, tmdbId]);
 
     const { data: fetchedDetails, isLoading: isLoadingDetailsQuery } = useQuery({
         queryKey: ['watchDetails', movie?.tmdb_id, movie?.type],
@@ -1069,6 +1076,7 @@ function WatchContent() {
                             <MovieTitle
                                 title={movie.title}
                                 logos={logos}
+                                isLoading={isLoadingDetails}
                             />
                         </div>
 
