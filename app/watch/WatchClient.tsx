@@ -1097,13 +1097,6 @@ function WatchContent() {
                                 onClick={() => {
                                     console.log('Botão Assistir clicado, setIsPlaying(true)');
                                     setIsPlaying(true);
-                                    // Scroll para o player após um pequeno delay
-                                    setTimeout(() => {
-                                        const playerSection = document.getElementById('player-section');
-                                        if (playerSection) {
-                                            playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                        }
-                                    }, 100);
                                 }}
                                 className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 sm:px-8
                                     rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base
@@ -1499,45 +1492,51 @@ function WatchContent() {
                         </section>
                     )}
 
-                    {/* Player Section */}
+                    {/* Player Section - Modal Flutuante */}
                     {isPlaying && (
                         <>
                             {console.log('Player renderizando! isPlaying =', isPlaying)}
-                            <section
-                                id="player-section"
-                                className="relative py-12"
-                                aria-label="Video Player"
-                            >
-                            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen -z-10">
-                                <img
-                                    src={(movie.backdrop_url && movie.backdrop_url !== '')
-                                        ? movie.backdrop_url
-                                        : (movie.poster_url && movie.poster_url !== '')
-                                            ? movie.poster_url
-                                            : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=1920&h=1080&fit=crop'}
-                                    alt=""
-                                    className="w-full h-full object-cover grayscale brightness-50"
-                                    aria-hidden="true"
-                                />
-                                <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-transparent to-[#121212]" />
-                            </div>
-
-                            <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative z-10 max-w-3xl mx-auto">
-                                <iframe
-                                    src={
-                                        isSeries
-                                            ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
-                                            : `https://megaembed.com/embed/${movie.tmdb_id}`
+                            <div
+                                className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+                                onClick={(e) => {
+                                    // Fechar ao clicar no fundo (backdrop)
+                                    if (e.target === e.currentTarget) {
+                                        setIsPlaying(false);
                                     }
-                                    width="100%"
-                                    height="100%"
-                                    frameBorder="0"
-                                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                                    allowFullScreen
-                                    className="w-full h-full"
-                                />
+                                }}
+                            >
+                                {/* Botão de fechar */}
+                                <button
+                                    onClick={() => setIsPlaying(false)}
+                                    className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                                    aria-label="Fechar player"
+                                >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </button>
+
+                                {/* Container do player */}
+                                <div className="w-full h-full max-w-7xl max-h-[90vh] mx-auto p-4 flex items-center justify-center">
+                                    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+                                        <iframe
+                                            src={
+                                                isSeries
+                                                    ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                                                    : `https://megaembed.com/embed/${movie.tmdb_id}`
+                                            }
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                                            allowFullScreen
+                                            className="w-full h-full"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </section>
+                        </>
+                    )}
                         </>
                     )}
 
