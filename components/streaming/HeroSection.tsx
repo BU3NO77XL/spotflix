@@ -247,7 +247,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
             </div>
 
             {/* Rating Circle */}
-            <div className="absolute right-0 top-[580px] md:top-[492px] z-20 flex items-center h-[35px]">
+            <div className="absolute right-0 top-[500px] md:top-[492px] z-20 flex items-center h-[35px]">
                 <div className="relative w-[35px] h-[35px] mr-[8px] z-10">
                     <svg viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                         <circle cx="17.5" cy="17.5" r="17" stroke="white" strokeOpacity="0.7"/>
