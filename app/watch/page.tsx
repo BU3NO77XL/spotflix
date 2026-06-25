@@ -33,6 +33,11 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         const imagePath = data?.backdrop_path || data?.poster_path;
         const ogImage = imagePath ? `https://image.tmdb.org/t/p/w1280${imagePath}` : undefined;
 
+        // URL do embed para o RAVE
+        const embedUrl = mediaType === 'series'
+            ? `https://megaembed.com/embed/${tmdbId}/1/1`
+            : `https://megaembed.com/embed/${tmdbId}`;
+
         return {
             title: `${title} - RAVEFLIX`,
             description,
@@ -41,17 +46,47 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
                 description,
                 type: mediaType === 'series' ? 'video.tv_show' : 'video.movie',
                 images: ogImage ? [{ url: ogImage, width: 1280, height: 720 }] : [],
+                videos: [
+                    {
+                        url: embedUrl,
+                        secureUrl: embedUrl,
+                        type: 'text/html',
+                        width: 1280,
+                        height: 720,
+                    }
+                ],
             },
             twitter: {
                 card: 'summary_large_image',
                 title: `${title} - RAVEFLIX`,
                 description,
                 images: ogImage ? [ogImage] : [],
+            },
+            other: {
+                'og:video': embedUrl,
+                'og:video:url': embedUrl,
+                'og:video:secure_url': embedUrl,
+                'og:video:type': 'text/html',
+                'og:video:width': '1280',
+                'og:video:height': '720',
             }
         };
-    } catch (e) {
+    } catch (error) {
+        console.error('Error fetching metadata:', error);
+        
+        // Fallback caso a API do TMDB falhe
+        const embedUrl = mediaType === 'series'
+            ? `https://megaembed.com/embed/${tmdbId}/1/1`
+            : `https://megaembed.com/embed/${tmdbId}`;
+            
         return {
             title: 'Assistir - RAVEFLIX',
+            description: 'Assista online com qualidade no RAVEFLIX.',
+            other: {
+                'og:video': embedUrl,
+                'og:video:url': embedUrl,
+                'og:video:secure_url': embedUrl,
+            }
         };
     }
 }

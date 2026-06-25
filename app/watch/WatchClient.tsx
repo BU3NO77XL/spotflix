@@ -493,6 +493,9 @@ function WatchContent() {
     const movie = movieById || movieByTmdb;
     const isLoading = isLoadingById || isLoadingByTmdb;
 
+    // Determinar se é série ou filme (precisa estar antes dos useEffects que usam)
+    const isSeries = movie && movie.type === 'series';
+
     // Efeito para carregar logos pré-carregados do store global (Zustand-like/Context)
     useEffect(() => {
         if (movie?.tmdb_id) {
@@ -810,14 +813,59 @@ function WatchContent() {
         }
     };
 
+    // Efeito para tentar comunicar com o RAVE se estiver presente
+    useEffect(() => {
+        // Só roda no cliente
+        if (typeof window === 'undefined' || !movie) return;
+
+        // Detecta se está rodando dentro do RAVE
+        const isRave = navigator.userAgent.includes('Rave') || 
+                       (window as any).RaveApp;
+
+        if (isRave) {
+            const embedUrl = isSeries
+                ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
+                : `https://megaembed.com/embed/${movie.tmdb_id}`;
+
+            const videoInfo = {
+                url: embedUrl,
+                title: movie.title,
+                thumbnail: movie.backdrop_url || movie.poster_url,
+                type: 'iframe'
+            };
+
+            // Tenta diferentes métodos de comunicação com o RAVE
+            try {
+                // Método 1: API direta do RAVE (se disponível)
+                if ((window as any).RaveApp?.setVideo) {
+                    (window as any).RaveApp.setVideo(videoInfo);
+                }
+
+                // Método 2: postMessage
+                window.postMessage({ 
+                    type: 'RAVE_VIDEO_DETECTED', 
+                    data: videoInfo 
+                }, '*');
+
+                // Método 3: CustomEvent
+                window.dispatchEvent(new CustomEvent('rave:video-detected', {
+                    detail: videoInfo
+                }));
+
+                console.log('RAVE detection executed:', videoInfo);
+            } catch (e) {
+                console.log('RAVE detection attempt failed:', e);
+            }
+        }
+    }, [movie, isSeries, selectedSeason, selectedEpisode]);
+
     // Verificar se temos um filme válido antes de renderizar
     // Removida a verificação de isLogoReady para evitar que a página fique travada no loading
     if (!isMounted || isLoading || !movie || Object.keys(movie).length === 0) {
         return <WatchLoading />;
     }
 
-    // Determinar se é série ou filme
-    const isSeries = movie && movie.type === 'series';
+    // Dados derivados de série ou filme
     const cast = isSeries ? seriesDetails?.cast || [] : movieDetails?.cast || [];
     const synopsis = isSeries ? seriesDetails?.overview || movie.synopsis || '' : movieDetails?.overview || movie.synopsis || '';
 
@@ -888,15 +936,6 @@ function WatchContent() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(videoObjectSchema) }}
             />
             
-            {/* Meta tags adicionais para o RAVE */}
-            <meta property="og:type" content="video.other" />
-            <meta property="og:video" content={embedUrl} />
-            <meta property="og:video:url" content={embedUrl} />
-            <meta property="og:video:secure_url" content={embedUrl} />
-            <meta property="og:video:type" content="text/html" />
-            <meta property="og:video:width" content="1280" />
-            <meta property="og:video:height" content="720" />
-            
             {/* Iframe oculto para o RAVE detectar - NÃO REMOVER */}
             <iframe
                 src={embedUrl}
@@ -931,36 +970,6 @@ function WatchContent() {
                 poster={movie.backdrop_url || movie.poster_url}
                 title={movie.title}
                 data-rave-video="true"
-            />
-            
-            {/* Script para forçar detecção do RAVE */}
-            <script
-                dangerouslySetInnerHTML={{
-                    __html: `
-                        // Tenta comunicar com o RAVE se estiver presente
-                        if (window.RaveApp || navigator.userAgent.includes('Rave')) {
-                            const embedUrl = ${JSON.stringify(embedUrl)};
-                            const videoInfo = {
-                                url: embedUrl,
-                                title: ${JSON.stringify(movie.title)},
-                                thumbnail: ${JSON.stringify(movie.backdrop_url || movie.poster_url)},
-                                type: 'iframe'
-                            };
-                            
-                            // Tenta diferentes métodos de comunicação com o RAVE
-                            try {
-                                if (window.RaveApp && window.RaveApp.setVideo) {
-                                    window.RaveApp.setVideo(videoInfo);
-                                }
-                                if (window.postMessage) {
-                                    window.postMessage({ type: 'RAVE_VIDEO_DETECTED', data: videoInfo }, '*');
-                                }
-                            } catch (e) {
-                                console.log('RAVE detection attempt:', e);
-                            }
-                        }
-                    `
-                }}
             />
             
             {/* Hero Section - Similar to MovieModal */}
@@ -1078,10 +1087,11 @@ function WatchContent() {
                             role="group"
                             aria-label="Ações do filme"
                         >
-                            {/* Texto indicativo para RAVE */}
+                            {/* Texto indicativo para RAVE - DESATIVADO
                             <p className="w-full text-white/80 text-xs sm:text-sm font-medium italic mb-2">
                                 AGUARDE NESSA PÁGINA, PARA ASSISTIR NO APLICATIVO RAVE
                             </p>
+                            */}
                             <button
                                 onClick={() => {
                                     const playerUrl = isSeries
@@ -1205,55 +1215,49 @@ function WatchContent() {
                         )}
 
 
-                        {/* Quick Info */}
-                        <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-sm text-gray-500">
+                        {/* Quick Info - MOVIDO PARA DEPOIS DOS EPISÓDIOS EM SÉRIES */}
+                        {!isSeries && (
+                            <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-sm text-gray-500">
 
-                            {(isSeries ? seriesDetails?.director : movieDetails?.director) && (
-                                <span>{isSeries ? 'Criação' : 'Direção'}: <span className="text-gray-300">{(isSeries ? seriesDetails?.director : movieDetails?.director)}</span></span>
-                            )}
+                                {movieDetails?.director && (
+                                    <span>Direção: <span className="text-gray-300">{movieDetails.director}</span></span>
+                                )}
 
-                            {/* Star Rating based on Score */}
-                            {(movie.score ?? 0) > 0 && (
-                                <div className="flex items-center gap-2" title={`Avaliação: ${movie.score}/10`}>
-                                    <span>Avaliação do público:</span>
-                                    <div className="flex relative">
-                                        {[1, 2, 3, 4, 5].map((star) => {
-                                            const ratingValue = (movie.score ?? 0) / 2; // Convert 0-10 to 0-5
-                                            const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
+                                {/* Star Rating based on Score */}
+                                {(movie.score ?? 0) > 0 && (
+                                    <div className="flex items-center gap-2" title={`Avaliação: ${movie.score}/10`}>
+                                        <span>Avaliação do público:</span>
+                                        <div className="flex relative">
+                                            {[1, 2, 3, 4, 5].map((star) => {
+                                                const ratingValue = (movie.score ?? 0) / 2; // Convert 0-10 to 0-5
+                                                const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
 
-                                            return (
-                                                <div key={star} className="relative w-4 h-4 mr-0.5">
-                                                    <svg
-                                                        className="w-full h-full"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <defs>
-                                                            <linearGradient id={`starGradient-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                <stop offset={`${fillPercentage}%`} stopColor="white" />
-                                                                <stop offset={`${fillPercentage}%`} stopColor="#4b5563" /> {/* gray-600 hex */}
-                                                            </linearGradient>
-                                                        </defs>
-                                                        <path
-                                                            fill={`url(#starGradient-${star}-${movie.id})`}
-                                                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                                                        />
-                                                    </svg>
-                                                </div>
-                                            );
-                                        })}
+                                                return (
+                                                    <div key={star} className="relative w-4 h-4 mr-0.5">
+                                                        <svg
+                                                            className="w-full h-full"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <defs>
+                                                                <linearGradient id={`starGradient-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="white" />
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#4b5563" /> {/* gray-600 hex */}
+                                                                </linearGradient>
+                                                            </defs>
+                                                            <path
+                                                                fill={`url(#starGradient-${star}-${movie.id})`}
+                                                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
                                     </div>
-                                    <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
-                                </div>
-                            )}
-
-                            {/* Informações adicionais para séries */}
-                            {isSeries && seriesDetails && (
-                                <>
-                                    <span>Data de lançamento: <span className="text-gray-300">{seriesDetails.first_air_date}</span></span>
-                                    <span>Última data: <span className="text-gray-300">{seriesDetails.last_air_date}</span></span>
-                                </>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
 
 
                         {/* Keywords/Tags - Desativado a pedido do usuario
@@ -1433,6 +1437,60 @@ function WatchContent() {
                             </div>
                         </section>
 
+                    )}
+
+                    {/* Quick Info para SÉRIES - aparece DEPOIS dos episódios */}
+                    {isSeries && (
+                        <section className="py-6 border-t border-white/10">
+                            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
+
+                                {seriesDetails?.director && (
+                                    <span>Criação: <span className="text-gray-300">{seriesDetails.director}</span></span>
+                                )}
+
+                                {/* Star Rating based on Score */}
+                                {(movie.score ?? 0) > 0 && (
+                                    <div className="flex items-center gap-2" title={`Avaliação: ${movie.score}/10`}>
+                                        <span>Avaliação do público:</span>
+                                        <div className="flex relative">
+                                            {[1, 2, 3, 4, 5].map((star) => {
+                                                const ratingValue = (movie.score ?? 0) / 2; // Convert 0-10 to 0-5
+                                                const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
+
+                                                return (
+                                                    <div key={star} className="relative w-4 h-4 mr-0.5">
+                                                        <svg
+                                                            className="w-full h-full"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <defs>
+                                                                <linearGradient id={`starGradient-series-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="white" />
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
+                                                                </linearGradient>
+                                                            </defs>
+                                                            <path
+                                                                fill={`url(#starGradient-series-${star}-${movie.id})`}
+                                                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
+                                    </div>
+                                )}
+
+                                {/* Informações adicionais para séries */}
+                                {seriesDetails && (
+                                    <>
+                                        <span>Data de lançamento: <span className="text-gray-300">{seriesDetails.first_air_date}</span></span>
+                                        <span>Última data: <span className="text-gray-300">{seriesDetails.last_air_date}</span></span>
+                                    </>
+                                )}
+                            </div>
+                        </section>
                     )}
 
                     {/* ═══════════════════════════════════════════════════════════

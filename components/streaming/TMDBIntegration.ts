@@ -6,8 +6,12 @@ const TMDB_BASE_URL = isServer ? 'https://api.themoviedb.org/3' : '/api/content'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 // Warn if API key is missing (apenas no servidor)
-if (isServer && !TMDB_API_KEY) {
-    console.warn('⚠️ TMDB API key not found. Please set TMDB_API_KEY in your .env file.');
+if (isServer) {
+    if (!TMDB_API_KEY) {
+        console.error('❌ TMDB API key not found. Please set TMDB_API_KEY in your .env file.');
+    } else {
+        console.log('✅ TMDB API key loaded:', TMDB_API_KEY.substring(0, 8) + '...');
+    }
 }
 
 export const TMDBService = {
@@ -596,9 +600,9 @@ export const TMDBService = {
     async fetchSeriesDetails(tmdbId: number): Promise<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null> {
         try {
             const [seriesResponse, creditsResponse, contentRatingsResponse] = await Promise.all([
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}?language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/credits?language=pt-BR`),
-                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/content_ratings`)
+                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`),
+                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=pt-BR`),
+                fetch(`${TMDB_BASE_URL}/tv/${tmdbId}/content_ratings?api_key=${TMDB_API_KEY}`)
             ]);
 
             // Verificar se as respostas são válidas
@@ -607,7 +611,8 @@ export const TMDBService = {
                     console.warn(`TV Series with ID ${tmdbId} not found for details`);
                     return null;
                 }
-                throw new Error(`HTTP error! status: ${seriesResponse.status || creditsResponse.status || contentRatingsResponse.status}`);
+                console.error(`TMDB API Error: ${seriesResponse.status || creditsResponse.status || contentRatingsResponse.status}`);
+                return null; // Retorna null em vez de lançar erro
             }
 
             const series = await seriesResponse.json();
