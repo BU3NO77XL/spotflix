@@ -118,7 +118,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 style={{
                                     backgroundImage: `
                                         linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.12) 30%, rgba(24,24,24,0.97) 100%),
-                                        linear-gradient(115deg, rgba(13,13,13,0.10) 18%, rgba(13,13,13,0.70) 58%, rgba(13,13,13,1) 100%),
+                                        linear-gradient(115deg, rgba(13,13,13,0.10) 18%, rgba(13,13,13,0.40) 58%, rgba(13,13,13,0.75) 100%),
                                         radial-gradient(circle at 18% 24%, rgba(255,235,220,0.22), transparent 28%)
                                     `,
                                 }}
@@ -159,29 +159,6 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                             >
                                 <X className="w-4 h-4" strokeWidth={2.5} />
                             </button>
-
-                            {/* Ícone cadeado centralizado sobre o backdrop */}
-                            <div className="absolute inset-0 z-10 flex items-center justify-center pb-2">
-                                <motion.div
-                                    initial={{ scale: 0.7, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ delay: 0.15, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                                    className="w-16 h-16 rounded-full flex items-center justify-center border border-white/20"
-                                    style={{
-                                        background: 'rgba(24,24,24,0.55)',
-                                        backdropFilter: 'blur(8px)',
-                                        boxShadow: '0 0 32px rgba(255,210,140,0.15)',
-                                    }}
-                                >
-                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                                        <path
-                                            fillRule="evenodd" clipRule="evenodd"
-                                            d="M12 2C9.23858 2 7 4.23858 7 7V10H5C4.44772 10 4 10.4477 4 11V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V11C20 10.4477 19.5523 10 19 10H17V7C17 4.23858 14.7614 2 12 2ZM15 10V7C15 5.34315 13.6569 4 12 4C10.3431 4 9 5.34315 9 7V10H15ZM12 14C11.4477 14 11 14.4477 11 15C11 15.5523 11.4477 16 12 16C12.5523 16 13 15.5523 13 15C13 14.4477 12.5523 14 12 14Z"
-                                            fill="white"
-                                        />
-                                    </svg>
-                                </motion.div>
-                            </div>
                         </div>
 
                         {/* ─── CORPO DO MODAL ─── */}
