@@ -202,9 +202,9 @@ function WatchContent() {
     if (tmdbId !== lastLoggedTmdbId.current) {
         navStartRef.current = performance.now();
         lastLoggedTmdbId.current = tmdbId;
-        console.log(`%c[WATCH PERF] ▶ Novo tmdbId=${tmdbId} — componente começou a renderizar (t=0ms)`, 'color:#0af;font-weight:bold');
+        // console.log(`%c[WATCH PERF] ▶ Novo tmdbId=${tmdbId} — componente começou a renderizar (t=0ms)`, 'color:#0af;font-weight:bold');
         const cached = queryClient.getQueryData(['movie', 'tmdb', tmdbId, mediaType]);
-        console.log(`%c[WATCH PERF] Cache React Query para este tmdbId:`, 'color:#0af', cached ? '✅ HIT — dados já disponíveis' : '❌ MISS — vai buscar da API');
+        // console.log(`%c[WATCH PERF] Cache React Query para este tmdbId:`, 'color:#0af', cached ? '✅ HIT — dados já disponíveis' : '❌ MISS — vai buscar da API');
     }
     
     // Estado para controlar se o componente foi montado no cliente (evita erro de hidratação)
@@ -213,7 +213,7 @@ function WatchContent() {
     // Marcar como montado após o primeiro render no cliente
     useEffect(() => {
         setIsMounted(true);
-        console.log(`%c[WATCH PERF] ✅ isMounted=true (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
+        // console.log(`%c[WATCH PERF] ✅ isMounted=true (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
     }, []);
 
     // Quando o id da mídia mudar (navegação para outro filme/série),
@@ -461,9 +461,9 @@ function WatchContent() {
     const { data: movieById, isLoading: isLoadingById } = useQuery({
         queryKey: ['movies', movieId],
         queryFn: async () => {
-            console.log(`%c[WATCH PERF] 🔍 movieById queryFn iniciou (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
+            // console.log(`%c[WATCH PERF] 🔍 movieById queryFn iniciou (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
             const movies = await base44.entities.Movie.filter({ id: movieId! });
-            console.log(`%c[WATCH PERF] ✅ movieById queryFn concluiu (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
+            // console.log(`%c[WATCH PERF] ✅ movieById queryFn concluiu (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
             return movies[0] || null;
         },
         enabled: !!movieId,
@@ -479,26 +479,23 @@ function WatchContent() {
     const { data: movieByTmdb, isLoading: isLoadingByTmdb } = useQuery({
         queryKey: ['movie', 'tmdb', tmdbId, mediaType],
         queryFn: async () => {
-            console.log(`%c[WATCH PERF] 🔍 movieByTmdb queryFn iniciou (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
-            // Primeiro tenta buscar no banco local
+            // console.log(`%c[WATCH PERF] 🔍 movieByTmdb queryFn iniciou (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
             const t1 = performance.now();
             const movies = await base44.entities.Movie.filter({ tmdb_id: Number(tmdbId) });
-            console.log(`%c[WATCH PERF]   ↳ base44 filter concluiu em ${(performance.now() - t1).toFixed(0)}ms (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
+            // console.log(`%c[WATCH PERF]   ↳ base44 filter concluiu em ${(performance.now() - t1).toFixed(0)}ms (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
             if (movies[0]) {
-                console.log(`%c[WATCH PERF] ✅ movieByTmdb encontrado no banco local`, 'color:#0af');
+                // console.log(`%c[WATCH PERF] ✅ movieByTmdb encontrado no banco local`, 'color:#0af');
                 return movies[0];
             }
 
-            // Se não encontrar, busca direto do TMDB
             const tmdbIdNum = Number(tmdbId);
             const isSeries = mediaType === 'series';
             const endpoint = isSeries ? 'tv' : 'movie';
 
-            console.log(`%c[WATCH PERF]   ↳ buscando da API TMDB /api/content/${endpoint}/${tmdbIdNum} (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
+            // console.log(`%c[WATCH PERF]   ↳ buscando da API TMDB /api/content/${endpoint}/${tmdbIdNum} (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
             const t2 = performance.now();
-            // Busca dados básicos do TMDB via proxy
             const response = await fetch(`/api/content/${endpoint}/${tmdbIdNum}?language=pt-BR`);
-            console.log(`%c[WATCH PERF]   ↳ API TMDB respondeu em ${(performance.now() - t2).toFixed(0)}ms (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
+            // console.log(`%c[WATCH PERF]   ↳ API TMDB respondeu em ${(performance.now() - t2).toFixed(0)}ms (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
             if (!response.ok) return {} as any;
             const tmdbData = await response.json();
 
@@ -636,7 +633,7 @@ function WatchContent() {
                     }
                 } catch (error) {
                     // Silently fail or log minimally to avoid flooding
-                    console.warn(`Could not fetch extra details for series ${movie.id}:`, error);
+                    // console.warn(`Could not fetch extra details for series ${movie.id}:`, error);
                 }
             }
         };
@@ -646,7 +643,7 @@ function WatchContent() {
 
     // Resetar logos e coleção quando mudar de filme/série
     useEffect(() => {
-        console.log(`%c[WATCH PERF] 🔄 Reset de estados (tmdbId=${tmdbId}) (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#fa0');
+        // console.log(`%c[WATCH PERF] 🔄 Reset de estados (tmdbId=${tmdbId}) (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#fa0');
         setLogos([]);
         setIsLogoReady(false);
         setIsLoadingDetails(true);
@@ -953,7 +950,7 @@ function WatchContent() {
     // Verificar se temos um filme válido antes de renderizar
     // Removida a verificação de isLogoReady para evitar que a página fique travada no loading
     if (!isMounted || isLoading || !movie || Object.keys(movie).length === 0) {
-        console.log(`%c[WATCH PERF] ⏳ Mostrando WatchLoading — isMounted=${isMounted} isLoading=${isLoading} movie=${!!movie} (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#f80;font-weight:bold');
+        // console.log(`%c[WATCH PERF] ⏳ Mostrando WatchLoading — isMounted=${isMounted} isLoading=${isLoading} movie=${!!movie} (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#f80;font-weight:bold');
         return <WatchLoading />;
     }
 
@@ -1019,7 +1016,7 @@ function WatchContent() {
                             preload="metadata"
                             className="w-full h-full object-cover"
                             onError={(e: any) => {
-                                console.error('Erro ao carregar vídeo de backdrop:', animatedBackdropUrl, e);
+                                // console.error('Erro ao carregar vídeo de backdrop:', animatedBackdropUrl, e);
                             }}
                         />
                     ) : (movie.backdrop_url || movie.poster_url) ? (
@@ -1595,7 +1592,7 @@ function WatchContent() {
                                                         onClick={() => {
                                                             if (!isCurrentMovie) {
                                                                 const clickTime = performance.now();
-                                                                console.log(`%c[WATCH PERF] 🖱️ CLIQUE no poster da coleção: "${part.title}" (tmdb_id=${part.id})`, 'color:#f0f;font-weight:bold;font-size:13px');
+                                                                // console.log(`%c[WATCH PERF] 🖱️ CLIQUE no poster da coleção: "${part.title}" (tmdb_id=${part.id})`, 'color:#f0f;font-weight:bold;font-size:13px');
 
                                                                 // Troca o filme LOCALMENTE — zero round-trip ao servidor
                                                                 setLocalOverride({
@@ -1632,7 +1629,7 @@ function WatchContent() {
                                                                 // Atualizar URL sem navegar (apenas para bookmarking/compartilhamento)
                                                                 window.history.replaceState(null, '', `/watch?ref=${part.id}`);
 
-                                                                console.log(`%c[WATCH PERF] ✅ override local setado (t=+${(performance.now() - clickTime).toFixed(1)}ms desde clique)`, 'color:#f0f');
+                                                                // console.log(`%c[WATCH PERF] ✅ override local setado (t=+${(performance.now() - clickTime).toFixed(1)}ms desde clique)`, 'color:#f0f');
                                                             }
                                                         }}
                                                         onMouseEnter={() => {

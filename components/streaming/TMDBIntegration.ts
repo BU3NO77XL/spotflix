@@ -10,7 +10,7 @@ if (isServer) {
     if (!TMDB_API_KEY) {
         console.error('❌ TMDB API key not found. Please set TMDB_API_KEY in your .env file.');
     } else {
-        console.log('✅ TMDB API key loaded:', TMDB_API_KEY.substring(0, 8) + '...');
+        // console.log('✅ TMDB API key loaded:', TMDB_API_KEY.substring(0, 8) + '...');
     }
 }
 

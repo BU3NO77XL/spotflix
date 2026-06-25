@@ -88,7 +88,7 @@ export default function RootLayout({
                       });
                     },
                     function(err) {
-                      console.log('ServiceWorker registration failed: ', err);
+                      // console.log('ServiceWorker registration failed: ', err);
                     }
                   );
                 });
