@@ -1301,66 +1301,6 @@ function WatchContent() {
                         */}
                     </section>
 
-                    {/* Quick Info para SÉRIES - aparece ANTES dos episódios */}
-                    {isSeries && (
-                        <section className="py-6 border-b border-white/10">
-                            <div className="flex flex-col lg:flex-col gap-3 text-sm text-gray-500">
-
-                                {seriesDetails?.director && (
-                                    <div className="flex items-center gap-2">
-                                        <span>Criação:</span>
-                                        <span className="text-gray-300">{seriesDetails.director}</span>
-                                    </div>
-                                )}
-
-                                {/* Star Rating based on Score */}
-                                {(movie.score ?? 0) > 0 && (
-                                    <div className="flex items-center gap-2" title={`Avaliação: ${movie.score}/10`}>
-                                        <span>Avaliação:</span>
-                                        <div className="flex relative">
-                                            {[1, 2, 3, 4, 5].map((star) => {
-                                                const ratingValue = (movie.score ?? 0) / 2;
-                                                const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
-
-                                                return (
-                                                    <div key={star} className="relative w-4 h-4 mr-0.5">
-                                                        <svg className="w-full h-full" viewBox="0 0 24 24">
-                                                            <defs>
-                                                                <linearGradient id={`starGradient-series-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="white" />
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
-                                                                </linearGradient>
-                                                            </defs>
-                                                            <path
-                                                                fill={`url(#starGradient-series-${star}-${movie.id})`}
-                                                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
-                                    </div>
-                                )}
-
-                                {/* Informações adicionais para séries */}
-                                {seriesDetails && (
-                                    <>
-                                        <div className="flex items-center gap-2">
-                                            <span>Data de lançamento:</span>
-                                            <span className="text-gray-300">{seriesDetails.first_air_date}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span>Última data:</span>
-                                            <span className="text-gray-300">{seriesDetails.last_air_date}</span>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </section>
-                    )}
-
 
                     {/* Seletor de temporadas e carrossel de episódios para séries */}
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
@@ -1523,6 +1463,66 @@ function WatchContent() {
                             </div>
                         </section>
 
+                    )}
+
+                    {/* Quick Info para SÉRIES - aparece DEPOIS dos episódios */}
+                    {isSeries && (
+                        <section className="py-6 border-b border-white/10">
+                            <div className="flex flex-col lg:flex-col gap-3 text-sm text-gray-500">
+
+                                {seriesDetails?.director && (
+                                    <div className="flex items-center gap-2">
+                                        <span>Criação:</span>
+                                        <span className="text-gray-300">{seriesDetails.director}</span>
+                                    </div>
+                                )}
+
+                                {/* Star Rating based on Score */}
+                                {(movie.score ?? 0) > 0 && (
+                                    <div className="flex items-center gap-2" title={`Avaliação: ${movie.score}/10`}>
+                                        <span>Avaliação:</span>
+                                        <div className="flex relative">
+                                            {[1, 2, 3, 4, 5].map((star) => {
+                                                const ratingValue = (movie.score ?? 0) / 2;
+                                                const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
+
+                                                return (
+                                                    <div key={star} className="relative w-4 h-4 mr-0.5">
+                                                        <svg className="w-full h-full" viewBox="0 0 24 24">
+                                                            <defs>
+                                                                <linearGradient id={`starGradient-series-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="white" />
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
+                                                                </linearGradient>
+                                                            </defs>
+                                                            <path
+                                                                fill={`url(#starGradient-series-${star}-${movie.id})`}
+                                                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
+                                    </div>
+                                )}
+
+                                {/* Informações adicionais para séries */}
+                                {seriesDetails && (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <span>Data de lançamento:</span>
+                                            <span className="text-gray-300">{seriesDetails.first_air_date}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span>Última data:</span>
+                                            <span className="text-gray-300">{seriesDetails.last_air_date}</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </section>
                     )}
 
                     {/* Collection/Franchise */}
