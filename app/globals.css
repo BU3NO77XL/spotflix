@@ -18,6 +18,9 @@
   --destructive-foreground: 0 0% 100%;
   --border: 0 0% 15%;
   --input: 0 0% 15%;
+
+  color-scheme: dark;
+}
   --ring: 142 70% 45%;
   --radius: 0.5rem;
 }
@@ -29,10 +32,33 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  /* Força a barra de navegação virtual do Android a usar cor escura */
+  background-color: #121212;
+}
+
 body {
   background-color: #121212;
   color: white;
   font-family: Arial, Helvetica, sans-serif;
+  /* Cobre a safe area inferior (barra de navegação virtual) com fundo escuro */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Garante que a área atrás da barra de navegação virtual seja escura */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body::after {
+    content: '';
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-bottom);
+    background-color: #121212;
+    z-index: 9999;
+    pointer-events: none;
+  }
 }
 
 /* Cursor pointer for interactive elements */
