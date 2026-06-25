@@ -227,18 +227,18 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo }: Her
                             <motion.div variants={itemVariants} className="flex items-center gap-2 md:gap-[12px] mt-[2px]">
                                 <button
                                     onClick={() => onWatch(movie)}
-                                    className="bg-[#1DB954] hover:bg-[#1DB954]/90 text-white flex items-center justify-center gap-1 md:gap-2 px-4 md:px-[24px] h-[42px] rounded-[4px] transition-colors"
+                                    className="bg-white hover:bg-gray-200 text-black flex items-center justify-center gap-1 md:gap-2 px-5 md:px-[24px] h-[50px] md:h-[42px] rounded-[4px] transition-colors"
                                 >
-                                    <Play className="w-5 h-5 md:w-6 md:h-6 fill-white" />
-                                    <span className="text-[16px] md:text-[18px] font-bold">Assistir</span>
+                                    <Play className="w-6 h-6 md:w-6 md:h-6 fill-black" />
+                                    <span className="text-[18px] md:text-[18px] font-bold">Assistir</span>
                                 </button>
                                 <button
                                     onClick={() => onMoreInfo(movie)}
-                                    className="bg-[#6D6D6E]/70 hover:bg-[#6D6D6E]/80 text-white flex items-center justify-center gap-1 md:gap-2 px-4 md:px-[24px] h-[42px] rounded-[4px] transition-colors backdrop-blur-md"
+                                    className="bg-[#6D6D6E]/70 hover:bg-[#6D6D6E]/80 text-white flex items-center justify-center gap-1 md:gap-2 px-5 md:px-[24px] h-[50px] md:h-[42px] rounded-[4px] transition-colors backdrop-blur-md"
                                 >
-                                    <Info className="w-5 h-5 md:w-6 md:h-6" />
-                                    <span className="text-[16px] md:text-[18px] font-bold hidden md:block">Mais Informações</span>
-                                    <span className="text-[16px] font-bold md:hidden">Informação</span>
+                                    <Info className="w-6 h-6 md:w-6 md:h-6" />
+                                    <span className="text-[18px] md:text-[18px] font-bold hidden md:block">Mais Informações</span>
+                                    <span className="text-[18px] font-bold md:hidden">Informação</span>
                                 </button>
                             </motion.div>
                         </motion.div>
