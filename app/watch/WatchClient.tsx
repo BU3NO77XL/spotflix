@@ -954,7 +954,7 @@ function WatchContent() {
                                     const playerUrl = isSeries
                                         ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
                                         : `https://megaembed.com/embed/${movie.tmdb_id}`;
-                                    window.open(playerUrl, '_blank');
+                                    window.location.href = playerUrl;
                                 }}
                                 className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 sm:px-8
                                     rounded transition-all duration-200 flex items-center justify-center text-sm sm:text-base
