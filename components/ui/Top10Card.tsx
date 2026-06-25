@@ -19,18 +19,30 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
       onClick={() => onClick(movie)}
-      className="group relative shrink-0 w-[215px] h-[154px] cursor-pointer"
+      className={cn(
+        "group relative shrink-0 cursor-pointer",
+        // Height: responsive and dynamic
+        "h-[154px] md:h-[150px] lg:h-[190px] xl:h-[230px]",
+        // Width: responsive and dynamic, extremely tight and compact on all screens
+        rank === 10
+          ? "w-[210px] md:w-[165px] lg:w-[210px] xl:w-[260px]"
+          : "w-[145px] md:w-[140px] lg:w-[180px] xl:w-[220px]"
+      )}
     >
       <div className="relative w-full h-full">
-        {/* Ranking Number */}
+        {/* Ranking Number - Responsive on all screens */}
         <div 
-          className="absolute left-[-15px] top-[8px] w-[127px] h-[143px] flex items-center justify-start select-none pointer-events-none"
+          className={cn(
+            "absolute z-0 flex items-center justify-start select-none pointer-events-none",
+            // Position: responsive
+            "left-[-10px] lg:left-[-15px] xl:left-[-20px] top-0",
+            // Width & Height: matches the card height exactly for vertical centering
+            "w-[110px] h-[154px] md:w-[110px] md:h-[150px] lg:w-[140px] lg:h-[190px] xl:w-[170px] xl:h-[230px]"
+          )}
         >
           <span
-            className="font-bold leading-none"
+            className="font-bold leading-none text-transparent text-[150px] md:text-[140px] lg:text-[180px] xl:text-[220px]"
             style={{
-              fontSize: '204px',
-              color: 'transparent',
               WebkitTextStroke: '4px rgba(255, 255, 255, 0.3)',
               fontFamily: '"Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif'
             }}
@@ -41,8 +53,13 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
 
         {/* Poster Container */}
         <div className={cn(
-          "absolute top-0 w-[109px] h-[154px] rounded-r-[2px] overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-20",
-          rank === 10 ? "left-[130px]" : "left-[55px]"
+          "absolute top-0 z-10 rounded-xl overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-30",
+          // Poster Dimensions: responsive
+          "w-[109px] h-[154px] md:w-[106px] md:h-[150px] lg:w-[134px] lg:h-[190px] xl:w-[162px] xl:h-[230px]",
+          // Poster Position: precise 80% overlap for 1-9, exact 50% of '0' for 10 on all screens
+          rank === 10
+            ? "left-[100px] md:left-[55px] lg:left-[72px] xl:left-[90px]"
+            : "left-[35px] md:left-[30px] lg:left-[40px] xl:left-[50px]"
         )}>
           {/* Image */}
           <img

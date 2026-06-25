@@ -3,7 +3,6 @@
 import { useRef, useState, ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 interface BaseCarouselProps {
   title?: string;
@@ -15,6 +14,8 @@ interface BaseCarouselProps {
   containerClassName?: string;
   gap?: 'sm' | 'md' | 'lg';
   padding?: 'sm' | 'md' | 'lg';
+  scrollContainerClassName?: string;
+  arrowBottomClass?: string;
 }
 
 const gapClasses = {
@@ -38,7 +39,9 @@ export default function BaseCarousel({
   titleClassName,
   containerClassName,
   gap = 'md',
-  padding = 'md'
+  padding = 'md',
+  scrollContainerClassName,
+  arrowBottomClass
 }: BaseCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -83,7 +86,8 @@ export default function BaseCarousel({
           <button
             onClick={() => scroll('left')}
             className={cn(
-              "absolute left-0 top-0 bottom-4 z-20 w-12 lg:w-16",
+              "absolute left-0 top-0 z-20 w-12 lg:w-16",
+              arrowBottomClass || "bottom-4",
               "flex items-center justify-start pl-2",
               "transition-opacity duration-300",
               showLeftArrow ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -100,7 +104,8 @@ export default function BaseCarousel({
           <button
             onClick={() => scroll('right')}
             className={cn(
-              "absolute right-0 top-0 bottom-4 z-20 w-12 lg:w-16",
+              "absolute right-0 top-0 z-20 w-12 lg:w-16",
+              arrowBottomClass || "bottom-4",
               "flex items-center justify-end pr-2",
               "transition-opacity duration-300",
               showRightArrow ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -117,7 +122,8 @@ export default function BaseCarousel({
           ref={scrollRef}
           onScroll={handleScroll}
           className={cn(
-            "flex overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth pb-4",
+            "flex overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth",
+            scrollContainerClassName || "pb-4",
             gapClasses[gap],
             paddingClasses[padding]
           )}

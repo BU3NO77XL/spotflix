@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import BaseCarousel from './BaseCarousel';
@@ -20,10 +20,11 @@ export default function BackdropCarousel({
   className,
   showBackdrop = true
 }: BackdropCarouselProps) {
-  const shouldShowBackdrop = showBackdrop && backdropUrl;
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const shouldShowBackdrop = showBackdrop && backdropUrl && !imageError;
 
   if (!shouldShowBackdrop) {
-    // Fallback to regular carousel if no backdrop
     return (
       <BaseCarousel title={title} className={className}>
         {children}
@@ -35,15 +36,22 @@ export default function BackdropCarousel({
     <section className={cn("relative py-8 lg:py-12", className)}>
       {/* Backdrop Image */}
       <div className="absolute inset-0 z-0">
-        <motion.img
-          src={backdropUrl}
-          alt=""
-          className="w-full h-full object-cover"
-        />
+        {!imageError && (
+          <motion.img
+            src={backdropUrl}
+            alt=""
+            className={`w-full h-full object-cover transition-opacity duration-700 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+          />
+        )}
 
         {/* Cinematic Overlay System */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#121212_90%)] opacity-80" />
         <div className="absolute inset-0 bg-linear-to-r from-[#121212] via-transparent to-transparent opacity-90" />
+        <div className="absolute inset-0 bg-linear-to-b from-[#121212] via-[#121212]/40 to-transparent" />
         <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-[#121212]/40 to-transparent" />
       </div>
 

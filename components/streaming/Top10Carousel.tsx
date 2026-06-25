@@ -15,7 +15,11 @@ export default function Top10Carousel({ movies, onMovieClick }: Top10CarouselPro
     const top10Movies = movies.slice(0, 10);
 
     return (
-        <BaseCarousel title="Top 10 Today">
+        <BaseCarousel 
+            title="Top 10 Today"
+            scrollContainerClassName="py-4 md:py-6 lg:py-8 xl:py-10"
+            arrowBottomClass="bottom-0"
+        >
             {top10Movies.map((movie, index) => (
                 <Top10Card
                     key={movie.id}
