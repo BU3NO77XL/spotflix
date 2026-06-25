@@ -18,7 +18,7 @@ import ProgressiveImage from '@/components/streaming/ProgressiveImage';
 import VideoPlayer from '@/components/streaming/VideoPlayer';
 import MovieTitle from '@/components/streaming/MovieTitle';
 import { cn } from '@/lib/utils';
-import { useLogoStore } from '@/stores/logoStore';
+import { useWatchNavigation } from '@/hooks/useWatchNavigation';
 import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 
 // Hook para preload de imagens
@@ -163,6 +163,7 @@ function WatchLoading() {
 function WatchContent() {
     const queryClient = useQueryClient();
     const router = useRouter();
+    const { navigateToWatch } = useWatchNavigation();
     const { getLogosForMovie } = useLogoStore();
     const searchParams = useSearchParams();
     const movieId = searchParams.get('id');
@@ -2199,14 +2200,11 @@ function WatchContent() {
             {/* Movie Modal */}
             < MovieModal
                 movie={selectedModalMovie}
-                isOpen={!!selectedModalMovie
-                }
+                isOpen={!!selectedModalMovie}
                 onClose={() => setSelectedModalMovie(null)}
                 onWatch={(movie: Movie) => {
                     setSelectedModalMovie(null);
-                    // Pre-popular o cache com os dados que já temos do filme similar
-                    queryClient.setQueryData(['movie', 'tmdb', String(movie.tmdb_id), movie.type || 'movie'], movie);
-                    router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}`);
+                    navigateToWatch(movie);
                 }}
                 onAddToList={() => { }}
             />

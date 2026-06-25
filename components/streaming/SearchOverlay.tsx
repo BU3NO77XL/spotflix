@@ -6,9 +6,9 @@ import { Search, X, Film, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
 import { Movie } from '@/types/movie';
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/lib/dataClient';
+import { useWatchNavigation } from '@/hooks/useWatchNavigation';
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -22,6 +22,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     const [results, setResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('all');
+    const { navigateToWatch } = useWatchNavigation();
 
     // Buscar filmes locais para tentar fazer match com os resultados da pesquisa
     const { data: localMovies = [] } = useQuery({
@@ -197,19 +198,14 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                             animate={{ opacity: 1 }}
                                             className="flex flex-col space-y-2 lg:space-y-4"
                                         >
-                                            {filteredResults.map((movie, index) => {
-                                                // Tentar construir URL otimizada: se tiver id local, usar; senão usar apenas ref
-                                                const hasLocalId = movie.id && !movie.id.startsWith('search-');
-                                                const watchUrl = hasLocalId
-                                                    ? `/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${movie.type}`
-                                                    : `/watch?ref=${movie.tmdb_id}&type=${movie.type}`;
-
-                                                return (
-                                                    <Link
-                                                        key={movie.id}
-                                                        href={watchUrl}
-                                                        onClick={handleClose}
-                                                        className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/4 transition-all duration-300 rounded-2xl"
+                                            {filteredResults.map((movie, index) => (
+                                                    <div
+                                                        key={movie.id || index}
+                                                        onClick={() => {
+                                                            handleClose();
+                                                            navigateToWatch(movie);
+                                                        }}
+                                                        className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/4 transition-all duration-300 rounded-2xl cursor-pointer"
                                                     >
                                                         {/* Poster thumbnail */}
                                                         <div className="w-14 h-20 lg:w-20 lg:h-28 shrink-0 relative rounded-xl overflow-hidden bg-white/5 ring-1 ring-white/10 group-hover:ring-white/20 transition-all">
@@ -244,9 +240,8 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                                 <span className="uppercase text-[10px] tracking-wider border border-gray-700 px-1 rounded-sm">HD</span>
                                                             </div>
                                                         </div>
-                                                    </Link>
-                                                );
-                                            })}
+                                                    </div>
+                                            ))}
                                         </motion.div>
                                     ) : (
                                         <motion.div
