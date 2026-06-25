@@ -1648,7 +1648,25 @@ function WatchContent() {
                                                         key={part.id}
                                                         onClick={() => {
                                                             if (!isCurrentMovie) {
-                                                                pendingNavRef.current = { id: part.id, title: part.title, poster_path: part.poster_path, release_date: part.release_date };
+                                                                // Pre-popular o cache com dados básicos para navegação instantânea
+                                                                const partData = {
+                                                                    id: `tmdb-${part.id}`,
+                                                                    title: part.title,
+                                                                    type: 'movie' as const,
+                                                                    year: part.release_date ? new Date(part.release_date).getFullYear() : new Date().getFullYear(),
+                                                                    rating: 'NR',
+                                                                    duration: '',
+                                                                    genre: [],
+                                                                    synopsis: '',
+                                                                    cast: [],
+                                                                    director: '',
+                                                                    poster_url: part.poster_path ? `https://image.tmdb.org/t/p/w500${part.poster_path}` : '',
+                                                                    backdrop_url: '',
+                                                                    score: 0,
+                                                                    tmdb_id: part.id,
+                                                                    category: 'trending' as const,
+                                                                };
+                                                                queryClient.setQueryData(['movie', 'tmdb', String(part.id), 'movie'], partData);
                                                                 router.push(`/watch?ref=${part.id}`);
                                                             }
                                                         }}
@@ -2058,6 +2076,8 @@ function WatchContent() {
                 onClose={() => setSelectedModalMovie(null)}
                 onWatch={(movie: Movie) => {
                     setSelectedModalMovie(null);
+                    // Pre-popular o cache com os dados que já temos do filme similar
+                    queryClient.setQueryData(['movie', 'tmdb', String(movie.tmdb_id), movie.type || 'movie'], movie);
                     router.push(`/watch?ref=${movie.tmdb_id}&type=${movie.type}`);
                 }}
                 onAddToList={() => { }}
