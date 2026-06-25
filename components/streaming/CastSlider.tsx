@@ -197,22 +197,22 @@ export default function CastSlider({ cast }: CastSliderProps) {
                             <button
                                 key={index}
                                 onClick={() => handleUserInteraction(index)}
-                                className="shrink-0 snap-start flex flex-col items-center group transition-all duration-300 w-20 sm:w-24 md:w-28 focus:outline-none"
+                                className="shrink-0 snap-start flex flex-col items-center group transition-all duration-300 w-24 sm:w-24 md:w-28 focus:outline-none"
                             >
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 transition-all duration-300 ring-1 ring-white/10 group-hover:ring-white/50 group-hover:scale-105 shadow-lg bg-[#2a2a2a]">
+                                <div className="w-20 h-20 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 transition-all duration-300 ring-1 ring-white/10 group-hover:ring-white/50 group-hover:scale-105 shadow-lg bg-[#2a2a2a]">
                                     {thumbUrl ? (
                                         <img src={thumbUrl} alt={actor.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
-                                            <User className="w-8 h-8 text-gray-500" />
+                                            <User className="w-9 h-9 text-gray-500" />
                                         </div>
                                     )}
                                 </div>
-                                <span className="text-white text-xs sm:text-sm font-medium text-center line-clamp-1 w-full px-1 group-hover:text-[#1DB954] transition-colors">
+                                <span className="text-white text-sm sm:text-sm font-medium text-center line-clamp-1 w-full px-1 group-hover:text-[#1DB954] transition-colors">
                                     {actor.name}
                                 </span>
                                 {actor.character && (
-                                    <span className="text-gray-400 text-[10px] sm:text-xs text-center line-clamp-2 w-full mt-0.5 leading-tight px-1">
+                                    <span className="text-gray-400 text-xs sm:text-xs text-center line-clamp-2 w-full mt-0.5 leading-tight px-1">
                                         {actor.character}
                                     </span>
                                 )}
