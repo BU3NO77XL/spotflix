@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Profile {
+  id             Int             @id @default(autoincrement())
+  authId         String          @unique
+  email          String          @unique
+  fullName       String?
+  avatarUrl      String?
+  passwordHash   String?
+  role           String          @default("client")
+  displayName    String?
+  bio            String?
+  favoriteGenres String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  preferences    Preference?
+  watchHistory   WatchHistory[]
+  watchlist      WatchlistItem[]
+
+  @@map("profiles")
+}
+
+model Preference {
+  id                      Int      @id @default(autoincrement())
+  profileId               Int      @unique
+  avatarIndex             Int      @default(0)
+  genres                  String
+  recommendationsUpdatedAt DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  profile                 Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("preferences")
+}
+
+model WatchlistItem {
+  id          Int      @id @default(autoincrement())
+  profileId   Int
+  tmdbId      Int
+  mediaType   String
+  title       String
+  posterUrl   String?
+  backdropUrl String?
+  addedAt     DateTime @default(now())
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, tmdbId, mediaType])
+  @@map("watchlist")
+}
+
+model WatchHistory {
+  id              Int      @id @default(autoincrement())
+  profileId       Int
+  tmdbId          Int
+  mediaType       String
+  title           String
+  progressPercent Float    @default(0)
+  watchedAt       DateTime @default(now())
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, tmdbId, mediaType])
+  @@map("watch_history")
+}
