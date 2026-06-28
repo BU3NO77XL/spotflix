@@ -23,6 +23,7 @@ import AutoPlaySlider from '@/components/streaming/AutoPlaySlider';
 import MovieModal from '@/components/streaming/MovieModal';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import { toast } from 'sonner';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 
 export default function Home() {
   const router = useRouter();
@@ -216,14 +217,7 @@ export default function Home() {
 
   // Loading apenas para conteúdo crítico
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#1DB954] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400">Carregando WEBFLIX...</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (

@@ -9,6 +9,7 @@ import HeroSection from '@/components/streaming/HeroSection';
 import Carousel from '@/components/streaming/Carousel';
 import BackdropCarousel from '@/components/streaming/BackdropCarousel';
 import Top10Carousel from '@/components/streaming/Top10Carousel';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import ThematicCarousel from '@/components/streaming/ThematicCarousel';
 import MiniCarousel from '@/components/streaming/MiniCarousels';
 import AutoPlaySlider from '@/components/streaming/AutoPlaySlider';
@@ -281,16 +282,7 @@ export default function Home() {
   };
 
   if (isLoading || tmdbLoading) {
-    return (
-      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#1DB954] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400">
-            {tmdbLoading ? 'Carregando conteúdo do TMDB...' : 'Carregando WEBFLIX...'}
-          </p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
