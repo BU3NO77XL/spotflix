@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, Component, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, Component, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Plus, Volume2, VolumeX, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
+import { calcMatch } from '@/lib/match';
 import { TMDBService } from './TMDBIntegration';
 import LoginRequiredModal from './LoginRequiredModal';
 
@@ -40,27 +41,6 @@ interface MovieModalProps {
     onRemoveFromList?: (movie: Movie) => void;
 }
 
-const RATING_STORAGE_KEY = 'webflix_ratings';
-
-function loadRatings(): Record<string, Rating> {
-    if (typeof window === 'undefined') return {};
-    try {
-        return JSON.parse(localStorage.getItem(RATING_STORAGE_KEY) || '{}');
-    } catch { return {}; }
-}
-
-function saveRating(tmdbId: number, rating: Rating | null) {
-    const ratings = loadRatings();
-    if (rating) ratings[String(tmdbId)] = rating;
-    else delete ratings[String(tmdbId)];
-    localStorage.setItem(RATING_STORAGE_KEY, JSON.stringify(ratings));
-}
-
-function getRating(tmdbId: number): Rating | null {
-    const ratings = loadRatings();
-    return ratings[String(tmdbId)] || null;
-}
-
 export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToList, isInWatchlist, onRemoveFromList }: MovieModalProps) {
     const [cast, setCast] = useState<any[]>([]);
     const [similar, setSimilar] = useState<Movie[]>([]);
@@ -72,6 +52,43 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [detailGenres, setDetailGenres] = useState<string[]>([]);
     const [currentRating, setCurrentRating] = useState<Rating | null>(null);
     const [showRatingTooltip, setShowRatingTooltip] = useState(false);
+    const [userId, setUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        const stored = localStorage.getItem('userBasicInfo');
+        if (stored) {
+            try {
+                const data = JSON.parse(stored);
+                setUserId(data.id);
+            } catch { /* ignore */ }
+        }
+    }, []);
+
+    const handleRatingAction = async (tmdbId: number, mediaType: string, value: Rating | null) => {
+        const uid = userId ?? (() => {
+            try { return JSON.parse(localStorage.getItem('userBasicInfo') || '{}').id; } catch { return null; }
+        })();
+        if (!uid) { setShowLoginModal(true); return; }
+        setCurrentRating(value);
+        try {
+            if (value) {
+                await fetch('/api/ratings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: uid, tmdbId, mediaType, value }),
+                });
+            } else {
+                await fetch('/api/ratings', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: uid, tmdbId, mediaType }),
+                });
+            }
+        } catch (e) {
+            console.error('[RATING-ERROR]', e);
+        }
+    };
+
     const [details, setDetails] = useState<{
         overview?: string;
         runtime?: number;
@@ -83,7 +100,24 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
         last_air_date?: string;
         director?: string;
         created_by?: string;
+        score?: number;
     } | null>(null);
+
+    const [favoriteGenres, setFavoriteGenres] = useState<string[]>([]);
+    const [totalRatingsCount, setTotalRatingsCount] = useState(0);
+    const [userDataLoaded, setUserDataLoaded] = useState(false);
+
+    const matchReady = !!details?.score && userDataLoaded;
+
+    const matchPercentage = useMemo(() => {
+        if (!matchReady) return null;
+        return calcMatch(
+            details!.score,
+            detailGenres.length > 0 ? detailGenres : (movie?.genre || []),
+            currentRating,
+            favoriteGenres,
+        );
+    }, [matchReady, details?.score, detailGenres, movie?.genre, currentRating, favoriteGenres]);
 
     const handleAddToListGuarded = (movie: Movie) => {
         const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
@@ -101,11 +135,31 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
             } catch (e) { /**/ }
             setCast([]);
             setSimilar([]);
+            setDetails(null);
+            setDetailGenres([]);
             setLogoUrl(null);
             setLogoLoading(true);
-            setCurrentRating(movie.tmdb_id ? getRating(Number(movie.tmdb_id)) : null);
             setShowRatingTooltip(false);
-
+            setUserDataLoaded(false);
+            if (userId) {
+                Promise.all([
+                    fetch(`/api/auth/profile?userId=${userId}`).then(r => r.json()),
+                    fetch(`/api/ratings?userId=${userId}`).then(r => r.json()),
+                ]).then(([profileData, ratingsData]) => {
+                    if (profileData.user?.preferences?.genres) {
+                        setFavoriteGenres(profileData.user.preferences.genres);
+                    }
+                    const allRatings = ratingsData.ratings || {};
+                    setTotalRatingsCount(Object.keys(allRatings).length);
+                    if (movie?.tmdb_id) {
+                        const rating = allRatings[String(movie.tmdb_id)] as Rating | undefined;
+                        if (rating) setCurrentRating(rating);
+                    }
+                    setUserDataLoaded(true);
+                }).catch(() => setUserDataLoaded(true));
+            } else {
+                setUserDataLoaded(true);
+            }
             const detailsPromise = movie.type === 'series'
                 ? TMDBService.fetchSeriesDetails(Number(movie.tmdb_id || movie.id))
                 : TMDBService.fetchMovieDetails(Number(movie.tmdb_id || movie.id));
@@ -124,12 +178,13 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                     first_air_date: 'first_air_date' in details ? (details as any).first_air_date : undefined,
                     last_air_date: 'last_air_date' in details ? (details as any).last_air_date : undefined,
                     director: 'director' in details ? (details as any).director : undefined,
-                    created_by: 'created_by' in details ? (details as any).created_by : undefined,
+                    created_by: 'created_by' in details ? (Array.isArray((details as any).created_by) ? (details as any).created_by.map((c: any) => c.name).join(', ') : (details as any).created_by) : undefined,
+                    score: (details as any).vote_average ?? undefined,
                 });
             }).catch(() => {});
 
             TMDBService.fetchSimilar(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(similarMovies => {
-                setSimilar(similarMovies.slice(0, 3) as Movie[]);
+                setSimilar(similarMovies.slice(0, 6) as Movie[]);
             });
 
             TMDBService.fetchMovieLogos(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(logos => {
@@ -305,8 +360,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         <button
                                             onClick={() => {
                                                 if (currentRating) {
-                                                    setCurrentRating(null);
-                                                    if (movie?.tmdb_id) saveRating(Number(movie.tmdb_id), null);
+                                                    if (movie?.tmdb_id) handleRatingAction(Number(movie.tmdb_id), movie.type, null);
                                                 } else {
                                                     setShowRatingTooltip(!showRatingTooltip);
                                                 }
@@ -330,8 +384,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                             key={rating}
                                                             onClick={() => {
                                                                 const id = Number(movie?.tmdb_id);
-                                                                setCurrentRating(rating);
-                                                                saveRating(id, rating);
+                                                                if (id) handleRatingAction(id, movie!.type, rating);
                                                                 setShowRatingTooltip(false);
                                                             }}
                                                             className="hover:scale-125 transition-transform"
@@ -369,12 +422,35 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
                         {/* Body Section */}
                         <div className="px-6 md:px-12 pb-12 pt-0 bg-[#181818]">
+                            <div className={cn("animate-pulse space-y-6 py-6", details ? "hidden" : "")}>
+                                <div className="flex gap-3">
+                                    <div className="h-4 w-20 bg-[#303030] rounded" />
+                                    <div className="h-4 w-12 bg-[#303030] rounded" />
+                                    <div className="h-4 w-24 bg-[#303030] rounded" />
+                                </div>
+                                <div className="h-4 w-full bg-[#303030] rounded" />
+                                <div className="h-4 w-3/4 bg-[#303030] rounded" />
+                                <div className="flex gap-6">
+                                    <div className="space-y-2 flex-1">
+                                        <div className="h-4 w-16 bg-[#303030] rounded" />
+                                        <div className="h-4 w-32 bg-[#303030] rounded" />
+                                        <div className="h-4 w-24 bg-[#303030] rounded" />
+                                    </div>
+                                    <div className="space-y-2 w-[200px] hidden md:block">
+                                        <div className="h-4 w-12 bg-[#303030] rounded" />
+                                        <div className="h-4 w-40 bg-[#303030] rounded" />
+                                        <div className="h-4 w-12 bg-[#303030] rounded" />
+                                        <div className="h-4 w-40 bg-[#303030] rounded" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={cn(!details ? "hidden" : "")}>
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
                                 {/* Left Column: Summary */}
                                 <div className="space-y-5">
                                     {/* Meta row */}
                                     <div className="flex flex-wrap items-center gap-2 text-base">
-                                        <span className="text-[#46d369] font-bold">98% Match</span>
+                                        {matchReady ? <span className="text-[#46d369] font-bold">{matchPercentage}% Match</span> : <span className="text-[#46d369] font-bold">--% Match</span>}
                                         <span className="text-[#bcbcbc]">{movie.year}</span>
                                         <span className="text-[#bcbcbc]">
                                             {movie.type === 'series'
@@ -434,7 +510,14 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                 <div className="mt-12">
                                     <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Títulos semelhantes</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-                                        {similar.map((item, idx) => (
+                                        {similar.map((item, idx) => {
+                                            const similarMatch = calcMatch(
+                                                item.score,
+                                                item.genre || [],
+                                                null,
+                                                favoriteGenres,
+                                            );
+                                            return (
                                             <div 
                                                 key={idx}
                                                 onClick={() => onWatch(item)}
@@ -452,7 +535,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                 <div className="p-4 pt-3.5 pb-4.5">
                                                     <div className="flex items-center justify-between mb-3">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[#46d369] text-base font-bold">98% Match</span>
+                                                            <span className="text-[#46d369] text-base font-bold">{similarMatch}% Match</span>
                                                             <span className="px-1.5 border border-white/38 text-[13px] font-semibold rounded-[4px] text-white/88 leading-none py-1">{item.rating || '14+'}</span>
                                                         </div>
                                                         <button className="w-7 h-7 rounded-full border-2 border-white/62 flex items-center justify-center text-white hover:bg-white/10">
@@ -462,7 +545,8 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                     <p className="text-[#d2d2d2] text-[15px] line-clamp-3 leading-[1.45]">{item.synopsis}</p>
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -507,6 +591,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                         </div>
                     </div>

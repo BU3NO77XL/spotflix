@@ -562,6 +562,9 @@ export const TMDBService = {
                 // Para séries, usar "created_by" em vez de "Director"
                 director: series.created_by?.length > 0
                     ? series.created_by.map((c: { name: string }) => c.name).join(', ')
+                    : undefined,
+                created_by: series.created_by?.length > 0
+                    ? series.created_by.map((c: { name: string }) => c.name).join(', ')
                     : undefined
             };
         } catch (error) {
