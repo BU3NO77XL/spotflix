@@ -181,7 +181,7 @@ export default function Header() {
                             </Link>
 
                             {/* Desktop Navigation */}
-                            <nav className="hidden md:flex items-center gap-[20px] pt-[4px]">
+                            <nav className="hidden md:flex items-center gap-[28px] pt-[4px]">
                                 {HEADER_ITEMS?.map((link) => {
                                     const isActive =
                                         (link.href === '/' && pathname === '/' && !activeFilter) ||
@@ -194,7 +194,7 @@ export default function Header() {
                                             key={link.label}
                                             href={link.href}
                                             className={cn(
-                                                "text-[14px] transition-colors duration-200 whitespace-nowrap",
+                                                "text-[16px] transition-colors duration-200 whitespace-nowrap",
                                                 isActive
                                                     ? "text-white font-medium"
                                                     : "text-[#e5e5e5] hover:text-[#b3b3b3] font-normal"
