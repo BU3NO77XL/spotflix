@@ -81,21 +81,12 @@ export default function MyListHero({ title = 'Minha Lista', description = '', ba
             {/* Content positioned like home hero, no buttons */}
             <div className="absolute inset-0 flex items-center sm:items-end z-20">
                 <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 w-full pb-4 sm:pb-8 lg:pb-12">
-                    <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                            key={`mylist-content-${currentIndex}`}
-                            variants={contentVariants}
-                            initial="enter"
-                            animate="center"
-                            exit="exit"
-                            className="max-w-2xl"
-                        >
-                            <h1 className="font-black text-white mb-4 lg:mb-6 leading-tight tracking-tight text-4xl sm:text-5xl lg:text-7xl">{title}</h1>
-                            {description ? (
-                                <p className="text-gray-300 text-base lg:text-lg leading-relaxed mb-6 lg:mb-8 line-clamp-3 max-w-xl">{description}</p>
-                            ) : null}
-                        </motion.div>
-                    </AnimatePresence>
+                    <div className="max-w-2xl">
+                        <h1 className="font-black text-white mb-4 lg:mb-6 leading-tight tracking-tight text-4xl sm:text-5xl lg:text-7xl">{title}</h1>
+                        {description ? (
+                            <p className="text-gray-300 text-base lg:text-lg leading-relaxed mb-6 lg:mb-8 line-clamp-3 max-w-xl">{description}</p>
+                        ) : null}
+                    </div>
                 </div>
             </div>
         </section>

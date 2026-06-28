@@ -207,21 +207,11 @@ export default function Home() {
     setModalOpen(true);
   };
 
-  const handleAddToList = (movie: Movie, listType: 'favorites' | 'watch_later') => {
+  const handleAddToList = (movie: Movie) => {
     addToListMutation.mutate({
       movie_id: movie.id,
-      list_type: listType,
+      list_type: 'watch_later',
     });
-
-    if (listType === 'watch_later') {
-      setContinueWatching(prev => {
-        const exists = prev.find(m => m.id === movie.id);
-        if (!exists) {
-          return [...prev, movie];
-        }
-        return prev;
-      });
-    }
   };
 
   // Loading apenas para conteúdo crítico

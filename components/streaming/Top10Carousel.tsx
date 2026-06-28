@@ -16,7 +16,7 @@ export default function Top10Carousel({ movies, onMovieClick }: Top10CarouselPro
 
     return (
         <BaseCarousel 
-            title="Top 10 Today"
+            title="Top 10 Hoje"
             scrollContainerClassName="py-4 md:py-6 lg:py-8 xl:py-10"
             arrowBottomClass="bottom-0"
         >

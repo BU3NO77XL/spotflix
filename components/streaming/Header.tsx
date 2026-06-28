@@ -36,7 +36,16 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    const [demoName] = useState("User");
+    const [userData, setUserData] = useState<{ name: string; email: string; avatarUrl?: string | null } | null>(null);
+
+    useEffect(() => {
+      const stored = localStorage.getItem('userBasicInfo');
+      if (stored) {
+        try {
+          setUserData(JSON.parse(stored));
+        } catch {}
+      }
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -220,7 +229,7 @@ export default function Header() {
                                     }}
                                     className="flex items-center gap-2"
                                 >
-                                    <NetflixAvatar name={demoName} size={36} />
+                                    <NetflixAvatar name={userData?.name || 'User'} size={36} />
                                     <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
                                 </button>
 
@@ -233,7 +242,7 @@ export default function Header() {
                                         <div className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md">
                                             <div className="p-4 border-b border-white/10">
                                                 <p className="text-white font-semibold">Minha Conta</p>
-                                                <p className="text-gray-400 text-sm">usuario@email.com</p>
+                                                <p className="text-gray-400 text-sm">{userData?.email || 'usuario@email.com'}</p>
                                             </div>
                                             <div className="py-2">
                                                 <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>

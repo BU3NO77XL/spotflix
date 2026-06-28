@@ -1,4 +1,5 @@
 import { Movie, CastMember } from '@/types/movie';
+import { TMDB_ID_TO_GENRE_NAME } from '@/lib/genre-map';
 
 const isServer = typeof window === 'undefined';
 const TMDB_API_KEY = isServer ? (process.env.TMDB_API_KEY || '') : '';
@@ -146,6 +147,42 @@ export const TMDBService = {
             const data = await response.json();
             return this.transformTMDBData(data.results?.slice(0, 12) || [], 'scifi', 'movie');
         } catch (error) { console.error('Error fetching sci-fi:', error); return []; }
+    },
+
+    // Fetch movies by genre IDs (uma chamada por gênero, ordenada por melhor avaliação)
+    async fetchByGenreIds(genreIds: number[]): Promise<Omit<Movie, 'id'>[]> {
+        if (!genreIds.length) return [];
+        try {
+            const results = await Promise.all(
+                genreIds.map((id) =>
+                    fetch(
+                        tmdbUrl('/discover/movie', {
+                            with_genres: String(id),
+                            sort_by: 'vote_average.desc',
+                            'vote_count.gte': '200',
+                            language: 'pt-BR'
+                        }),
+                        { next: { revalidate: 3600 } }
+                    ).then(async (r) => {
+                        if (!r.ok) return [];
+                        const d = await r.json();
+                        return this.transformTMDBData(d.results?.slice(0, 12) || [], 'personalized', 'movie');
+                    }).catch(() => [] as Omit<Movie, 'id'>[])
+                )
+            );
+            const seen = new Set<string>();
+            const merged = results.flat().filter((m) => {
+                if (seen.has(m.title)) return false;
+                seen.add(m.title);
+                return true;
+            });
+            // Embaralha para misturar os gêneros
+            for (let i = merged.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [merged[i], merged[j]] = [merged[j], merged[i]];
+            }
+            return merged;
+        } catch (error) { console.error('Error fetching by genre:', error); return []; }
     },
 
     // Fetch critically acclaimed
@@ -715,13 +752,17 @@ export const TMDBService = {
                 duration = this.getRandomDuration();
             }
 
+            const genreNames = (item.genre_ids || [])
+                .map((id) => TMDB_ID_TO_GENRE_NAME[id])
+                .filter(Boolean) as string[];
+
             return {
                 title,
                 type: isMovie ? 'movie' : 'series',
                 year,
                 rating: this.getContentRating(item.adult),
                 duration,
-                genre: [],
+                genre: genreNames,
                 synopsis: item.overview || 'No synopsis available.',
                 cast: [],
                 director: 'Unknown',
@@ -869,4 +910,5 @@ interface TMDBItem {
     backdrop_path?: string;
     vote_average?: number;
     number_of_seasons?: number;
+    genre_ids?: number[];
 }
