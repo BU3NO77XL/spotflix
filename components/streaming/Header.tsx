@@ -163,20 +163,20 @@ export default function Header() {
                     )}
                     style={{
                         background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.7) 12.5%, rgba(0, 0, 0, 0) 100%)',
-                        height: '68px'
+                        height: '72px'
                     }}
                 />
 
                 <div className="w-full px-4 md:px-[38px] relative z-10">
-                    <div className="flex items-center justify-between h-[68px]">
+                    <div className="flex items-center justify-between h-[72px]">
                         <div className="flex items-center gap-[45px]">
                             {/* Logo matching rdesign dimensions */}
                             <Link href="/" className="shrink-0 flex items-center gap-1">
-                                <h1 className="text-2xl font-black tracking-tighter uppercase text-white flex items-center gap-1">
-                                    <div className="w-[28px] h-[28px] md:w-[25px] md:h-[25px] rounded-sm bg-[#1DB954] flex items-center justify-center">
-                                        <Play className="w-[16px] h-[16px] md:w-[14px] md:h-[14px] text-white fill-white" />
+                                <h1 className="text-2xl md:text-[28px] font-black tracking-tighter uppercase text-white flex items-center gap-1">
+                                    <div className="w-[36px] h-[36px] rounded-sm bg-[#1DB954] flex items-center justify-center">
+                                        <Play className="w-[20px] h-[20px] text-white fill-white" />
                                     </div>
-                                    <span className="text-[22px] md:text-[22px] tracking-tight font-bold">WEBFLIX</span>
+                                    <span className="tracking-tight font-bold">WEBFLIX</span>
                                 </h1>
                             </Link>
 
@@ -285,7 +285,7 @@ export default function Header() {
                                 ) : (
                                     <Link
                                         href="/login"
-                                        className="bg-white text-black font-semibold px-5 py-1.5 rounded-md text-sm hover:bg-white/90 transition-colors"
+                                        className="bg-white text-black font-semibold px-6 py-2 rounded-md text-base hover:bg-white/90 transition-colors"
                                     >
                                         Fazer login
                                     </Link>
@@ -322,7 +322,7 @@ export default function Header() {
                             initial={{ y: -10, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: -10, opacity: 0 }}
-                            className="fixed top-[68px] left-0 right-0 z-60"
+                            className="fixed top-[72px] left-0 right-0 z-60"
                         >
                             <div className="bg-[#141414] border-b border-white/10 shadow-xl">
                                 <nav className="w-full px-4 md:px-[38px]">
