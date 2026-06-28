@@ -221,57 +221,68 @@ export default function Header() {
 
                             {/* User Dropdown */}
                             <div className="relative flex items-center gap-2">
-                                <button
-                                    onClick={() => {
-                                        setUserDropdownOpen(!userDropdownOpen);
-                                        setMobileMenuOpen(false);
-                                        setSearchOpen(false);
-                                    }}
-                                    className="flex items-center gap-2"
-                                >
-                                    <NetflixAvatar name={userData?.name || 'User'} size={36} />
-                                    <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
-                                </button>
-
-                                {userDropdownOpen && (
+                                {userData ? (
                                     <>
-                                        <div
-                                            className="fixed inset-0 z-30"
-                                            onClick={() => setUserDropdownOpen(false)}
-                                        />
-                                        <div className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md">
-                                            <div className="p-4 border-b border-white/10">
-                                                <p className="text-white font-semibold">Minha Conta</p>
-                                                <p className="text-gray-400 text-sm">{userData?.email || 'usuario@email.com'}</p>
+                                    <button
+                                        onClick={() => {
+                                            setUserDropdownOpen(!userDropdownOpen);
+                                            setMobileMenuOpen(false);
+                                            setSearchOpen(false);
+                                        }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <NetflixAvatar name={userData?.name || 'User'} size={36} />
+                                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
+                                    </button>
+
+                                    {userDropdownOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-30"
+                                                onClick={() => setUserDropdownOpen(false)}
+                                            />
+                                            <div className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md">
+                                                <div className="p-4 border-b border-white/10">
+                                                    <p className="text-white font-semibold">Minha Conta</p>
+                                                    <p className="text-gray-400 text-sm">{userData?.email || 'usuario@email.com'}</p>
+                                                </div>
+                                                <div className="py-2">
+                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                        <span aria-hidden>{renderUserIcon('Perfil')}</span>
+                                                        <span>Perfil</span>
+                                                    </button>
+                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                        <span aria-hidden>{renderUserIcon('Configurações')}</span>
+                                                        <span>Configurações</span>
+                                                    </button>
+                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                        <span aria-hidden>{renderUserIcon('Planos')}</span>
+                                                        <span>Planos</span>
+                                                    </button>
+                                                </div>
+                                                <div className="border-t border-white/10 py-2">
+                                                    <button
+                                                        className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors flex items-center gap-3"
+                                                        onClick={() => {
+                                                            setUserDropdownOpen(false);
+                                                            router.push('/login');
+                                                        }}
+                                                    >
+                                                        <span aria-hidden>{renderUserIcon('Sair')}</span>
+                                                        <span>Sair</span>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="py-2">
-                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
-                                                    <span aria-hidden>{renderUserIcon('Perfil')}</span>
-                                                    <span>Perfil</span>
-                                                </button>
-                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
-                                                    <span aria-hidden>{renderUserIcon('Configurações')}</span>
-                                                    <span>Configurações</span>
-                                                </button>
-                                                <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
-                                                    <span aria-hidden>{renderUserIcon('Planos')}</span>
-                                                    <span>Planos</span>
-                                                </button>
-                                            </div>
-                                            <div className="border-t border-white/10 py-2">
-                                                <button
-                                                    className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors flex items-center gap-3"
-                                                    onClick={() => {
-                                                        setUserDropdownOpen(false);
-                                                        router.push('/login');
-                                                    }}
-                                                >
-                                                    <span aria-hidden>{renderUserIcon('Sair')}</span>
-                                                    <span>Sair</span>
-                                                </button>
-                                            </div>
-                                        </div>
+                                        </>
+                                    )}
                                     </>
+                                ) : (
+                                    <Link
+                                        href="/login"
+                                        className="bg-white text-black font-semibold px-5 py-1.5 rounded-md text-sm hover:bg-white/90 transition-colors"
+                                    >
+                                        Fazer login
+                                    </Link>
                                 )}
                             </div>
 
