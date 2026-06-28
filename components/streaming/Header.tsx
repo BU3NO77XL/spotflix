@@ -194,7 +194,7 @@ export default function Header() {
                                             key={link.label}
                                             href={link.href}
                                             className={cn(
-                                                "text-[16px] transition-colors duration-200 whitespace-nowrap",
+                                                "text-[22px] transition-colors duration-200 whitespace-nowrap",
                                                 isActive
                                                     ? "text-white font-medium"
                                                     : "text-[#e5e5e5] hover:text-[#b3b3b3] font-normal"
@@ -218,7 +218,7 @@ export default function Header() {
                                 className="p-1 text-white hover:opacity-80 transition-opacity"
                                 aria-label="Open search"
                             >
-                                <Search className="w-6 h-6 md:w-5 md:h-5" />
+                                <Search className="w-7 h-7" strokeWidth={2.5} />
                             </button>
 
                             {/* User Dropdown */}
