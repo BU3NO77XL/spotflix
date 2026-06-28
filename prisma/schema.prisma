@@ -23,6 +23,7 @@ model Profile {
   preferences    Preference?
   watchHistory   WatchHistory[]
   watchlist      WatchlistItem[]
+  ratings        Rating[]
 
   @@map("profiles")
 }
@@ -67,4 +68,17 @@ model WatchHistory {
 
   @@unique([profileId, tmdbId, mediaType])
   @@map("watch_history")
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  profileId Int
+  tmdbId    Int
+  mediaType String
+  value     String
+  createdAt DateTime @default(now())
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, tmdbId, mediaType])
+  @@map("ratings")
 }

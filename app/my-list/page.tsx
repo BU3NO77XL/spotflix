@@ -28,23 +28,6 @@ export default function MyList() {
     const [ratings, setRatings] = useState<Record<string, 'love' | 'like' | 'dislike'>>({});
 
     useEffect(() => {
-        try {
-            const stored = JSON.parse(localStorage.getItem('webflix_ratings') || '{}');
-            setRatings(stored);
-        } catch { /* ignore */ }
-    }, []);
-
-    const saveRating = (tmdbId: number, value: 'love' | 'like' | 'dislike' | null) => {
-        setRatings(prev => {
-            const next = { ...prev };
-            if (value) next[String(tmdbId)] = value;
-            else delete next[String(tmdbId)];
-            localStorage.setItem('webflix_ratings', JSON.stringify(next));
-            return next;
-        });
-    };
-
-    useEffect(() => {
         const stored = localStorage.getItem('userBasicInfo');
         if (stored) {
             try {
@@ -54,6 +37,14 @@ export default function MyList() {
             } catch { /* ignore */ }
         }
     }, []);
+
+    useEffect(() => {
+        if (!userId) return;
+        fetch(`/api/ratings?userId=${userId}`)
+            .then(r => r.json())
+            .then(data => setRatings(data.ratings || {}))
+            .catch(() => {});
+    }, [userId]);
 
     const { data: userList = [] } = useQuery({
         queryKey: ['userList'],
@@ -340,11 +331,19 @@ export default function MyList() {
                                                     </button>
                                                     {movie.tmdb_id && (
                                                         <button
-                                                            onClick={(e) => {
+                                                            onClick={async (e) => {
                                                                 e.stopPropagation();
                                                                 const id = Number(movie.tmdb_id);
                                                                 const current = ratings[String(id)];
-                                                                saveRating(id, current ? null : 'like');
+                                                                const uid = userId;
+                                                                if (!uid) return;
+                                                                if (current) {
+                                                                    setRatings(prev => { const n = { ...prev }; delete n[String(id)]; return n; });
+                                                                    await fetch('/api/ratings', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: uid, tmdbId: id, mediaType: movie.type }) });
+                                                                } else {
+                                                                    setRatings(prev => ({ ...prev, [String(id)]: 'like' }));
+                                                                    await fetch('/api/ratings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: uid, tmdbId: id, mediaType: movie.type, value: 'like' }) });
+                                                                }
                                                             }}
                                                             className={`w-8 h-8 rounded-full bg-[#2a2a2a]/80 hover:bg-[#444444] border border-white/60 
                                                   flex items-center justify-center transition-all hover:scale-110 ${ratings[String(movie.tmdb_id)] ? 'text-white' : 'text-white'}`}

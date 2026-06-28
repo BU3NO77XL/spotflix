@@ -18,6 +18,7 @@ import ProgressiveImage from '@/components/streaming/ProgressiveImage';
 import VideoPlayer from '@/components/streaming/VideoPlayer';
 import MovieTitle from '@/components/streaming/MovieTitle';
 import { cn } from '@/lib/utils';
+import { calcMatch } from '@/lib/match';
 import { useWatchNavigation } from '@/hooks/useWatchNavigation';
 import { useLogoStore } from '@/stores/logoStore';
 import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
@@ -280,6 +281,7 @@ function WatchContent() {
     const [localFavorited, setLocalFavorited] = useState(false);
     const [localLiked, setLocalLiked] = useState(false);
     const userId = typeof window !== 'undefined' ? (() => { try { const u = localStorage.getItem('userBasicInfo'); return u ? JSON.parse(u).id : null; } catch { return null; } })() : null;
+    const [watchMatch, setWatchMatch] = useState<number | null>(null);
 
     const { data: watchlistData = { items: [] } } = useQuery({
         queryKey: ['watchlist', userId],
@@ -578,6 +580,21 @@ function WatchContent() {
     const movie = movieById || movieByTmdb;
     const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdbId));
     const isInWatchlist = movie && movie.tmdb_id ? watchlistTmdbIds.has(Number(movie.tmdb_id)) : false;
+
+    useEffect(() => {
+        if (!userId || !movie?.tmdb_id || !movie.type) return;
+        const params = new URLSearchParams({
+            userId: String(userId),
+            tmdbId: String(movie.tmdb_id),
+            mediaType: movie.type,
+        });
+        if (movie.score != null) params.set('tmdbScore', String(movie.score));
+        if (movie.genre?.length) params.set('genres', movie.genre.join(','));
+        fetch(`/api/match?${params}`)
+            .then(r => r.json())
+            .then(data => setWatchMatch(data.match))
+            .catch(() => {});
+    }, [userId, movie?.tmdb_id, movie?.type]);
     
     // Se temos um override local (clique na Coleção), usar os dados básicos dele
     // enquanto o React Query busca os dados completos em background
@@ -1219,9 +1236,7 @@ function WatchContent() {
 
                         {/* Movie/Series Info */}
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-base mt-1">
-                            {movie.score && (
-                                <span className="text-[#46d369] font-bold text-base sm:text-base">{Math.round(Number(movie.score) * 10)}% Match</span>
-                            )}
+                            {watchMatch != null ? <span className="text-[#46d369] font-bold text-base sm:text-base">{watchMatch}% Match</span> : null}
                             <span className="text-white font-bold text-base sm:text-base">{displayYear}</span>
 
                             {/* Age Rating Badge - Estilo Netflix */}
