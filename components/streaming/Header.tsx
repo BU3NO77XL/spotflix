@@ -172,11 +172,11 @@ export default function Header() {
                         <div className="flex items-center gap-[45px]">
                             {/* Logo matching rdesign dimensions */}
                             <Link href="/" className="shrink-0 flex items-center gap-1">
-                                <h1 className="text-2xl md:text-[28px] font-black tracking-tighter uppercase text-white flex items-center gap-1">
+                                <h1 className="text-2xl md:text-[28px] font-black tracking-tighter uppercase text-white flex items-center gap-1 leading-none">
                                     <div className="w-[36px] h-[36px] rounded-sm bg-[#1DB954] flex items-center justify-center">
                                         <Play className="w-[20px] h-[20px] text-white fill-white" />
                                     </div>
-                                    <span className="tracking-tight font-bold">WEBFLIX</span>
+                                    <span className="tracking-tight font-bold leading-none">WEBFLIX</span>
                                 </h1>
                             </Link>
 
