@@ -44,8 +44,10 @@ export default function Header() {
         try {
           setUserData(JSON.parse(stored));
         } catch {}
+      } else {
+        setUserData(null);
       }
-    }, []);
+    }, [pathname]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -265,6 +267,10 @@ export default function Header() {
                                                         className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors flex items-center gap-3"
                                                         onClick={() => {
                                                             setUserDropdownOpen(false);
+                                                            localStorage.removeItem('sb-session');
+                                                            localStorage.removeItem('userBasicInfo');
+                                                            localStorage.removeItem('userPreferences');
+                                                            setUserData(null);
                                                             router.push('/login');
                                                         }}
                                                     >
