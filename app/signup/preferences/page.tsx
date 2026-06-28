@@ -40,20 +40,58 @@ export default function PreferencesPage() {
   }, []);
 
   // Função para finalizar o processo de cadastro
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (selectedGenres.length < 3) {
       toast.error('Por favor, selecione pelo menos 3 gêneros.');
       return;
     }
 
-    // Simular salvamento das preferências
-    localStorage.setItem('userPreferences', JSON.stringify({
-      avatar: selectedAvatar,
-      genres: selectedGenres
-    }));
+    const userInfo = localStorage.getItem('userBasicInfo');
+    if (!userInfo) {
+      toast.error('Usuário não encontrado. Faça login novamente.');
+      router.push('/login');
+      return;
+    }
 
-    toast.success('Preferências salvas! Bem-vindo ao WEBFLIX.');
-    router.push('/');
+    const { id: userId } = JSON.parse(userInfo);
+    if (!userId) {
+      toast.error('Usuário não encontrado. Faça login novamente.');
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          avatarIndex: selectedAvatar,
+          genres: selectedGenres,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao salvar preferências.');
+        return;
+      }
+
+      const userInfo = JSON.parse(localStorage.getItem('userBasicInfo') || '{}');
+      userInfo.avatarUrl = data.avatarUrl;
+      userInfo.preferences = { avatarIndex: selectedAvatar, genres: selectedGenres };
+      localStorage.setItem('userBasicInfo', JSON.stringify(userInfo));
+      localStorage.setItem('userPreferences', JSON.stringify({
+        avatar: selectedAvatar,
+        genres: selectedGenres,
+      }));
+
+      toast.success('Preferências salvas! Bem-vindo ao WEBFLIX.');
+      router.push('/');
+    } catch {
+      toast.error('Erro de conexão. Tente novamente.');
+    }
   };
 
   // Função para selecionar/deselecionar um gênero
