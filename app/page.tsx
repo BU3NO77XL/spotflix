@@ -303,7 +303,7 @@ export default function Home() {
       />
 
       {/* Carousels */}
-      <div className="-mt-[211px] relative z-20 pb-16 space-y-8">
+      <div className="-mt-[211px] relative z-20 pb-12 space-y-5">
         {continueWatching.length > 0 && (
           <Carousel
             title="Continue Assistindo"

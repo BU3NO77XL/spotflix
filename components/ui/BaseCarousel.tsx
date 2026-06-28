@@ -66,12 +66,12 @@ export default function BaseCarousel({
   };
 
   return (
-    <section className={cn("relative py-4 lg:py-4 group/section", className)}>
+    <section className={cn("relative py-3 lg:py-4 group/section", className)}>
       {/* Section Title */}
       {showTitle && title && (
-        <div className={cn("w-full mb-3 lg:mb-4", paddingClasses[padding])}>
+        <div className={cn("w-full mb-2 lg:mb-3", paddingClasses[padding])}>
           <h2 className={cn(
-            "text-[20px] font-medium text-[#e5e5e5] tracking-tight leading-[18px]",
+            "text-[22px] font-bold text-white tracking-tight leading-none",
             titleClassName
           )}>
             {title}
