@@ -58,7 +58,7 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const emailValidation = validateEmail(email);
@@ -74,17 +74,47 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      // Salvar sessão simulada no localStorage
-      localStorage.setItem('sb-session', JSON.stringify({ email, name: email.split('@')[0] }));
-      localStorage.setItem('userBasicInfo', JSON.stringify({ name: email.split('@')[0], email }));
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao fazer login.');
+        setIsLoading(false);
+        return;
+      }
+
+      const userData = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role,
+        avatarUrl: data.user.avatarUrl,
+        preferences: data.user.preferences,
+      };
+      localStorage.setItem('sb-session', JSON.stringify({ email: data.user.email, name: data.user.name }));
+      localStorage.setItem('userBasicInfo', JSON.stringify(userData));
+      if (data.user.preferences) {
+        localStorage.setItem('userPreferences', JSON.stringify({
+          avatar: data.user.preferences.avatarIndex,
+          genres: data.user.preferences.genres,
+        }));
+      }
       toast.success('Login realizado com sucesso! Bem-vindo ao WEBFLIX.');
       router.push('/');
-    }, 1500);
+    } catch {
+      toast.error('Erro de conexão. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const nameValidation = validateName(name);
@@ -117,14 +147,37 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      // Salvar sessão e dados do usuário
-      localStorage.setItem('sb-session', JSON.stringify({ email: signupEmail, name }));
-      localStorage.setItem('userBasicInfo', JSON.stringify({ name, email: signupEmail }));
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email: signupEmail, password: signupPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao criar conta.');
+        setIsLoading(false);
+        return;
+      }
+
+      localStorage.setItem('sb-session', JSON.stringify({ email: data.user.email, name: data.user.name }));
+      localStorage.setItem('userBasicInfo', JSON.stringify({
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role || 'client',
+        avatarUrl: data.user.avatarUrl || null,
+        preferences: data.user.preferences || null,
+      }));
       toast.success('Conta criada com sucesso!');
       router.push('/signup/preferences');
-    }, 1500);
+    } catch {
+      toast.error('Erro de conexão. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
