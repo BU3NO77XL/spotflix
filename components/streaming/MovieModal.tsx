@@ -1,22 +1,67 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Component, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Plus, ThumbsUp, Volume2, VolumeX, Check, Star } from 'lucide-react';
+import { X, Play, Plus, Volume2, VolumeX, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
 import LoginRequiredModal from './LoginRequiredModal';
+
+type Rating = 'love' | 'like' | 'dislike';
+
+class ModalErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean}> {
+    constructor(props: {children: ReactNode}) {
+        super(props);
+        this.state = { hasError: false };
+    }
+    static getDerivedStateFromError(error: any) {
+        console.error('[MODAL-ERROR]', error);
+        return { hasError: true };
+    }
+    componentDidCatch(error: any, info: any) {
+        console.error('[MODAL-ERROR-DETAIL]', error, info);
+    }
+    render() {
+        if (this.state.hasError) {
+            return null;
+        }
+        return this.props.children;
+    }
+}
 
 interface MovieModalProps {
     movie: Movie | null;
     isOpen: boolean;
     onClose: () => void;
     onWatch: (movie: Movie) => void;
-    onAddToList: (movie: Movie, listType: 'favorites' | 'watch_later') => void;
+    onAddToList: (movie: Movie) => void;
+    isInWatchlist?: boolean;
+    onRemoveFromList?: (movie: Movie) => void;
 }
 
-export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToList }: MovieModalProps) {
+const RATING_STORAGE_KEY = 'webflix_ratings';
+
+function loadRatings(): Record<string, Rating> {
+    if (typeof window === 'undefined') return {};
+    try {
+        return JSON.parse(localStorage.getItem(RATING_STORAGE_KEY) || '{}');
+    } catch { return {}; }
+}
+
+function saveRating(tmdbId: number, rating: Rating | null) {
+    const ratings = loadRatings();
+    if (rating) ratings[String(tmdbId)] = rating;
+    else delete ratings[String(tmdbId)];
+    localStorage.setItem(RATING_STORAGE_KEY, JSON.stringify(ratings));
+}
+
+function getRating(tmdbId: number): Rating | null {
+    const ratings = loadRatings();
+    return ratings[String(tmdbId)] || null;
+}
+
+export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToList, isInWatchlist, onRemoveFromList }: MovieModalProps) {
     const [cast, setCast] = useState<any[]>([]);
     const [similar, setSimilar] = useState<Movie[]>([]);
     const [isMuted, setIsMuted] = useState(true);
@@ -24,31 +69,64 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [logoLoading, setLogoLoading] = useState(true);
     const [isOnNetflix, setIsOnNetflix] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [detailGenres, setDetailGenres] = useState<string[]>([]);
+    const [currentRating, setCurrentRating] = useState<Rating | null>(null);
+    const [showRatingTooltip, setShowRatingTooltip] = useState(false);
+    const [details, setDetails] = useState<{
+        overview?: string;
+        runtime?: number;
+        number_of_seasons?: number;
+        number_of_episodes?: number;
+        ageRating?: string;
+        tagline?: string;
+        first_air_date?: string;
+        last_air_date?: string;
+        director?: string;
+        created_by?: string;
+    } | null>(null);
 
-    const handleAddToListGuarded = (movie: Movie, listType: 'favorites' | 'watch_later') => {
-        // Verificação de autenticação: se não houver sessão, exibe o modal de login
+    const handleAddToListGuarded = (movie: Movie) => {
         const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
         if (!isAuthenticated) {
             setShowLoginModal(true);
             return;
         }
-        onAddToList(movie, listType);
+        onAddToList(movie);
     };
 
     useEffect(() => {
         if (isOpen && movie) {
+            try {
+                console.log('[MOVIE-MODAL] opened movie:', { id: movie.id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type });
+            } catch (e) { /**/ }
             setCast([]);
             setSimilar([]);
             setLogoUrl(null);
-            setLogoLoading(true); // sempre bloquear título antes de resolver o logo
+            setLogoLoading(true);
+            setCurrentRating(movie.tmdb_id ? getRating(Number(movie.tmdb_id)) : null);
+            setShowRatingTooltip(false);
 
             const detailsPromise = movie.type === 'series'
                 ? TMDBService.fetchSeriesDetails(Number(movie.tmdb_id || movie.id))
                 : TMDBService.fetchMovieDetails(Number(movie.tmdb_id || movie.id));
 
             detailsPromise.then(details => {
-                if (details?.cast) setCast(details.cast.slice(0, 5));
-            });
+                if (!details) return;
+                if (details.cast) setCast(details.cast.slice(0, 5));
+                if (details.genres) setDetailGenres(details.genres);
+                setDetails({
+                    overview: details.overview,
+                    runtime: 'runtime' in details ? (details as any).runtime : undefined,
+                    number_of_seasons: 'number_of_seasons' in details ? (details as any).number_of_seasons : undefined,
+                    number_of_episodes: 'number_of_episodes' in details ? (details as any).number_of_episodes : undefined,
+                    ageRating: details.ageRating,
+                    tagline: details.tagline,
+                    first_air_date: 'first_air_date' in details ? (details as any).first_air_date : undefined,
+                    last_air_date: 'last_air_date' in details ? (details as any).last_air_date : undefined,
+                    director: 'director' in details ? (details as any).director : undefined,
+                    created_by: 'created_by' in details ? (details as any).created_by : undefined,
+                });
+            }).catch(() => {});
 
             TMDBService.fetchSimilar(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(similarMovies => {
                 setSimilar(similarMovies.slice(0, 3) as Movie[]);
@@ -83,19 +161,18 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
     if (!movie) return null;
 
-    const titleLines = movie.title.split(' ');
+    const titleLines = (movie.title || '').split(' ');
     const displayTitle = titleLines.length > 2 ? [titleLines.slice(0, Math.ceil(titleLines.length/2)).join(' '), titleLines.slice(Math.ceil(titleLines.length/2)).join(' ')] : [movie.title];
+    const bgUrl = movie.backdrop_url || movie.poster_url || '';
 
     return (
+        <ModalErrorBoundary>
         <>
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center px-4 py-8 md:p-8 overflow-y-auto scrollbar-hide">
+        {isOpen && (
+            <div className="fixed inset-0 z-50"
+            >
                     {/* Overlay with Radial Gradient */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                    <div
                         onClick={onClose}
                         className="fixed inset-0 bg-[#000]/78"
                         style={{
@@ -104,39 +181,36 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                     />
 
                     {/* Modal Content */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
+                    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 py-8 md:p-8 overflow-y-auto scrollbar-hide"
                     >
-                        {/* Hero Section */}
+                        <div className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
+                        >
                         <div className="relative h-[478px] w-full overflow-hidden">
                             {/* Backdrop Image Layer + Gradients */}
                             <div 
                                 className="absolute inset-0"
                                 style={{
-                                    backgroundImage: `
+                                    backgroundImage: bgUrl ? `
                                         linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.12) 30%, rgba(24, 24, 24, 0.92) 100%),
                                         linear-gradient(115deg, rgba(13, 13, 13, 0.15) 18%, rgba(13, 13, 13, 0.86) 58%, rgba(13, 13, 13, 1) 100%),
                                         radial-gradient(circle at 18% 24%, rgba(255, 235, 220, 0.22), transparent 28%),
                                         linear-gradient(135deg, #333 0%, #1a1a1a 100%),
-                                        url("${movie.backdrop_url || movie.poster_url}")
-                                    `,
+                                        url("${bgUrl}")
+                                    ` : 'none',
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center top',
                                     backgroundRepeat: 'no-repeat',
                                 }}
                             />
                             
-                            {/* Separate Layer for Screen Blending as in Reference */}
+                            {/* Separate Layer for Screen Blending */}
                             <div 
                                 className="absolute inset-0 mix-blend-screen opacity-[0.4]"
                                 style={{
-                                    backgroundImage: `
+                                    backgroundImage: bgUrl ? `
                                         linear-gradient(90deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.24) 68%, rgba(0, 0, 0, 0.58) 100%),
-                                        url("${movie.backdrop_url || movie.poster_url}")
-                                    `,
+                                        url("${bgUrl}")
+                                    ` : 'none',
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center top',
                                 }}
@@ -192,7 +266,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                 className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-white max-w-[80vw] md:max-w-none"
                                                 initial={{ opacity: 0, y: 14 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                                                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                                             >
                                                 {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
                                             </motion.h1>
@@ -201,7 +275,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                 </AnimatePresence>
                             </div>
 
-                            {/* Actions Area matching reference SVG structure */}
+                            {/* Actions Area */}
                             <div className="absolute left-6 md:left-12 bottom-10 z-30 flex items-center gap-3">
                                 <div className="flex items-center gap-3">
                                     <button
@@ -215,22 +289,65 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </button>
 
                                     <button
-                                        onClick={() => handleAddToListGuarded(movie, 'watch_later')}
+                                        onClick={() => {
+                                            if (isInWatchlist && onRemoveFromList) {
+                                                onRemoveFromList(movie);
+                                            } else {
+                                                handleAddToListGuarded(movie);
+                                            }
+                                        }}
                                         className="w-12 h-12 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
                                     >
-                                        <Plus className="w-7 h-7" />
+                                        {isInWatchlist ? <Check className="w-7 h-7" /> : <Plus className="w-7 h-7" />}
                                     </button>
                                     
-                                    <button
-                                        onClick={() => handleAddToListGuarded(movie, 'favorites')}
-                                        className="w-12 h-12 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
-                                    >
-                                        <ThumbsUp className="w-6 h-6" />
-                                    </button>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => {
+                                                if (currentRating) {
+                                                    setCurrentRating(null);
+                                                    if (movie?.tmdb_id) saveRating(Number(movie.tmdb_id), null);
+                                                } else {
+                                                    setShowRatingTooltip(!showRatingTooltip);
+                                                }
+                                            }}
+                                            className="w-12 h-12 flex items-center justify-center border-2 rounded-full border-white/50 bg-[#2a2a2a] hover:bg-[#333] text-white transition-all backdrop-blur-md"
+                                        >
+                                            {currentRating === 'love' ? (
+                                                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732Z" /></svg>
+                                            ) : currentRating === 'like' ? (
+                                                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732Z" /></svg>
+                                            ) : (
+                                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732ZM10.5 2C9.67157 2 9 2.67157 9 3.5V7.7132L7.05942 10.8181C6.92829 11.0279 6.72404 11.1817 6.48614 11.2497L4.45056 11.8313C3.59195 12.0766 3 12.8613 3 13.7543V18.5468C3 19.6255 3.87447 20.5 4.95319 20.5C5.87021 20.5 6.78124 20.6478 7.65121 20.9378L9.14427 21.4355C10.2659 21.8094 11.4405 22 12.6228 22H13H14H16.5C18.2692 22 19.7319 20.6873 19.967 18.9827C20.6039 18.3496 21 17.4709 21 16.5C21 16.4369 20.9983 16.3742 20.995 16.3118C21.3153 15.783 21.5 15.1622 21.5 14.5C21.5 13.8378 21.3153 13.217 20.995 12.6883C20.9983 12.6258 21 12.5631 21 12.5C21 10.567 19.433 9 17.5 9H15.9338C15.9752 8.6755 16 8.33974 16 8C16 6.98865 15.7788 5.80611 15.5539 4.85235C15.1401 3.09702 13.5428 2 11.8377 2H10.5Z" fill="currentColor" /></svg>
+                                            )}
+                                        </button>
+
+                                        {showRatingTooltip && (
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50">
+                                                <div className="bg-[#2a2a2a] rounded-full px-4 py-2.5 flex items-center gap-3 shadow-xl border border-white/10 whitespace-nowrap">
+                                                    {(['love', 'like', 'dislike'] as const).map(rating => (
+                                                        <button
+                                                            key={rating}
+                                                            onClick={() => {
+                                                                const id = Number(movie?.tmdb_id);
+                                                                setCurrentRating(rating);
+                                                                saveRating(id, rating);
+                                                                setShowRatingTooltip(false);
+                                                            }}
+                                                            className="hover:scale-125 transition-transform"
+                                                            title={rating === 'love' ? 'Amei' : rating === 'like' ? 'Gostei' : 'Não gostei'}
+                                                        >
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732Z" /></svg>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Volume Button - Positioned absolutely to the right */}
+                            {/* Volume Button */}
                             <div className="absolute right-6 md:right-12 bottom-10 z-30">
                                 <button
                                     onClick={() => setIsMuted(!isMuted)}
@@ -255,13 +372,21 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
                                 {/* Left Column: Summary */}
                                 <div className="space-y-5">
-                                    {/* Meta row: 98% Match, ano, duração, classificação, HD */}
+                                    {/* Meta row */}
                                     <div className="flex flex-wrap items-center gap-2 text-base">
                                         <span className="text-[#46d369] font-bold">98% Match</span>
                                         <span className="text-[#bcbcbc]">{movie.year}</span>
-                                        <span className="text-[#bcbcbc]">{movie.type === 'series' ? '3 Temporadas' : movie.duration}</span>
+                                        <span className="text-[#bcbcbc]">
+                                            {movie.type === 'series'
+                                                ? details?.number_of_seasons
+                                                    ? `${details.number_of_seasons} Temporada${details.number_of_seasons > 1 ? 's' : ''}`
+                                                    : '1 Temporada'
+                                                : details?.runtime
+                                                ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m`
+                                                : movie.duration}
+                                        </span>
                                         <span className="px-1.5 py-0.5 border border-[#808080] text-[11px] font-bold rounded-[4px] text-[#e5e5e5]">
-                                            {movie.rating || '14+'}
+                                            {details?.ageRating || movie.rating || '14+'}
                                         </span>
                                         <span className="px-1.5 py-0.5 border border-white/20 text-[10px] font-bold rounded-[4px] text-white/60">HD</span>
                                         <svg className="w-10 h-4" viewBox="0 0 39 16" fill="none" aria-label="Audiodescrição">
@@ -272,55 +397,22 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         </svg>
                                     </div>
 
-                                    {/* Top 10 Badge — pixel-perfect do reference modal_detail/index.html */}
+                                    {/* Top 10 Badge */}
                                     {movie.rank && (
                                         <div className="flex items-center animate-in fade-in slide-in-from-left-4 duration-500">
-                                            <svg
-                                                width="245"
-                                                height="30"
-                                                viewBox="0 0 245 30"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                aria-label={`#${movie.rank} em ${movie.type === 'series' ? 'Séries' : 'Filmes'} hoje`}
-                                            >
-                                                {/* Quadrado vermelho do badge */}
+                                            <svg width="245" height="30" viewBox="0 0 245 30" fill="none" aria-label={`#${movie.rank} em ${movie.type === 'series' ? 'Séries' : 'Filmes'} hoje`}>
                                                 <rect y="1.0957" width="27.8086" height="27.8086" rx="3.47608" fill="#F50723"/>
-
-                                                {/* Glifo "TOP" — paths exatos do reference */}
                                                 <path d="M7.72649 13.7028H6.16834V8.3974H4.05576V7.04955H9.83908V8.3974H7.72649V13.7028Z" fill="white"/>
                                                 <path d="M13.27 13.8557C12.7729 13.8557 12.3141 13.7697 11.903 13.5976C11.4824 13.4255 11.1192 13.1866 10.8228 12.8711C10.5169 12.5557 10.278 12.1924 10.1155 11.7622C9.94339 11.3416 9.85736 10.8828 9.85736 10.3762C9.85736 9.86951 9.94339 9.41067 10.1155 8.98051C10.278 8.5599 10.5169 8.19665 10.8228 7.8812C11.1192 7.56574 11.4824 7.32676 11.903 7.1547C12.3141 6.98263 12.7729 6.8966 13.27 6.8966C13.7766 6.8966 14.2355 6.98263 14.6561 7.1547C15.0671 7.32676 15.4304 7.56574 15.7363 7.8812C16.0422 8.19665 16.2812 8.5599 16.4532 8.98051C16.6157 9.41067 16.7018 9.86951 16.7018 10.3762C16.7018 10.8828 16.6157 11.3416 16.4532 11.7622C16.2812 12.1924 16.0422 12.5557 15.7363 12.8711C15.4304 13.1866 15.0671 13.4255 14.6561 13.5976C14.2355 13.7697 13.7766 13.8557 13.27 13.8557ZM13.27 12.4792C13.6333 12.4792 13.9583 12.3931 14.2355 12.2115C14.5127 12.0395 14.723 11.7909 14.8855 11.4755C15.048 11.16 15.1245 10.7968 15.1245 10.3762C15.1245 9.95555 15.048 9.58274 14.8855 9.26728C14.723 8.95183 14.5127 8.71285 14.2355 8.53123C13.9583 8.35916 13.6333 8.27313 13.27 8.27313C12.9163 8.27313 12.6009 8.35916 12.3236 8.53123C12.0464 8.71285 11.8266 8.95183 11.6736 9.26728C11.5111 9.58274 11.4346 9.95555 11.4346 10.3762C11.4346 10.7968 11.5111 11.16 11.6736 11.4755C11.8266 11.7909 12.0464 12.0395 12.3236 12.2115C12.6009 12.3931 12.9163 12.4792 13.27 12.4792Z" fill="white"/>
-                                                {/* "P" de TOP */}
                                                 <path d="M17.3002 13.7028V7.04955H20.0533C20.5982 7.04955 21.0761 7.14514 21.4681 7.33632C21.86 7.52751 22.1659 7.79517 22.3762 8.1393C22.5865 8.48343 22.6916 8.88492 22.6916 9.34376C22.6916 9.8026 22.5865 10.2041 22.3762 10.5482C22.1659 10.9019 21.86 11.1696 21.4681 11.3608C21.0761 11.5519 20.5982 11.6475 20.0533 11.6475H18.8584V13.7028H17.3002ZM18.8584 10.3284H19.8239C20.2732 10.3284 20.5982 10.2423 20.8085 10.0703C21.0092 9.90775 21.1144 9.65921 21.1144 9.34376C21.1144 9.0283 21.0092 8.78932 20.8085 8.61726C20.5982 8.45475 20.2732 8.36872 19.8239 8.36872H18.8584V10.3284Z" fill="white"/>
-
-                                                {/* Número do rank dinâmico */}
-                                                <text
-                                                    x="9"
-                                                    y="24"
-                                                    fill="white"
-                                                    fontSize="13"
-                                                    fontWeight="900"
-                                                    fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
-                                                >
-                                                    {movie.rank}
-                                                </text>
-
-                                                {/* Texto "#N em Séries hoje" */}
-                                                <text
-                                                    x="35"
-                                                    y="21"
-                                                    fill="white"
-                                                    fontSize="17"
-                                                    fontWeight="400"
-                                                    fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
-                                                >
-                                                    #{movie.rank} em {movie.type === 'series' ? 'Séries' : 'Filmes'} hoje
-                                                </text>
+                                                <text x="9" y="24" fill="white" fontSize="13" fontWeight="900" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif">{movie.rank}</text>
+                                                <text x="35" y="21" fill="white" fontSize="17" fontWeight="400" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif">#{movie.rank} em {movie.type === 'series' ? 'Séries' : 'Filmes'} hoje</text>
                                             </svg>
                                         </div>
                                     )}
 
                                     <p className="text-white text-[16px] leading-[26px] font-normal">
-                                        {movie.synopsis}
+                                        {details?.overview || movie.synopsis}
                                     </p>
                                 </div>
 
@@ -332,16 +424,12 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </div>
                                     <div className="flex flex-wrap gap-1">
                                         <span className="text-[#777777]">Gêneros:</span>
-                                        <span className="text-white">{movie.genre?.join(', ') || 'Filmes, Séries'}</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                        <span className="text-[#777777]">Este título é:</span>
-                                        <span className="text-white">Cerebral, Inspirador, Empolgante</span>
+                                        <span className="text-white">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* More Like This Section */}
+                            {/* More Like This */}
                             {similar.length > 0 && (
                                 <div className="mt-12">
                                     <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Títulos semelhantes</h3>
@@ -353,14 +441,8 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                 className="bg-[#232323] rounded-md overflow-hidden group cursor-pointer shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                                             >
                                                 <div className="relative h-[141px]">
-                                                    <img 
-                                                        src={item.backdrop_url || item.poster_url} 
-                                                        alt="" 
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                    <span className="absolute bottom-2.5 right-2.5 text-base font-semibold text-white/92 bg-black/60 px-2 py-1 rounded-[3px] shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-                                                        {item.year}
-                                                    </span>
+                                                    <img src={item.backdrop_url || item.poster_url} alt="" className="w-full h-full object-cover" />
+                                                    <span className="absolute bottom-2.5 right-2.5 text-base font-semibold text-white/92 bg-black/60 px-2 py-1 rounded-[3px]">{item.year}</span>
                                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                                                         <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40">
                                                             <Play className="w-5 h-5 fill-white" />
@@ -371,17 +453,13 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                     <div className="flex items-center justify-between mb-3">
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-[#46d369] text-base font-bold">98% Match</span>
-                                                            <span className="px-1.5 border border-white/38 text-[13px] font-semibold rounded-[4px] text-white/88 leading-none py-1">
-                                                                {item.rating || '14+'}
-                                                            </span>
+                                                            <span className="px-1.5 border border-white/38 text-[13px] font-semibold rounded-[4px] text-white/88 leading-none py-1">{item.rating || '14+'}</span>
                                                         </div>
                                                         <button className="w-7 h-7 rounded-full border-2 border-white/62 flex items-center justify-center text-white hover:bg-white/10">
                                                             <Plus className="w-4 h-4" />
                                                         </button>
                                                     </div>
-                                                    <p className="text-[#d2d2d2] text-[15px] line-clamp-3 leading-[1.45]">
-                                                        {item.synopsis}
-                                                    </p>
+                                                    <p className="text-[#d2d2d2] text-[15px] line-clamp-3 leading-[1.45]">{item.synopsis}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -393,43 +471,53 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             <div className="mt-12 pt-6 border-t border-white/10">
                                 <h3 className="text-2xl font-bold text-white mb-6">Sobre {movie.title}</h3>
                                 <div className="grid grid-cols-[128px_1fr] gap-x-4.5 gap-y-2.5 text-[15px] leading-[1.5]">
-                                    <div className="text-white/45">Direção:</div>
-                                    <div className="text-[#d2d2d2]">Christopher Nolan</div>
-                                    
-                                    <div className="text-white/45">Elenco:</div>
-                                    <div className="text-[#d2d2d2]">{cast.map(c => c.name).join(', ')}</div>
-                                    
-                                    <div className="text-white/45">Roteiro:</div>
-                                    <div className="text-[#d2d2d2]">Jonathan Nolan</div>
-                                    
-                                    <div className="text-white/45">Gêneros:</div>
-                                    <div className="text-[#d2d2d2]">{movie.genre?.join(', ')}</div>
-                                    
-                                    <div className="text-white/45">Este título é:</div>
-                                    <div className="text-[#d2d2d2]">Cerebral, Inspirador, Empolgante</div>
+                                    {movie.type === 'series' ? (
+                                        <>
+                                            <div className="text-white/45">Criado por:</div>
+                                            <div className="text-[#d2d2d2]">{details?.created_by || 'Informação indisponível'}</div>
+                                            <div className="text-white/45">Elenco:</div>
+                                            <div className="text-[#d2d2d2]">{cast.map(c => c.name).join(', ')}</div>
+                                            <div className="text-white/45">Gêneros:</div>
+                                            <div className="text-[#d2d2d2]">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</div>
+                                            {details?.number_of_seasons && details?.number_of_episodes && (
+                                                <>
+                                                    <div className="text-white/45">Temporadas:</div>
+                                                    <div className="text-[#d2d2d2]">{details.number_of_seasons} temporada{details.number_of_seasons > 1 ? 's' : ''} • {details.number_of_episodes} episódios</div>
+                                                </>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="text-white/45">Direção:</div>
+                                            <div className="text-[#d2d2d2]">{details?.director || 'Informação indisponível'}</div>
+                                            <div className="text-white/45">Elenco:</div>
+                                            <div className="text-[#d2d2d2]">{cast.map(c => c.name).join(', ')}</div>
+                                            <div className="text-white/45">Roteiro:</div>
+                                            <div className="text-[#d2d2d2]">Informação indisponível</div>
+                                            <div className="text-white/45">Gêneros:</div>
+                                            <div className="text-[#d2d2d2]">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</div>
+                                        </>
+                                    )}
                                     
                                     <div className="text-white/45">Classificação:</div>
                                     <div className="text-[#d2d2d2]">
                                         <div className="flex flex-col gap-1">
-                                            <span className="px-2 py-0.5 border border-gray-600 rounded text-[10px] w-fit text-white">
-                                                {movie.rating || '14+'}
-                                            </span>
-                                            <span className="text-[10px] text-gray-500">recomendado para maiores de {movie.rating || '14'} anos</span>
+                                            <span className="px-2 py-0.5 border border-gray-600 rounded text-[10px] w-fit text-white">{details?.ageRating || movie.rating || '14+'}</span>
+                                            <span className="text-[10px] text-gray-500">recomendado para maiores de {details?.ageRating || movie.rating || '14'} anos</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
+            </div>
             )}
-        </AnimatePresence>
-
-        {/* Modal de Login Necessário */}
         <LoginRequiredModal
             isOpen={showLoginModal}
             onClose={() => setShowLoginModal(false)}
         />
         </>
+        </ModalErrorBoundary>
     );
 }

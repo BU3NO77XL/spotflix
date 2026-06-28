@@ -68,15 +68,18 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
     const gridBackdrops = backdrops.slice(0, 6);
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <>
+        {isOpen && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            >
 
                     {/* Overlay — radial-gradient igual ao MovieModal */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
                         onClick={onClose}
                         className="absolute inset-0"
                         style={{
@@ -88,7 +91,6 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                     <motion.div
                         initial={{ opacity: 0, y: 24 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 16 }}
                         transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
                         className="relative w-full max-w-sm rounded-xl shadow-[0_28px_80px_rgba(0,0,0,0.85)]"
                         style={{ background: '#181818' }}
@@ -227,8 +229,8 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                             </motion.button>
                         </div>
                     </motion.div>
-                </div>
+                </motion.div>
             )}
-        </AnimatePresence>
+        </>
     );
 }
