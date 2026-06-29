@@ -174,7 +174,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 style={{
                                     fontSize: '22px',
                                     fontWeight: 900,
-                                    fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                                    fontFamily: '"Netflix Sans"',
                                     letterSpacing: '-0.02em',
                                 }}
                             >
@@ -188,7 +188,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 transition={{ delay: 0.24, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
                                 style={{
                                     fontSize: '15px',
-                                    fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                                    fontFamily: '"Netflix Sans"',
                                     fontWeight: 400,
                                     color: 'rgba(255,255,255,0.70)',
                                     lineHeight: 1.6,
@@ -213,7 +213,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                     color: 'black',
                                     fontWeight: 700,
                                     fontSize: '15px',
-                                    fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                                    fontFamily: '"Netflix Sans"',
                                     letterSpacing: '0.01em',
                                     borderRadius: '8px',
                                     padding: '12px 32px',
