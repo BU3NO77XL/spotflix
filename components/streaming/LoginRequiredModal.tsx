@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Bookmark, Sparkles, LogIn, ChevronRight } from 'lucide-react';
+import { X, Play, Bookmark, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface LoginRequiredModalProps {
@@ -153,18 +153,18 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 style={{ background: 'linear-gradient(to top, #181818 0%, transparent 100%)' }}
                             />
 
-                            {/* Botão Fechar */}
+                            {/* Botão Fechar sem fundo */}
                             <button
                                 onClick={onClose}
-                                className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white/70 hover:text-white hover:bg-black/70 transition-all duration-200"
+                                className="absolute top-3 right-3 z-20 p-1.5 text-white/60 hover:text-white transition-colors duration-200"
                                 aria-label="Fechar"
                             >
-                                <X className="w-4 h-4" strokeWidth={2.5} />
+                                <X className="w-5 h-5" strokeWidth={2} />
                             </button>
                         </div>
 
                         {/* ─── CORPO DO MODAL ─── */}
-                        <div className="px-7 pt-1 pb-8 flex flex-col items-center text-center">
+                        <div className="px-7 pt-1 pb-6 flex flex-col items-center text-center">
                             <motion.h2
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -197,7 +197,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 Faça login na sua conta para liberar todos os recursos da plataforma.
                             </motion.p>
 
-                            {/* Lista de Benefícios — com estilo neutro e elegante */}
+                            {/* Lista de Benefícios */}
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -220,7 +220,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 })}
                             </motion.div>
 
-                            {/* Botão Fazer Login Original — Fundo Branco, Texto Preto */}
+                            {/* Botão Fazer Login Original */}
                             <motion.button
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -247,6 +247,18 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 onMouseLeave={e => (e.currentTarget.style.background = 'white')}
                             >
                                 Fazer login
+                            </motion.button>
+
+                            {/* Botão Secundário em Texto Cinza */}
+                            <motion.button
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.32, duration: 0.38 }}
+                                onClick={onClose}
+                                className="w-full mt-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
+                                style={{ fontFamily: '"Netflix Sans"' }}
+                            >
+                                Continuar apenas navegando
                             </motion.button>
                         </div>
                     </motion.div>
