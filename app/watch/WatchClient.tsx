@@ -1165,6 +1165,7 @@ function WatchContent() {
                             />
                         </div>
 
+                        {/* BADGE TOP 10 DESATIVADO TEMPORARIAMENTE
                         {urlRank && (
                             <div className="flex items-center animate-in fade-in slide-in-from-left-4 duration-500 mb-4">
                                 <svg width="245" height="30" viewBox="0 0 245 30" fill="none" aria-label={`#${urlRank} em ${movie.type === 'series' ? 'Séries' : 'Filmes'} hoje`}>
@@ -1177,6 +1178,7 @@ function WatchContent() {
                                 </svg>
                             </div>
                         )}
+                        */}
 
                         {/* Tagline */}
                         {(isSeries ? seriesDetails?.tagline : movieDetails?.tagline) && (
@@ -1231,7 +1233,6 @@ function WatchContent() {
                                         </svg>
                                     )}
                                 </button>
-                                {/* BOTÃO NÃO GOSTEI DESATIVADO TEMPORARIAMENTE
                                 <button
                                     onClick={handleLikeAction}
                                     className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
@@ -1249,7 +1250,6 @@ function WatchContent() {
                                         </svg>
                                     )}
                                 </button>
-                                */}
                             </div>
 
 
