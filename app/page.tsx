@@ -241,7 +241,9 @@ export default function Home() {
       : featuredMovies.length > 0
         ? featuredMovies
         : movies.slice(0, 10);
-    return [...pool].sort(() => Math.random() - 0.5);
+    return [...pool]
+      .filter(m => !m.synopsis || m.synopsis.length <= 250)
+      .sort(() => Math.random() - 0.5);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movies.length]); // só re-embaralha quando a lista de filmes muda
   const trendingMovies = movies.filter((m: Movie) => m.category === 'trending');
@@ -289,7 +291,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#121212]">
       {/* Hero - Prioriza filmes em alta do dia */}
       <HeroSection
-        featuredMovies={shuffledHeroMovies.length > 0 ? shuffledHeroMovies : movies.slice(0, 3)}
+        featuredMovies={shuffledHeroMovies.length > 0 ? shuffledHeroMovies : movies.filter((m: Movie) => !m.synopsis || m.synopsis.length <= 250).slice(0, 3)}
         onWatch={handleWatch}
         onMoreInfo={handleMoreInfo}
       />
