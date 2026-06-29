@@ -47,8 +47,9 @@ export default function MyList() {
                 }
             } catch { /* ignore */ }
         }
-        setLoginModalOpen(true);
-    }, []);
+        router.replace('/');
+        setTimeout(() => window.dispatchEvent(new Event('requireLogin')), 100);
+    }, [router]);
 
     useEffect(() => {
         const handleRequireLogin = () => setLoginModalOpen(true);

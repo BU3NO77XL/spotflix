@@ -6,9 +6,8 @@ import { X, Play, Plus, Volume2, VolumeX, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { calcMatch } from '@/lib/match';
-import { movieModalContent, overlayFade, imageReveal, easeOutQuint } from '@/lib/motion';
+import { overlayFade, imageReveal, easeOutQuint, movieModalContent } from '@/lib/motion';
 import { TMDBService } from './TMDBIntegration';
-import LoginRequiredModal from './LoginRequiredModal';
 import RatingTooltip from '@/components/ui/RatingTooltip';
 
 type Rating = 'love' | 'like' | 'dislike';
@@ -50,7 +49,6 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoLoading, setLogoLoading] = useState(true);
     const [isOnNetflix, setIsOnNetflix] = useState(false);
-    const [showLoginModal, setShowLoginModal] = useState(false);
     const [detailGenres, setDetailGenres] = useState<string[]>([]);
     const [currentRating, setCurrentRating] = useState<Rating | null>(null);
     const [showRatingTooltip, setShowRatingTooltip] = useState(false);
@@ -70,7 +68,11 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
         const uid = userId ?? (() => {
             try { return JSON.parse(localStorage.getItem('userBasicInfo') || '{}').id; } catch { return null; }
         })();
-        if (!uid) { setShowLoginModal(true); return; }
+        if (!uid) {
+            onClose();
+            window.dispatchEvent(new Event('requireLogin'));
+            return;
+        }
         setCurrentRating(value);
         try {
             if (value) {
@@ -124,7 +126,8 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const handleAddToListGuarded = (movie: Movie) => {
         const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
         if (!isAuthenticated) {
-            setShowLoginModal(true);
+            onClose();
+            window.dispatchEvent(new Event('requireLogin'));
             return;
         }
         onAddToList(movie);
@@ -379,6 +382,12 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     <div className="relative">
                                         <button
                                             onClick={() => {
+                                                const uid = userId ?? (localStorage.getItem('userBasicInfo') ? true : false);
+                                                if (!uid) {
+                                                    onClose();
+                                                    window.dispatchEvent(new Event('requireLogin'));
+                                                    return;
+                                                }
                                                 if (currentRating) {
                                                     if (movie?.tmdb_id) handleRatingAction(Number(movie.tmdb_id), movie.type, null);
                                                 } else {
@@ -629,10 +638,6 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
             </div>
         )}
         </AnimatePresence>
-        <LoginRequiredModal
-            isOpen={showLoginModal}
-            onClose={() => setShowLoginModal(false)}
-        />
         </>
         </ModalErrorBoundary>
     );

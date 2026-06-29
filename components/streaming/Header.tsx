@@ -200,7 +200,7 @@ export default function Header() {
                                                 }
                                             }}
                                             className={cn(
-                                                "text-[22px] transition-colors duration-200 whitespace-nowrap",
+                                                "text-[15px] transition-colors duration-200 whitespace-nowrap",
                                                 isActive
                                                     ? "text-white font-medium"
                                                     : "text-[#e5e5e5] hover:text-[#b3b3b3] font-normal"
@@ -375,6 +375,11 @@ export default function Header() {
                 isOpen={!!selectedMovie}
                 onClose={closeModal}
                 onWatch={(movie) => {
+                    if (!userData) {
+                        closeModal();
+                        window.dispatchEvent(new Event('requireLogin'));
+                        return;
+                    }
                     router.push(`/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${movie.type}`);
                     setTimeout(() => closeModal(), 500);
                 }}

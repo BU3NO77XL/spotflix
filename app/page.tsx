@@ -82,6 +82,18 @@ export default function Home() {
     return () => window.removeEventListener('requireLogin', handleRequireLogin);
   }, []);
 
+  // Check for requireLogin param from middleware redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('requireLogin') === 'true') {
+        setTimeout(() => window.dispatchEvent(new Event('requireLogin')), 100);
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, []);
+
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ['movies'],
     queryFn: () => base44.entities.Movie.list(),
@@ -358,6 +370,7 @@ export default function Home() {
 
   const handleWatch = (movie: Movie) => {
     if (!userId) {
+      setModalOpen(false);
       setLoginModalOpen(true);
       return;
     }

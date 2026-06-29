@@ -289,9 +289,17 @@ function WatchContent() {
     useEffect(() => {
         try {
             const u = localStorage.getItem('userBasicInfo');
-            if (u) setUserId(JSON.parse(u).id);
-        } catch { /* ignore */ }
-    }, []);
+            if (u) {
+                setUserId(JSON.parse(u).id);
+            } else {
+                router.replace('/');
+                setTimeout(() => window.dispatchEvent(new Event('requireLogin')), 100);
+            }
+        } catch { 
+            router.replace('/');
+            setTimeout(() => window.dispatchEvent(new Event('requireLogin')), 100);
+        }
+    }, [router]);
     const [watchMatch, setWatchMatch] = useState<number | null>(null);
 
     const { data: watchlistData = { items: [] } } = useQuery({
