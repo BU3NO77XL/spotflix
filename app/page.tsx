@@ -264,6 +264,12 @@ export default function Home() {
   };
 
   const handleMoreInfo = (movie: Movie) => {
+    if (!movie.rank) {
+      const top10Index = top10Movies.findIndex(m => m.tmdb_id && m.tmdb_id === movie.tmdb_id);
+      if (top10Index >= 0) {
+        movie = { ...movie, rank: top10Index + 1 };
+      }
+    }
     setSelectedMovie(movie);
     setModalOpen(true);
   };
