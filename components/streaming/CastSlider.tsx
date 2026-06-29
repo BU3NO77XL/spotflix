@@ -158,7 +158,7 @@ export default function CastSlider({ cast }: CastSliderProps) {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-white text-xl font-semibold px-2">Elenco Principal</h2>
+            <h2 className="text-white text-xl md:text-2xl font-semibold px-2">Elenco Principal</h2>
 
             {/* Thumbnails - Cast List */}
             <div className="relative -mx-4 sm:-mx-8 lg:-mx-12">

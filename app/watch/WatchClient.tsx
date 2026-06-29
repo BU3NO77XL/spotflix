@@ -1548,7 +1548,7 @@ function WatchContent() {
 
                     {/* Quick Info para SÉRIES - aparece DEPOIS dos episódios */}
                     {isSeries && (
-                        <section className="py-6 border-b border-white/10">
+                        <section className="py-8 border-b border-white/10">
                             <h2 className="text-white text-xl md:text-2xl font-semibold mb-4">Detalhes</h2>
                             <div className="flex flex-col lg:flex-col gap-3 text-sm text-gray-500">
 
@@ -2117,15 +2117,16 @@ function WatchContent() {
                     {isLoadingDetails ? (
                         <SectionSkeleton />
                     ) : similarMovies.length > 0 && (
-                        <section
-                            className="py-8 -mx-4 sm:-mx-8 lg:-mx-12"
-                            aria-label="Títulos semelhantes a este filme"
-                        >
-                            <Carousel
-                                title="Títulos Semelhantes"
-                                movies={similarMovies}
-                                onMovieClick={handleSimilarMovieClick}
-                            />
+                        <section className="py-8" aria-label="Títulos semelhantes a este filme">
+                            <h2 className="text-white text-xl md:text-2xl font-semibold px-2 mb-3">Títulos Semelhantes</h2>
+                            <div className="relative -mx-4 sm:-mx-8 lg:-mx-12">
+                                <Carousel
+                                    title="Títulos Semelhantes"
+                                    showTitle={false}
+                                    movies={similarMovies}
+                                    onMovieClick={handleSimilarMovieClick}
+                                />
+                            </div>
                         </section>
                     )}
 

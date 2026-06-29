@@ -8,13 +8,14 @@ interface CarouselProps {
     title: string;
     movies: Movie[];
     onMovieClick: (movie: Movie) => void;
+    showTitle?: boolean;
 }
 
-export default function Carousel({ title, movies, onMovieClick }: CarouselProps) {
+export default function Carousel({ title, movies, onMovieClick, showTitle = true }: CarouselProps) {
     if (!movies?.length) return null;
 
     return (
-        <BaseCarousel title={title}>
+        <BaseCarousel title={title} showTitle={showTitle}>
             {movies.map((movie, index) => (
                 <MovieCard
                     key={movie.id}
