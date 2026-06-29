@@ -1191,8 +1191,8 @@ function WatchContent() {
                                         : `https://megaembed.com/embed/${movie.tmdb_id}`;
                                     window.location.href = embedUrl;
                                 }}
-                                className="bg-white hover:bg-gray-200 text-black font-bold py-3 px-8 sm:py-2 sm:px-8
-                                    rounded transition-all duration-200 flex items-center justify-center text-base sm:text-base
+                                className="bg-white hover:bg-gray-200 text-black font-bold py-3 sm:py-2 md:py-3 px-8 md:px-10
+                                    rounded transition-all duration-200 flex items-center justify-center text-base sm:text-base md:text-lg
                                     focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
                                 aria-label={`Assistir ${movie.title}`}
                             >
@@ -1203,7 +1203,7 @@ function WatchContent() {
                                 <button
                                     onClick={handleAddToList}
                                     className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
-                                        rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10
+                                        rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
                                         focus:outline-none focus:ring-0 text-white`}
                                     aria-label={isInWatchlist ? 'Remover da lista' : 'Adicionar à minha lista'}
                                 >
@@ -1220,7 +1220,7 @@ function WatchContent() {
                                 <button
                                     onClick={handleLikeAction}
                                     className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
-                                        rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10
+                                        rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
                                         focus:outline-none focus:ring-0 text-white`}
                                     aria-label={localLiked ? 'Não gostei' : 'Gostei deste filme'}
                                 >
@@ -1241,13 +1241,13 @@ function WatchContent() {
 
 
                         {/* Movie/Series Info */}
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-base mt-1">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-base sm:text-base md:text-lg">
                             {watchMatch != null
-                                ? <span className="text-[#46d369] font-bold text-base sm:text-base">{watchMatch}% Match</span>
+                                ? <span className="text-[#46d369] font-bold text-base sm:text-base md:text-lg">{watchMatch}% Match</span>
                                 : movie?.score != null
-                                ? <span className="text-[#46d369] font-bold text-base sm:text-base">{Math.round(Number(movie.score) * 10)}% Match</span>
+                                ? <span className="text-[#46d369] font-bold text-base sm:text-base md:text-lg">{Math.round(Number(movie.score) * 10)}% Match</span>
                                 : null}
-                            <span className="text-white font-bold text-base sm:text-base">{displayYear}</span>
+                            <span className="text-white font-bold text-base sm:text-base md:text-lg">{displayYear}</span>
 
                             {/* Age Rating Badge - Estilo Netflix */}
                             {(isSeries ? seriesDetails?.ageRating : movieDetails?.ageRating) && (
@@ -1268,23 +1268,23 @@ function WatchContent() {
                                 </div>
                             )}
 
-                            <span className="text-white font-bold text-base sm:text-base">{displayDuration}</span>
+                            <span className="text-white font-bold text-base sm:text-base md:text-lg">{displayDuration}</span>
                             {(() => {
                                 const genres = (isSeries ? seriesDetails?.genres : movieDetails?.genres) || movie.genre || [];
                                 if (genres.length >= 2) {
                                     return (
                                         <>
                                             <span className="w-1 h-1 rounded-full bg-gray-500" />
-                                            <span className="text-gray-400 text-base sm:text-base">{genres[0]}</span>
+                                            <span className="text-gray-400 text-base sm:text-base md:text-lg">{genres[0]}</span>
                                             <span className="w-1 h-1 rounded-full bg-gray-500" />
-                                            <span className="text-gray-400 text-base sm:text-base">{genres[1]}</span>
+                                            <span className="text-gray-400 text-base sm:text-base md:text-lg">{genres[1]}</span>
                                         </>
                                     );
                                 } else if (genres.length === 1) {
                                     return (
                                         <>
                                             <span className="w-1 h-1 rounded-full bg-gray-500" />
-                                            <span className="text-gray-400 text-base sm:text-base">{genres[0]}</span>
+                                            <span className="text-gray-400 text-base sm:text-base md:text-lg">{genres[0]}</span>
                                         </>
                                     );
                                 }
@@ -1303,8 +1303,8 @@ function WatchContent() {
 
                     {/* Synopsis */}
                     <section className="py-8">
-                        <h2 className="text-white text-xl font-semibold mb-3">Descrição</h2>
-                        <p className="text-gray-200 text-base sm:text-base leading-relaxed max-w-4xl">
+                        <h2 className="text-white text-xl md:text-2xl font-semibold mb-3">Descrição</h2>
+                        <p className="text-gray-200 text-base sm:text-base md:text-lg leading-relaxed max-w-4xl">
                             {!isSynopsisExpanded && synopsis.length > SYNOPSIS_LIMIT
                                 ? `${synopsis.slice(0, SYNOPSIS_LIMIT)}...`
                                 : synopsis}
@@ -1321,7 +1321,7 @@ function WatchContent() {
 
                         {/* Quick Info - MOVIDO PARA DEPOIS DOS EPISÓDIOS EM SÉRIES */}
                         {!isSeries && (
-                            <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-sm text-gray-500">
+                            <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-sm md:text-base text-gray-500">
 
                                 {movieDetails?.director && (
                                     <span>Direção: <span className="text-gray-300">{movieDetails.director}</span></span>
@@ -1337,7 +1337,7 @@ function WatchContent() {
                                                 const fillPercentage = Math.min(Math.max((ratingValue - (star - 1)) * 100, 0), 100);
 
                                                 return (
-                                                    <div key={star} className="relative w-4 h-4 mr-0.5">
+                                                    <div key={star} className="relative w-4 h-4 md:w-5 md:h-5 mr-0.5">
                                                         <svg
                                                             className="w-full h-full"
                                                             viewBox="0 0 24 24"
@@ -1345,7 +1345,7 @@ function WatchContent() {
                                                             <defs>
                                                                 <linearGradient id={`starGradient-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
                                                                     <stop offset={`${fillPercentage}%`} stopColor="white" />
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="#4b5563" /> {/* gray-600 hex */}
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
                                                                 </linearGradient>
                                                             </defs>
                                                             <path
@@ -1357,7 +1357,7 @@ function WatchContent() {
                                                 );
                                             })}
                                         </div>
-                                        <span className="text-sm font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
+                                        <span className="text-sm md:text-base font-bold text-white">{((movie.score ?? 0) / 2).toFixed(1)}</span>
                                     </div>
                                 )}
                             </div>
@@ -1392,7 +1392,7 @@ function WatchContent() {
                                 
                                 {/* Lado esquerdo: Título e contador de episódios */}
                                 <div>
-                                    <h2 className="text-white text-xl font-semibold mb-2">Episódios</h2>
+                                    <h2 className="text-white text-xl md:text-2xl font-semibold mb-2">Episódios</h2>
                                     {seriesDetails && (
                                         <div className="flex items-center gap-2 text-sm text-gray-400">
                                             <span>{seriesDetails.number_of_seasons} Temporadas</span>
@@ -1549,7 +1549,7 @@ function WatchContent() {
                     {/* Quick Info para SÉRIES - aparece DEPOIS dos episódios */}
                     {isSeries && (
                         <section className="py-6 border-b border-white/10">
-                            <h2 className="text-white text-xl font-semibold mb-4">Detalhes</h2>
+                            <h2 className="text-white text-xl md:text-2xl font-semibold mb-4">Detalhes</h2>
                             <div className="flex flex-col lg:flex-col gap-3 text-sm text-gray-500">
 
                                 {seriesDetails?.director && (
@@ -1629,8 +1629,8 @@ function WatchContent() {
                                 )}
 
                                 <div className={`relative z-10 p-4 sm:p-5 ${!collection.backdrop_path ? 'bg-[#1f1f1f]' : ''}`}>
-                                    <h2 className="text-white text-lg font-semibold mb-1">{collection.name}</h2>
-                                    <p className="text-gray-400 text-sm mb-4">
+                            <h2 className="text-white text-lg md:text-xl font-semibold mb-1">{collection.name}</h2>
+                            <p className="text-gray-400 text-sm mb-4">
                                         Parte de uma coleção com {collection.parts.length} títulos
                                     </p>
                                     <div className="relative group/collection">
@@ -1830,7 +1830,7 @@ function WatchContent() {
                                 </div>
 
                                 <div className="relative z-10 p-4 sm:p-5">
-                                    <h2 className="text-white text-lg font-semibold mb-1">Mais de {creatorInfo.name}</h2>
+                                    <h2 className="text-white text-lg md:text-xl font-semibold mb-1">Mais de {creatorInfo.name}</h2>
                                     <p className="text-gray-400 text-sm mb-4">
                                         Outras séries do mesmo criador de {movie.title}
                                     </p>
