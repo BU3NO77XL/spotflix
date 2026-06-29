@@ -8,18 +8,25 @@ datasource db {
 }
 
 model Profile {
+  // Identificadores
   id             Int             @id @default(autoincrement())
   authId         String          @unique
   email          String          @unique
+
+  // Dados do Usuário
   fullName       String?
+  displayName    String?
   avatarUrl      String?
   passwordHash   String?
-  role           String          @default("client")
-  displayName    String?
   bio            String?
   favoriteGenres String?
+  role           String          @default("client")
+
+  // Datas / Timestamps
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  // Relacionamentos
   preferences    Preference?
   watchHistory   WatchHistory[]
   watchlist      WatchlistItem[]
@@ -29,27 +36,41 @@ model Profile {
 }
 
 model Preference {
-  id                      Int      @id @default(autoincrement())
-  profileId               Int      @unique
-  avatarIndex             Int      @default(0)
-  genres                  String
+  // Chaves Primária e Estrangeira
+  id                       Int       @id @default(autoincrement())
+  profileId                Int       @unique
+
+  // Configurações de Preferência
+  avatarIndex              Int       @default(0)
+  genres                   String
   recommendationsUpdatedAt DateTime?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-  profile                 Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Datas / Timestamps
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  // Relacionamentos
+  profile                  Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@map("preferences")
 }
 
 model WatchlistItem {
+  // Chaves Primária e Estrangeira
   id          Int      @id @default(autoincrement())
   profileId   Int
   tmdbId      Int
   mediaType   String
+
+  // Informações do Conteúdo
   title       String
   posterUrl   String?
   backdropUrl String?
+
+  // Datas / Timestamps
   addedAt     DateTime @default(now())
+
+  // Relacionamentos
   profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, tmdbId, mediaType])
@@ -57,13 +78,28 @@ model WatchlistItem {
 }
 
 model WatchHistory {
+  // Chaves Primária e Estrangeira
   id              Int      @id @default(autoincrement())
   profileId       Int
   tmdbId          Int
   mediaType       String
+
+  // Informações do Conteúdo
   title           String
+  posterUrl       String?
+  backdropUrl     String?
+
+  // Rastreamento de Progresso e Episódios
+  seasonNumber    Int      @default(0)
+  episodeNumber   Int      @default(0)
+  totalSeasons    Int      @default(0)
+  totalEpisodes   Int      @default(0)
   progressPercent Float    @default(0)
+
+  // Datas / Timestamps
   watchedAt       DateTime @default(now())
+
+  // Relacionamentos
   profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, tmdbId, mediaType])
@@ -71,12 +107,19 @@ model WatchHistory {
 }
 
 model Rating {
+  // Chaves Primária e Estrangeira
   id        Int      @id @default(autoincrement())
   profileId Int
   tmdbId    Int
   mediaType String
+
+  // Dados da Avaliação
   value     String
+
+  // Datas / Timestamps
   createdAt DateTime @default(now())
+
+  // Relacionamentos
   profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, tmdbId, mediaType])

@@ -25,7 +25,7 @@ async function setToCache(key: string, data: any, ttlSeconds: number) {
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-function rateLimit(ip: string, limit: number = 200, windowMs: number = 60000): boolean {
+function rateLimit(ip: string, limit: number = 2000, windowMs: number = 60000): boolean {
     const now = Date.now();
     const record = rateLimitMap.get(ip);
 
@@ -49,15 +49,17 @@ export async function GET(
     context: { params: Promise<{ path: string[] }> }
 ) {
     try {
-        const ip = request.headers.get('x-forwarded-for') || 'unknown';
-        if (!rateLimit(ip)) {
-            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-        }
-
         const { path } = await context.params;
         const subPath = path.join('/');
         const searchParams = request.nextUrl.searchParams;
         const cacheKey = `tmdb:${subPath}:${searchParams.toString()}`;
+
+        const ip = request.headers.get('x-forwarded-for') || 'unknown';
+        if (!rateLimit(ip)) {
+            const stale = serverCache.get(cacheKey);
+            if (stale) return NextResponse.json(stale.data);
+            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+        }
 
         // 1. Try to get from Redis (Conceptual) / Server Cache
         const cachedResponse = await getFromCache(cacheKey);

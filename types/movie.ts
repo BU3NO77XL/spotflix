@@ -18,6 +18,10 @@ export interface Movie {
     tmdb_id?: number;
     listItemId?: string;
     rank?: number;
+    season_number?: number;
+    episode_number?: number;
+    total_episodes?: number;
+    total_seasons?: number;
 }
 
 export interface UserListItem {
