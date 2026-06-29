@@ -257,9 +257,9 @@ export default function Home() {
   const personalizedMovies = movies.filter((m: Movie) => m.category === 'personalized');
 
   const handleWatch = (movie: Movie) => {
-    // Redirecionar imediatamente para melhor UX
-    router.push(`/watch?id=${movie.id}`);
-    // Fechar modal em paralelo (não bloqueia o redirecionamento)
+    const params = new URLSearchParams({ id: String(movie.id) });
+    if (movie.rank) params.set('rank', String(movie.rank));
+    router.push(`/watch?${params}`);
     setTimeout(() => setModalOpen(false), 100);
   };
 
