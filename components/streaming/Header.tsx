@@ -193,6 +193,12 @@ export default function Header() {
                                         <Link
                                             key={link.label}
                                             href={link.href}
+                                            onClick={(e) => {
+                                                if (link.href === '/my-list' && !userData) {
+                                                    e.preventDefault();
+                                                    window.dispatchEvent(new Event('requireLogin'));
+                                                }
+                                            }}
                                             className={cn(
                                                 "text-[22px] transition-colors duration-200 whitespace-nowrap",
                                                 isActive
@@ -265,13 +271,20 @@ export default function Header() {
                                                 <div className="border-t border-white/10 py-2">
                                                     <button
                                                         className="w-full px-4 py-2.5 text-left text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors flex items-center gap-3"
-                                                        onClick={() => {
+                                                        onClick={async () => {
                                                             setUserDropdownOpen(false);
+                                                            
+                                                            try {
+                                                                await fetch('/api/auth/logout', { method: 'POST' });
+                                                            } catch (e) {
+                                                                console.error(e);
+                                                            }
+                                                            
                                                             localStorage.removeItem('sb-session');
                                                             localStorage.removeItem('userBasicInfo');
                                                             localStorage.removeItem('userPreferences');
                                                             setUserData(null);
-                                                            router.push('/login');
+                                                            window.location.href = '/login';
                                                         }}
                                                     >
                                                         <span aria-hidden>{renderUserIcon('Sair')}</span>
@@ -331,7 +344,13 @@ export default function Header() {
                                             <Link
                                                 key={link.label}
                                                 href={link.href}
-                                                onClick={() => setMobileMenuOpen(false)}
+                                                onClick={(e) => {
+                                                    if (link.href === '/my-list' && !userData) {
+                                                        e.preventDefault();
+                                                        window.dispatchEvent(new Event('requireLogin'));
+                                                    }
+                                                    setMobileMenuOpen(false);
+                                                }}
                                                 className="flex items-center gap-4 px-4 py-4 rounded text-white hover:bg-white/5 transition-colors font-medium text-lg"
                                             >
                                                 <span aria-hidden>{renderIcon(link.label)}</span>
