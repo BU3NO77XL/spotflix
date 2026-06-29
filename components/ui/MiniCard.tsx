@@ -1,8 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
+import NetflixBadge from '@/components/streaming/NetflixBadge';
+import { checkIsOnNetflix } from '@/lib/netflixCache';
 
 interface MiniCardProps {
   movie: Movie;
@@ -19,6 +22,17 @@ export default function MiniCard({
   variant = 'portrait',
   accentColor = '#1DB954'
 }: MiniCardProps) {
+  const [isOnNetflix, setIsOnNetflix] = useState(false);
+
+  useEffect(() => {
+    if (!movie.tmdb_id) return;
+    let cancelled = false;
+    checkIsOnNetflix(movie.tmdb_id, movie.type).then(result => {
+      if (!cancelled) setIsOnNetflix(result);
+    });
+    return () => { cancelled = true; };
+  }, [movie.tmdb_id, movie.type]);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -72,6 +86,14 @@ export default function MiniCard({
               alt={movie.title}
               className="w-full h-full object-cover transition-transform duration-500"
             />
+
+            {/* Netflix Badge */}
+            {isOnNetflix && (
+              <div className="absolute top-2 left-2 z-10">
+                <NetflixBadge />
+              </div>
+            )}
+
             <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent" />
 
             <div className="absolute bottom-0 left-0 right-0 p-3">

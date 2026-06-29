@@ -1,9 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Movie } from '@/types/movie';
+import NetflixBadge from '@/components/streaming/NetflixBadge';
+import { checkIsOnNetflix } from '@/lib/netflixCache';
 
 interface Top10CardProps {
   movie: Movie;
@@ -13,6 +16,17 @@ interface Top10CardProps {
 }
 
 export default function Top10Card({ movie, rank, onClick, index }: Top10CardProps) {
+  const [isOnNetflix, setIsOnNetflix] = useState(false);
+
+  useEffect(() => {
+    if (!movie.tmdb_id) return;
+    let cancelled = false;
+    checkIsOnNetflix(movie.tmdb_id, movie.type).then(result => {
+      if (!cancelled) setIsOnNetflix(result);
+    });
+    return () => { cancelled = true; };
+  }, [movie.tmdb_id, movie.type]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -44,7 +58,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
             className="font-bold leading-none text-transparent text-[150px] md:text-[140px] lg:text-[180px] xl:text-[220px]"
             style={{
               WebkitTextStroke: '4px rgba(255, 255, 255, 0.3)',
-              fontFamily: '"Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif'
+              fontFamily: '"Netflix Sans"'
             }}
           >
             {rank}
@@ -71,6 +85,13 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/20 to-transparent 
               opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Netflix Badge */}
+          {isOnNetflix && (
+            <div className="absolute top-2 left-2 z-10">
+              <NetflixBadge />
+            </div>
+          )}
 
           {/* Score Badge */}
           {movie.score && (

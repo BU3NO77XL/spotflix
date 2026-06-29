@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MyListHero from '@/components/streaming/MyListHero';
 import { toast } from 'sonner';
 import MovieModal from '@/components/streaming/MovieModal';
+import NetflixBadge from '@/components/streaming/NetflixBadge';
+import { checkIsOnNetflix } from '@/lib/netflixCache';
 
 export default function MyList() {
     const router = useRouter();
@@ -21,6 +23,7 @@ export default function MyList() {
     const [userName, setUserName] = useState('');
     const [descIndex, setDescIndex] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
+    const [netflixIds, setNetflixIds] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         setDescIndex(Math.floor(Math.random() * 5));
@@ -135,6 +138,18 @@ export default function MyList() {
         ? baseList.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()))
         : baseList;
     const watchlistTmdbIds = new Set(watchlistData.items.map((item: { tmdbId: number }) => item.tmdbId));
+
+    useEffect(() => {
+        const items = currentList.map(m => ({ tmdbId: Number(m.tmdb_id), type: m.type }));
+        if (items.length === 0) return;
+        let cancelled = false;
+        Promise.all(items.map(({ tmdbId, type }) =>
+            checkIsOnNetflix(tmdbId, type).then(r => r ? tmdbId : null)
+        )).then(results => {
+            if (!cancelled) setNetflixIds(new Set(results.filter(Boolean) as number[]));
+        });
+        return () => { cancelled = true; };
+    }, [currentList, activeTab]);
 
     const handleWatch = (movie: Movie) => {
         try {
@@ -286,6 +301,13 @@ export default function MyList() {
                                                 alt={movie.title}
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />
+
+                                            {/* Netflix Badge */}
+                                            {netflixIds.has(Number(movie.tmdb_id)) && (
+                                                <div className="absolute top-3 left-3 z-10">
+                                                    <NetflixBadge />
+                                                </div>
+                                            )}
 
                                             {/* Score Badge */}
                                             {movie.score && (

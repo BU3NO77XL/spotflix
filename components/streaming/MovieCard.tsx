@@ -1,10 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Play } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Movie } from '@/types/movie';
 import PlayButton from '@/components/ui/PlayButton';
 import ActionButton from '@/components/ui/ActionButton';
+import NetflixBadge from './NetflixBadge';
+import { checkIsOnNetflix } from '@/lib/netflixCache';
 
 interface MovieCardProps {
     movie: Movie;
@@ -13,6 +16,17 @@ interface MovieCardProps {
 }
 
 export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps) {
+    const [isOnNetflix, setIsOnNetflix] = useState(false);
+
+    useEffect(() => {
+        if (!movie.tmdb_id) return;
+        let cancelled = false;
+        checkIsOnNetflix(movie.tmdb_id, movie.type).then(result => {
+            if (!cancelled) setIsOnNetflix(result);
+        });
+        return () => { cancelled = true; };
+    }, [movie.tmdb_id, movie.type]);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -45,6 +59,13 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/20 to-transparent 
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Netflix Badge */}
+                {isOnNetflix && (
+                    <div className="absolute top-2 left-2">
+                        <NetflixBadge />
+                    </div>
+                )}
 
                 {/* Score Badge */}
                 {movie.score && (
