@@ -280,7 +280,13 @@ function WatchContent() {
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
     const [localFavorited, setLocalFavorited] = useState(false);
     const [localLiked, setLocalLiked] = useState(false);
-    const userId = typeof window !== 'undefined' ? (() => { try { const u = localStorage.getItem('userBasicInfo'); return u ? JSON.parse(u).id : null; } catch { return null; } })() : null;
+    const [userId, setUserId] = useState<number | null>(null);
+    useEffect(() => {
+        try {
+            const u = localStorage.getItem('userBasicInfo');
+            if (u) setUserId(JSON.parse(u).id);
+        } catch { /* ignore */ }
+    }, []);
     const [watchMatch, setWatchMatch] = useState<number | null>(null);
 
     const { data: watchlistData = { items: [] } } = useQuery({
@@ -581,21 +587,6 @@ function WatchContent() {
     const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdbId));
     const isInWatchlist = movie && movie.tmdb_id ? watchlistTmdbIds.has(Number(movie.tmdb_id)) : false;
 
-    useEffect(() => {
-        if (!userId || !movie?.tmdb_id || !movie.type) return;
-        const params = new URLSearchParams({
-            userId: String(userId),
-            tmdbId: String(movie.tmdb_id),
-            mediaType: movie.type,
-        });
-        if (movie.score != null) params.set('tmdbScore', String(movie.score));
-        if (movie.genre?.length) params.set('genres', movie.genre.join(','));
-        fetch(`/api/match?${params}`)
-            .then(r => r.json())
-            .then(data => setWatchMatch(data.match))
-            .catch(() => {});
-    }, [userId, movie?.tmdb_id, movie?.type]);
-    
     // Se temos um override local (clique na Coleção), usar os dados básicos dele
     // enquanto o React Query busca os dados completos em background
     const isLoading = localOverride
@@ -1054,6 +1045,21 @@ function WatchContent() {
     const animatedBackdrop = animatedBackdrops[backdropKey] || null;
     const animatedBackdropUrl = animatedBackdrop?.url || null;
     const hasBackdropAudio = animatedBackdrop?.hasAudio || false;
+
+    useEffect(() => {
+        if (!userId || !movie?.tmdb_id || !movie.type) return;
+        const params = new URLSearchParams({
+            userId: String(userId),
+            tmdbId: String(movie.tmdb_id),
+            mediaType: movie.type,
+        });
+        if (movie.score != null) params.set('tmdbScore', String(movie.score));
+        if (movie.genre?.length) params.set('genres', movie.genre.join(','));
+        fetch(`/api/match?${params}`)
+            .then(r => r.json())
+            .then(data => setWatchMatch(data.match))
+            .catch(() => {});
+    }, [userId, movie?.tmdb_id, movie?.type]);
 
     return (
         <div className="min-h-screen bg-[#121212]">
