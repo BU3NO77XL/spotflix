@@ -36,7 +36,7 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    const [userData, setUserData] = useState<{ name: string; email: string; avatarUrl?: string | null } | null>(null);
+    const [userData, setUserData] = useState<{ name: string; email: string; avatarUrl?: string | null; preferences?: { avatarIndex?: number; genres?: string } | null } | null>(null);
 
     useEffect(() => {
       const stored = localStorage.getItem('userBasicInfo');
@@ -233,7 +233,7 @@ export default function Header() {
                                         }}
                                         className="flex items-center gap-2"
                                     >
-                                        <NetflixAvatar name={userData?.name || 'User'} size={36} />
+                                        <NetflixAvatar name={userData?.name || 'User'} selectedIndex={userData?.preferences?.avatarIndex ?? null} size={36} />
                                         <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
                                     </button>
 

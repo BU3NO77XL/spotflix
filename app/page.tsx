@@ -18,6 +18,17 @@ import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import { GENRE_NAME_TO_TMDB_ID } from '@/lib/genre-map';
 import { toast } from 'sonner';
 
+interface WatchHistoryItem {
+  id: number;
+  tmdbId: number;
+  mediaType: string;
+  seasonNumber: number;
+  episodeNumber: number;
+  title: string;
+  progressPercent: number;
+  watchedAt: string;
+}
+
 export default function Home() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -185,11 +196,92 @@ export default function Home() {
   }, [queryClient, preferencesLoaded, genreNames, recommendationsTimestamp, userId]);
 
   // Watchlist do usuário vinda da API
-  const { data: watchlistData = { items: [] } } = useQuery({
+  const { data: rawWatchlist } = useQuery({
     queryKey: ['watchlist', userId],
     queryFn: () => fetch(`/api/watchlist?userId=${userId}`).then(r => r.json()),
     enabled: !!userId,
   });
+  const watchlistData = rawWatchlist ?? { items: [] };
+
+  // Histórico de exibição para "Continue Assistindo"
+  const { data: rawWatchHistory } = useQuery({
+    queryKey: ['watchHistory', userId],
+    queryFn: () => fetch(`/api/watch-history?userId=${userId}`).then(r => r.json()),
+    enabled: !!userId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  });
+
+  useEffect(() => {
+    const historyItems: WatchHistoryItem[] = rawWatchHistory?.items || [];
+    if (historyItems.length === 0) {
+      setContinueWatching([]);
+      return;
+    }
+    const allMovies: Movie[] = movies || [];
+    let cancelled = false;
+
+    const initialMapped: Movie[] = historyItems.map((h: any) => {
+      const match = allMovies.find(m => Number(m.tmdb_id) === Number(h.tmdbId));
+      return {
+        id: match?.id || String(h.tmdbId),
+        tmdb_id: h.tmdbId,
+        title: match?.title || h.title,
+        type: (h.mediaType || match?.type || 'movie') as 'movie' | 'series',
+        year: match?.year || 0,
+        poster_url: match?.poster_url || h.posterUrl || '',
+        backdrop_url: match?.backdrop_url || h.backdropUrl || '',
+        genre: match?.genre || [],
+        score: match?.score,
+        rating: match?.rating,
+        season_number: h.mediaType === 'series' ? h.seasonNumber : undefined,
+        episode_number: h.mediaType === 'series' ? h.episodeNumber : undefined,
+        total_seasons: h.mediaType === 'series' ? h.totalSeasons : undefined,
+        total_episodes: h.mediaType === 'series' ? h.totalEpisodes : undefined,
+      };
+    });
+    setContinueWatching(initialMapped);
+
+    const fetchMissingDetails = async () => {
+      const updated = await Promise.all(initialMapped.map(async (movie) => {
+        if (movie.score != null && movie.rating != null && movie.year > 0 && movie.poster_url) {
+          return movie;
+        }
+        try {
+          const details = movie.type === 'series'
+            ? await TMDBService.fetchSeriesDetails(Number(movie.tmdb_id))
+            : await TMDBService.fetchMovieDetails(Number(movie.tmdb_id));
+          if (!details) return movie;
+          const voteAvg = (details as any).vote_average ?? (details as any).voteAverage;
+          const yearVal = (details as any).first_air_date ? new Date((details as any).first_air_date).getFullYear() : ((details as any).release_date ? new Date((details as any).release_date).getFullYear() : movie.year);
+          const posterPath = (details as any).poster_path || (details as any).posterUrl;
+          const backdropPath = (details as any).backdrop_path || (details as any).backdropUrl;
+          const posterUrl = posterPath ? (posterPath.startsWith('http') ? posterPath : `https://image.tmdb.org/t/p/w500${posterPath}`) : movie.poster_url;
+          const backdropUrl = backdropPath ? (backdropPath.startsWith('http') ? backdropPath : `https://image.tmdb.org/t/p/w1280${backdropPath}`) : movie.backdrop_url;
+          return {
+            ...movie,
+            poster_url: posterUrl || movie.poster_url,
+            backdrop_url: backdropUrl || movie.backdrop_url,
+            score: voteAvg != null ? parseFloat(Number(voteAvg).toFixed(1)) : movie.score,
+            rating: details.ageRating || movie.rating,
+            year: yearVal || movie.year,
+            genre: details.genres?.length ? details.genres : movie.genre,
+            total_episodes: (details as any).number_of_episodes,
+            total_seasons: (details as any).number_of_seasons,
+          };
+        } catch {
+          return movie;
+        }
+      }));
+      if (!cancelled) {
+        setContinueWatching(updated);
+      }
+    };
+
+    fetchMissingDetails();
+    return () => { cancelled = true; };
+  }, [rawWatchHistory, movies]);
 
   const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdbId));
   const selectedMovieInList = selectedMovie ? watchlistTmdbIds.has(Number(selectedMovie.tmdb_id)) : false;
@@ -259,6 +351,10 @@ export default function Home() {
   const handleWatch = (movie: Movie) => {
     const params = new URLSearchParams({ id: String(movie.id) });
     if (movie.rank) params.set('rank', String(movie.rank));
+    if (movie.season_number) params.set('season', String(movie.season_number));
+    if (movie.episode_number) params.set('episode', String(movie.episode_number));
+    if (movie.tmdb_id) params.set('ref', String(movie.tmdb_id));
+    if (movie.type) params.set('type', movie.type);
     router.push(`/watch?${params}`);
     setTimeout(() => setModalOpen(false), 100);
   };
@@ -270,19 +366,16 @@ export default function Home() {
         movie = { ...movie, rank: top10Index + 1 };
       }
     }
+    if (movie.season_number || movie.episode_number) {
+      handleWatch(movie);
+      return;
+    }
     setSelectedMovie(movie);
     setModalOpen(true);
   };
 
   const handleAddToList = (movie: Movie) => {
     addToListMutation.mutate(movie);
-    setContinueWatching(prev => {
-      const exists = prev.find(m => m.id === movie.id);
-      if (!exists) {
-        return [...prev, movie];
-      }
-      return prev;
-    });
   };
 
   const handleRemoveFromList = (movie: Movie) => {
@@ -307,7 +400,7 @@ export default function Home() {
       <div className="-mt-[211px] relative z-20 pb-12 space-y-5">
         {continueWatching.length > 0 && (
           <Carousel
-            title="Continue Assistindo"
+            title="Recém assistidos"
             movies={continueWatching}
             onMovieClick={handleMoreInfo}
           />

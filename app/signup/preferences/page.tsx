@@ -138,7 +138,7 @@ export default function PreferencesPage() {
                   Passo 1 de 2
                 </span>
               </div>
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
                 {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
                   <button
                     key={index}
@@ -148,7 +148,7 @@ export default function PreferencesPage() {
                         : 'ring-1 ring-white/10 hover:ring-white/30'
                       }`}
                   >
-                    <NetflixAvatar name={`User${index}`} className="w-full h-full" />
+                    <NetflixAvatar selectedIndex={index} className="w-full h-full" />
                   </button>
                 ))}
               </div>

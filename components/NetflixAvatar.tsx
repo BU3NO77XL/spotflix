@@ -3,27 +3,30 @@ import { cn } from '@/lib/utils';
 import { NETFLIX_AVATARS } from '@/lib/avatars';
 
 interface NetflixAvatarProps {
-    name?: string; // Usado para garantir consistência (se passar o mesmo nome, gera o mesmo avatar)
+    name?: string;
+    selectedIndex?: number | null;
     size?: number;
     className?: string;
 }
 
 export default function NetflixAvatar({
     name = "User",
+    selectedIndex,
     size = 40,
     className
 }: NetflixAvatarProps) {
 
-    // Seleciona um avatar baseado no hash do nome para ser consistente
-    // Se mudar o nome, muda o avatar. Se manter o nome, mantem o avatar.
     const avatarUrl = useMemo(() => {
+        if (typeof selectedIndex === 'number' && selectedIndex >= 0 && selectedIndex < NETFLIX_AVATARS.length) {
+            return NETFLIX_AVATARS[selectedIndex];
+        }
         let hash = 0;
         for (let i = 0; i < name.length; i++) {
             hash = name.charCodeAt(i) + ((hash << 5) - hash);
         }
         const index = Math.abs(hash) % NETFLIX_AVATARS.length;
         return NETFLIX_AVATARS[index];
-    }, [name]);
+    }, [name, selectedIndex]);
 
     return (
         <div

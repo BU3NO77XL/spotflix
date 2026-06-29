@@ -9,6 +9,7 @@ import { calcMatch } from '@/lib/match';
 import { movieModalContent, overlayFade, imageReveal, easeOutQuint } from '@/lib/motion';
 import { TMDBService } from './TMDBIntegration';
 import LoginRequiredModal from './LoginRequiredModal';
+import RatingTooltip from '@/components/ui/RatingTooltip';
 
 type Rating = 'love' | 'like' | 'dislike';
 
@@ -397,22 +398,14 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
                                         {showRatingTooltip && (
                                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50">
-                                                <div className="bg-[#2a2a2a] rounded-full px-4 py-2.5 flex items-center gap-3 shadow-xl border border-white/10 whitespace-nowrap">
-                                                    {(['love', 'like', 'dislike'] as const).map(rating => (
-                                                        <button
-                                                            key={rating}
-                                                            onClick={() => {
-                                                                const id = Number(movie?.tmdb_id);
-                                                                if (id) handleRatingAction(id, movie!.type, rating);
-                                                                setShowRatingTooltip(false);
-                                                            }}
-                                                            className="hover:scale-125 transition-transform"
-                                                            title={rating === 'love' ? 'Amei' : rating === 'like' ? 'Gostei' : 'Não gostei'}
-                                                        >
-                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732Z" /></svg>
-                                                        </button>
-                                                    ))}
-                                                </div>
+                                                <RatingTooltip
+                                                    currentRating={currentRating}
+                                                    onRate={(value) => {
+                                                        const id = Number(movie?.tmdb_id);
+                                                        if (id) handleRatingAction(id, movie!.type, value);
+                                                        setShowRatingTooltip(false);
+                                                    }}
+                                                />
                                             </div>
                                         )}
                                     </div>

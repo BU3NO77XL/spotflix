@@ -22,6 +22,7 @@ import { calcMatch } from '@/lib/match';
 import { useWatchNavigation } from '@/hooks/useWatchNavigation';
 import { useLogoStore } from '@/stores/logoStore';
 import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
+import RatingTooltip from '@/components/ui/RatingTooltip';
 
 // Hook para preload de imagens
 const useImagePreload = (urls: string[]) => {
@@ -170,6 +171,8 @@ function WatchContent() {
     const urlTmdbId = searchParams.get('ref');
     const urlMediaType = searchParams.get('type') || 'movie';
     const urlRank = searchParams.get('rank');
+    const urlSeason = searchParams.get('season');
+    const urlEpisode = searchParams.get('episode');
 
     // Override local — ao clicar em item da Coleção, troca o filme SEM navegar
     // Isso elimina o round-trip ao servidor em produção
@@ -237,8 +240,8 @@ function WatchContent() {
     const [movieDetails, setMovieDetails] = useState<{ overview?: string; budget?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null>(null);
     const [seriesDetails, setSeriesDetails] = useState<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null>(null);
     const [seasonDetails, setSeasonDetails] = useState<{ episodes: { id: number; episode_number: number; name: string; overview: string; air_date: string; runtime: number; still_path: string; vote_average: number }[] } | null>(null);
-    const [selectedSeason, setSelectedSeason] = useState<number>(1);
-    const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
+    const [selectedSeason, setSelectedSeason] = useState<number>(urlSeason ? Number(urlSeason) : 1);
+    const [selectedEpisode, setSelectedEpisode] = useState<number>(urlEpisode ? Number(urlEpisode) : 1);
     const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
     const [trailers, setTrailers] = useState<{ key: string; name: string; type: string }[]>([]);
     const [keywords, setKeywords] = useState<{ id: number; name: string }[]>([]);
@@ -280,7 +283,8 @@ function WatchContent() {
     // Estado para controle de áudio do backdrop animado
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
     const [localFavorited, setLocalFavorited] = useState(false);
-    const [localLiked, setLocalLiked] = useState(false);
+    const [currentRating, setCurrentRating] = useState<'love' | 'like' | 'dislike' | null>(null);
+    const [showRatingTooltip, setShowRatingTooltip] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
     useEffect(() => {
         try {
@@ -509,45 +513,59 @@ function WatchContent() {
             const isSeries = mediaType === 'series';
             const endpoint = isSeries ? 'tv' : 'movie';
 
-            // console.log(`%c[WATCH PERF]   ↳ buscando da API TMDB /api/content/${endpoint}/${tmdbIdNum} (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
-            const t2 = performance.now();
-            const response = await fetch(`/api/content/${endpoint}/${tmdbIdNum}?language=pt-BR`);
-            // console.log(`%c[WATCH PERF]   ↳ API TMDB respondeu em ${(performance.now() - t2).toFixed(0)}ms (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
-            if (!response.ok) return {} as any;
-            const tmdbData = await response.json();
+            let tmdbData: any = null;
+            try {
+                const response = await fetch(`/api/content/${endpoint}/${tmdbIdNum}?language=pt-BR`);
+                if (response.ok) {
+                    tmdbData = await response.json();
+                }
+            } catch { /* ignore */ }
 
-            // Verificar se temos dados válidos
-            if (!tmdbData || Object.keys(tmdbData).length === 0) {
-                return {} as any;
-            }
+            if (tmdbData && Object.keys(tmdbData).length > 0 && !tmdbData.error) {
+                const title = tmdbData.title || tmdbData.name || 'Untitled';
+                const releaseDate = tmdbData.release_date || tmdbData.first_air_date || '';
+                const year = releaseDate ? new Date(releaseDate).getFullYear() : new Date().getFullYear();
 
-            const title = tmdbData.title || tmdbData.name || 'Untitled';
-            const releaseDate = tmdbData.release_date || tmdbData.first_air_date || '';
-            const year = releaseDate ? new Date(releaseDate).getFullYear() : new Date().getFullYear();
+                let duration = '2h 0m';
+                if (isSeries) {
+                    const seasons = tmdbData.number_of_seasons || 1;
+                    duration = `${seasons} Temporada${seasons > 1 ? 's' : ''}`;
+                } else if (tmdbData.runtime) {
+                    duration = `${Math.floor(tmdbData.runtime / 60)}h ${tmdbData.runtime % 60}m`;
+                }
 
-            // Para séries, calcular duração como número de temporadas
-            let duration = '2h 0m';
-            if (isSeries) {
-                const seasons = tmdbData.number_of_seasons || 1;
-                duration = `${seasons} Temporada${seasons > 1 ? 's' : ''}`;
-            } else if (tmdbData.runtime) {
-                duration = `${Math.floor(tmdbData.runtime / 60)}h ${tmdbData.runtime % 60}m`;
+                return {
+                    id: `tmdb-${tmdbIdNum}`,
+                    title,
+                    type: isSeries ? 'series' as const : 'movie' as const,
+                    year,
+                    rating: 'NR',
+                    duration,
+                    genre: tmdbData.genres?.map((g: { name: string }) => g.name) || [],
+                    synopsis: tmdbData.overview || '',
+                    cast: [],
+                    director: 'Unknown',
+                    poster_url: tmdbData.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : '',
+                    backdrop_url: tmdbData.backdrop_path ? `https://image.tmdb.org/t/p/original${tmdbData.backdrop_path}` : '',
+                    score: tmdbData.vote_average ? parseFloat(Number(tmdbData.vote_average).toFixed(1)) : 0,
+                    tmdb_id: tmdbIdNum,
+                    category: 'trending' as const,
+                };
             }
 
             return {
                 id: `tmdb-${tmdbIdNum}`,
-                title,
+                title: 'Assistir',
                 type: isSeries ? 'series' as const : 'movie' as const,
-                year,
+                year: new Date().getFullYear(),
                 rating: 'NR',
-                duration,
-                genre: tmdbData.genres?.map((g: { name: string }) => g.name) || [],
-                synopsis: tmdbData.overview || '',
+                duration: '',
+                genre: [],
+                synopsis: '',
                 cast: [],
-                director: 'Unknown',
-                poster_url: tmdbData.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : '',
-                backdrop_url: tmdbData.backdrop_path ? `https://image.tmdb.org/t/p/original${tmdbData.backdrop_path}` : '',
-                score: tmdbData.vote_average ? parseFloat(tmdbData.vote_average.toFixed(1)) : 0,
+                director: '',
+                poster_url: '',
+                backdrop_url: '',
                 tmdb_id: tmdbIdNum,
                 category: 'trending' as const,
             };
@@ -603,6 +621,63 @@ function WatchContent() {
             .catch(() => {});
     }, [userId, movie?.tmdb_id, movie?.type]);
 
+    useEffect(() => {
+        if (!userId || !movie?.tmdb_id) return;
+        fetch(`/api/ratings?userId=${userId}`)
+            .then(r => r.json())
+            .then(data => {
+                const ratings = data.ratings || {};
+                const tmdbId = Number(movie.tmdb_id);
+                if (ratings[String(tmdbId)]) {
+                    setCurrentRating(ratings[String(tmdbId)]);
+                }
+            })
+            .catch(() => {});
+    }, [userId, movie?.tmdb_id]);
+
+    const [savedHistory, setSavedHistory] = useState<{ seasonNumber: number; episodeNumber: number } | null>(null);
+
+    useEffect(() => {
+        if (!userId || !movie?.tmdb_id) return;
+        fetch(`/api/watch-history?userId=${userId}`)
+            .then(r => r.json())
+            .then(data => {
+                const items = data.items || [];
+                const match = items.find((i: any) => Number(i.tmdbId) === Number(movie.tmdb_id) && i.mediaType === movie.type);
+                if (match && match.seasonNumber > 0 && match.episodeNumber > 0) {
+                    setSavedHistory({ seasonNumber: match.seasonNumber, episodeNumber: match.episodeNumber });
+                }
+            })
+            .catch(() => {});
+    }, [userId, movie?.tmdb_id, movie?.type]);
+
+    const handleRatingAction = async (tmdbId: number, mediaType: string, value: 'love' | 'like' | 'dislike' | null) => {
+        const uid = userId ?? (() => {
+            try { return JSON.parse(localStorage.getItem('userBasicInfo') || '{}').id; } catch { return null; }
+        })();
+        if (!uid) {
+            if (value) setShowLoginModal(true);
+            return;
+        }
+        try {
+            if (value) {
+                await fetch('/api/ratings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: uid, tmdbId, mediaType, value }),
+                });
+                setCurrentRating(value);
+            } else {
+                await fetch('/api/ratings', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: uid, tmdbId, mediaType }),
+                });
+                setCurrentRating(null);
+            }
+        } catch { /* ignore */ }
+    };
+
     // Se temos um override local (clique na Coleção), usar os dados básicos dele
     // enquanto o React Query busca os dados completos em background
     const isLoading = localOverride
@@ -641,7 +716,7 @@ function WatchContent() {
     const imagesToPreload = movie ? [
         movie.backdrop_url,
         movie.poster_url
-    ].filter(Boolean) : [];
+    ].filter((img): img is string => Boolean(img)) : [];
 
     const preloadedImages = useImagePreload(imagesToPreload);
 
@@ -730,12 +805,15 @@ function WatchContent() {
                     (TMDBService as any).fetchSeriesFullDetails ? (TMDBService as any).fetchSeriesFullDetails(tmdbIdNum) : Promise.resolve(null),
                 ]);
 
+                let seasonTargetSeasonNumber = urlSeason ? Number(urlSeason) : 0;
                 let seasonData = null;
                 if (seriesData?.seasons && seriesData.seasons.length > 0) {
-                    const firstSeason = seriesData.seasons.find((s: any) => s.season_number === 1) || seriesData.seasons[0];
-                    if (firstSeason) {
-                        seasonData = await TMDBService.fetchSeasonDetails(tmdbIdNum, firstSeason.season_number);
-                        seasonData = { ...seasonData, season_number: firstSeason.season_number };
+                    const targetSeason = seasonTargetSeasonNumber
+                        ? seriesData.seasons.find((s: any) => s.season_number === seasonTargetSeasonNumber) || seriesData.seasons[0]
+                        : seriesData.seasons.find((s: any) => s.season_number === 1) || seriesData.seasons[0];
+                    if (targetSeason) {
+                        seasonData = await TMDBService.fetchSeasonDetails(tmdbIdNum, targetSeason.season_number);
+                        seasonData = { ...seasonData, season_number: targetSeason.season_number };
                     }
                 }
 
@@ -805,8 +883,10 @@ function WatchContent() {
             if (fetchedDetails.seasonData) {
                 const { season_number, ...seasonData } = fetchedDetails.seasonData as any;
                 setSeasonDetails(seasonData);
-                setSelectedSeason(season_number);
-                setSelectedEpisode(1);
+                const targetSeason = urlSeason ? Number(urlSeason) : (savedHistory?.seasonNumber || season_number);
+                const targetEpisode = urlEpisode ? Number(urlEpisode) : (savedHistory?.episodeNumber || 1);
+                setSelectedSeason(targetSeason);
+                setSelectedEpisode(targetEpisode);
             }
             if (fetchedDetails.creatorInfoData) setCreatorInfo(fetchedDetails.creatorInfoData);
             if (fetchedDetails.creatorSeriesData) setCreatorSeries(fetchedDetails.creatorSeriesData);
@@ -891,7 +971,7 @@ function WatchContent() {
         if (!movie?.tmdb_id) return;
 
         const fetchBackdrops = async () => {
-            const images = await TMDBService.fetchMovieImages(movie.tmdb_id, movie.type === 'series');
+            const images = await TMDBService.fetchMovieImages(Number(movie.tmdb_id), movie.type === 'series');
             if (images.length > 0) {
                 setBackdrops(images);
             }
@@ -927,7 +1007,7 @@ function WatchContent() {
     }, [collection, trailers, creatorSeries]);
 
     // Função para buscar detalhes de uma temporada específica
-    const fetchSeasonDetails = async (seasonNumber: number) => {
+    const fetchSeasonDetails = async (seasonNumber: number, targetEpisode?: number) => {
         // Verificar se temos um filme válido
         if (movie && Object.keys(movie).length > 0 && movie.tmdb_id) {
             setIsLoadingDetails(true);
@@ -935,12 +1015,24 @@ function WatchContent() {
                 const seasonData = await TMDBService.fetchSeasonDetails(movie.tmdb_id, seasonNumber);
                 setSeasonDetails(seasonData);
                 setSelectedSeason(seasonNumber);
-                setSelectedEpisode(1);
+                setSelectedEpisode(targetEpisode ?? 1);
             } finally {
                 setIsLoadingDetails(false);
             }
         }
     };
+
+    useEffect(() => {
+        if (!savedHistory || !movie?.tmdb_id || movie.type !== 'series') return;
+        if (urlSeason || urlEpisode) return; // URL params take precedence
+        if (savedHistory.seasonNumber > 0 && savedHistory.episodeNumber > 0) {
+            if (selectedSeason !== savedHistory.seasonNumber) {
+                fetchSeasonDetails(savedHistory.seasonNumber, savedHistory.episodeNumber);
+            } else {
+                setSelectedEpisode(savedHistory.episodeNumber);
+            }
+        }
+    }, [savedHistory, movie?.tmdb_id, movie?.type, urlSeason, urlEpisode]);
 
     const addToListMutation = useMutation({
         mutationFn: () =>
@@ -993,13 +1085,11 @@ function WatchContent() {
     };
 
     const handleLikeAction = () => {
-        // Guard de autenticação para o botão de curtir
-        const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
-        if (!isAuthenticated) {
-            setShowLoginModal(true);
-            return;
+        if (currentRating) {
+            handleRatingAction(Number(movie?.tmdb_id), movie?.type || 'movie', null);
+        } else {
+            setShowRatingTooltip(!showRatingTooltip);
         }
-        setLocalLiked(!localLiked);
     };
 
     const handleSimilarMovieClick = (similarMovie: Movie) => {
@@ -1201,7 +1291,28 @@ function WatchContent() {
                             </p>
                             */}
                             <button
-                                onClick={() => {
+                                onClick={async () => {
+                                    if (userId && movie?.tmdb_id) {
+                                        try {
+                                            await fetch('/api/watch-history', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    userId: String(userId),
+                                                    tmdbId: String(movie.tmdb_id),
+                                                    mediaType: movie.type,
+                                                    seasonNumber: isSeries ? selectedSeason : undefined,
+                                                    episodeNumber: isSeries ? selectedEpisode : undefined,
+                                                    totalSeasons: isSeries ? seriesDetails?.number_of_seasons : undefined,
+                                                    totalEpisodes: isSeries ? seriesDetails?.number_of_episodes : undefined,
+                                                    title: movie.title,
+                                                    posterUrl: movie.poster_url,
+                                                    backdropUrl: movie.backdrop_url,
+                                                    progressPercent: 0,
+                                                }),
+                                            });
+                                        } catch (e) { /* silent */ }
+                                    }
                                     const embedUrl = isSeries
                                         ? `https://megaembed.com/embed/${movie.tmdb_id}/${selectedSeason}/${selectedEpisode}`
                                         : `https://megaembed.com/embed/${movie.tmdb_id}`;
@@ -1233,23 +1344,40 @@ function WatchContent() {
                                         </svg>
                                     )}
                                 </button>
-                                <button
-                                    onClick={handleLikeAction}
-                                    className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
-                                        rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
-                                        focus:outline-none focus:ring-0 text-white`}
-                                    aria-label={localLiked ? 'Não gostei' : 'Gostei deste filme'}
-                                >
-                                    {localLiked ? (
-                                        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732Z" />
-                                        </svg>
-                                    ) : (
-                                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732ZM10.5 2C9.67157 2 9 2.67157 9 3.5V7.7132L7.05942 10.8181C6.92829 11.0279 6.72404 11.1817 6.48614 11.2497L4.45056 11.8313C3.59195 12.0766 3 12.8613 3 13.7543V18.5468C3 19.6255 3.87447 20.5 4.95319 20.5C5.87021 20.5 6.78124 20.6478 7.65121 20.9378L9.14427 21.4355C10.2659 21.8094 11.4405 22 12.6228 22H13H14H16.5C18.2692 22 19.7319 20.6873 19.967 18.9827C20.6039 18.3496 21 17.4709 21 16.5C21 16.4369 20.9983 16.3742 20.995 16.3118C21.3153 15.783 21.5 15.1622 21.5 14.5C21.5 13.8378 21.3153 13.217 20.995 12.6883C20.9983 12.6258 21 12.5631 21 12.5C21 10.567 19.433 9 17.5 9H15.9338C15.9752 8.6755 16 8.33974 16 8C16 6.98865 15.7788 5.80611 15.5539 4.85235C15.1401 3.09702 13.5428 2 11.8377 2H10.5Z" fill="currentColor" />
-                                        </svg>
+                                <div className="relative">
+                                    <button
+                                        onClick={handleLikeAction}
+                                        className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
+                                            rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
+                                            focus:outline-none focus:ring-0 text-white`}
+                                        aria-label={currentRating ? 'Remover avaliação' : 'Avaliar este título'}
+                                    >
+                                        {currentRating === 'love' || currentRating === 'like' ? (
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732Z" />
+                                            </svg>
+                                        ) : currentRating === 'dislike' ? (
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'scaleY(-1)' }}>
+                                                <path d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732Z" />
+                                            </svg>
+                                        ) : (
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M10.696 8.7732C10.8947 8.45534 11 8.08804 11 7.7132V4H11.8377C12.7152 4 13.4285 4.55292 13.6073 5.31126C13.8233 6.22758 14 7.22716 14 8C14 8.58478 13.8976 9.1919 13.7536 9.75039L13.4315 11H14.7219H17.5C18.3284 11 19 11.6716 19 12.5C19 12.5929 18.9917 12.6831 18.976 12.7699L18.8955 13.2149L19.1764 13.5692C19.3794 13.8252 19.5 14.1471 19.5 14.5C19.5 14.8529 19.3794 15.1748 19.1764 15.4308L18.8955 15.7851L18.976 16.2301C18.9917 16.317 19 16.4071 19 16.5C19 16.9901 18.766 17.4253 18.3994 17.7006L18 18.0006L18 18.5001C17.9999 19.3285 17.3284 20 16.5 20H14H13H12.6228C11.6554 20 10.6944 19.844 9.77673 19.5382L8.28366 19.0405C7.22457 18.6874 6.11617 18.5051 5 18.5001V13.7543L7.03558 13.1727C7.74927 12.9688 8.36203 12.5076 8.75542 11.8781L10.696 8.7732ZM10.5 2C9.67157 2 9 2.67157 9 3.5V7.7132L7.05942 10.8181C6.92829 11.0279 6.72404 11.1817 6.48614 11.2497L4.45056 11.8313C3.59195 12.0766 3 12.8613 3 13.7543V18.5468C3 19.6255 3.87447 20.5 4.95319 20.5C5.87021 20.5 6.78124 20.6478 7.65121 20.9378L9.14427 21.4355C10.2659 21.8094 11.4405 22 12.6228 22H13H14H16.5C18.2692 22 19.7319 20.6873 19.967 18.9827C20.6039 18.3496 21 17.4709 21 16.5C21 16.4369 20.9983 16.3742 20.995 16.3118C21.3153 15.783 21.5 15.1622 21.5 14.5C21.5 13.8378 21.3153 13.217 20.995 12.6883C20.9983 12.6258 21 12.5631 21 12.5C21 10.567 19.433 9 17.5 9H15.9338C15.9752 8.6755 16 8.33974 16 8C16 6.98865 15.7788 5.80611 15.5539 4.85235C15.1401 3.09702 13.5428 2 11.8377 2H10.5Z" fill="currentColor" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                    {showRatingTooltip && (
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50">
+                                            <RatingTooltip
+                                                currentRating={currentRating}
+                                                onRate={(value) => {
+                                                    handleRatingAction(Number(movie?.tmdb_id), movie?.type || 'movie', value);
+                                                    setShowRatingTooltip(false);
+                                                }}
+                                            />
+                                        </div>
                                     )}
-                                </button>
+                                </div>
                             </div>
 
 
@@ -1361,7 +1489,7 @@ function WatchContent() {
                                                         >
                                                             <defs>
                                                                 <linearGradient id={`starGradient-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="white" />
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#facc15" />
                                                                     <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
                                                                 </linearGradient>
                                                             </defs>
@@ -1453,7 +1581,7 @@ function WatchContent() {
                             </div>
 
                             {/* Carrossel de episódios */}
-                            <div className="relative group/episode">
+                            <div className="relative group/episode -mx-4 sm:-mx-8 lg:-mx-12">
                                 {/* Botões de navegação - Estilo igual ao carrossel principal */}
                                 <button
                                     onClick={() => scrollEpisodes('left')}
@@ -1487,11 +1615,11 @@ function WatchContent() {
                                 <div
                                     ref={episodesScrollRef}
                                     onScroll={handleEpisodeScroll}
-                                    className="flex gap-4 overflow-x-auto py-4 scrollbar-hide px-6"
+                                    className="flex gap-2.5 overflow-x-auto py-4 scrollbar-hide px-4 sm:px-8 lg:px-12"
                                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                                 >
                                     {isLoadingDetails ? (
-                                        <div className="flex gap-4 py-2">
+                                        <div className="flex gap-2.5 py-2">
                                             {[...Array(5)].map((_, i) => (
                                                 <div key={i} className="shrink-0 w-64">
                                                     <div className="animate-pulse bg-white/10 rounded-lg h-36 mb-2" />
@@ -1518,7 +1646,7 @@ function WatchContent() {
                                                             });
                                                         }
                                                     }}
-                                                    className={`shrink-0 w-64 bg-[#1f1f1f] rounded-lg overflow-hidden hover:scale-105 transition-all duration-200 cursor-pointer
+                                                    className={`shrink-0 w-64 md:w-72 bg-[#1f1f1f] rounded overflow-hidden hover:bg-[#2a2a2a] transition-colors duration-200 cursor-pointer
                                                         ${selectedEpisode === episode.episode_number ? 'ring-2 ring-[#46d369] ring-offset-2 ring-offset-[#1f1f1f]' : ''}`}
                                                 >
                                                     <div className="relative">
@@ -1538,14 +1666,14 @@ function WatchContent() {
                                                         </div>
                                                     </div>
                                                     <div className="p-3">
-                                                        {/* <h3 className="text-white font-medium text-sm mb-1 truncate">
+                                                        <h3 className="text-white font-medium text-xs sm:text-sm mb-1">
                                                             {episode.episode_number}. {episode.name}
-                                                        </h3> */}
-                                                        <p className="text-gray-400 text-xs line-clamp-2">
+                                                        </h3>
+                                                        <p className="text-gray-400 text-xs leading-relaxed">
                                                             {episode.overview || 'Sem descrição disponível.'}
                                                         </p>
                                                         {episode.air_date && (
-                                                            <p className="text-gray-500 text-xs mt-1">
+                                                            <p className="text-gray-500 text-xs mt-2">
                                                                 {new Date(episode.air_date).toLocaleDateString('pt-BR')}
                                                             </p>
                                                         )}
@@ -1590,7 +1718,7 @@ function WatchContent() {
                                                         <svg className="w-full h-full" viewBox="0 0 24 24">
                                                             <defs>
                                                                 <linearGradient id={`starGradient-series-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="white" />
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#facc15" />
                                                                     <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
                                                                 </linearGradient>
                                                             </defs>

@@ -50,7 +50,7 @@ function AutoPlaySlide({ movie, onMovieClick, index }: AutoPlaySlideProps) {
             {/* Background Image */}
             <div className="absolute inset-0">
                 <img
-                    src={backdropUrl || ''}
+                    src={backdropUrl || undefined}
                     alt={movie.title}
                     className="w-full h-full object-cover"
                 />
@@ -62,8 +62,8 @@ function AutoPlaySlide({ movie, onMovieClick, index }: AutoPlaySlideProps) {
             <div className="absolute inset-0 flex flex-col justify-center p-8 lg:p-12 max-w-2xl">
                 {/* Subtle Rating */}
                 <div className="flex items-center gap-1.5 mb-3">
-                    <Star className="w-4 h-4 text-[#1DB954] fill-[#1DB954]" />
-                    <span className="text-white font-bold text-sm">{movie.score}</span>
+                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    <span className="text-white font-bold text-sm">{((movie.score || 0) / 2).toFixed(1)}</span>
                     <span className="text-gray-400 text-sm">• {movie.year}</span>
                 </div>
 

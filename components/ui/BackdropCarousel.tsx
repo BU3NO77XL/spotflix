@@ -22,7 +22,7 @@ export default function BackdropCarousel({
 }: BackdropCarouselProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const shouldShowBackdrop = showBackdrop && backdropUrl && !imageError;
+  const shouldShowBackdrop = showBackdrop && Boolean(backdropUrl && backdropUrl !== '') && !imageError;
 
   if (!shouldShowBackdrop) {
     return (
@@ -38,7 +38,7 @@ export default function BackdropCarousel({
       <div className="absolute inset-0 z-0">
         {!imageError && (
           <motion.img
-            src={backdropUrl}
+            src={backdropUrl || undefined}
             alt=""
             className={`w-full h-full object-cover transition-opacity duration-700 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'

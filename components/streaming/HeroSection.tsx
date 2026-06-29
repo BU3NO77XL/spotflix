@@ -168,10 +168,10 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
                     className="absolute inset-0"
                 >
                     <ProgressiveImage
-                        src={currentImageUrl || ''}
+                        src={currentImageUrl || null}
                         alt={movie.title}
                         className="w-full h-full object-cover object-top"
-                        preloaded={preloadedBackdrops.has(currentImageUrl || '')}
+                        preloaded={currentImageUrl ? preloadedBackdrops.has(currentImageUrl) : false}
                     />
                 </motion.div>
             </AnimatePresence>
