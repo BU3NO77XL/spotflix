@@ -300,6 +300,7 @@ export default function Home() {
         featuredMovies={shuffledHeroMovies.length > 0 ? shuffledHeroMovies : movies.filter((m: Movie) => !m.synopsis || m.synopsis.length <= 250).slice(0, 3)}
         onWatch={handleWatch}
         onMoreInfo={handleMoreInfo}
+        top10Ranks={Object.fromEntries(top10Movies.map((m, i) => [m.tmdb_id, i + 1]).filter(([id]) => id != null) as [number, number][])}
       />
 
       {/* Carousels */}

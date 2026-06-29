@@ -1231,6 +1231,7 @@ function WatchContent() {
                                         </svg>
                                     )}
                                 </button>
+                                {/* BOTÃO NÃO GOSTEI DESATIVADO TEMPORARIAMENTE
                                 <button
                                     onClick={handleLikeAction}
                                     className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
@@ -1248,6 +1249,7 @@ function WatchContent() {
                                         </svg>
                                     )}
                                 </button>
+                                */}
                             </div>
 
 
