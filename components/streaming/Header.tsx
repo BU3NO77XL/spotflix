@@ -208,7 +208,7 @@ export default function Header() {
                         </div>
 
                         {/* Right Section */}
-                        <div className="flex items-center gap-5">
+                        <div className="flex items-center gap-2.5 sm:gap-4 md:gap-5">
                             <div className="hidden lg:flex items-center">
                                 <InstallButton />
                             </div>
@@ -218,7 +218,7 @@ export default function Header() {
                                 className="p-1 text-white hover:opacity-80 transition-opacity"
                                 aria-label="Open search"
                             >
-                                <Search className="w-7 h-7" strokeWidth={2.5} />
+                                <Search className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} />
                             </button>
 
                             {/* User Dropdown */}
@@ -285,7 +285,7 @@ export default function Header() {
                                 ) : (
                                     <Link
                                         href="/login"
-                                        className="bg-white text-black font-semibold px-6 py-2 rounded-md text-base hover:bg-white/90 transition-colors"
+                                        className="bg-white text-black font-semibold px-3 py-1.5 sm:px-5 sm:py-2 rounded text-xs sm:text-sm md:text-base hover:bg-white/90 transition-colors whitespace-nowrap"
                                     >
                                         Fazer login
                                     </Link>
@@ -294,11 +294,11 @@ export default function Header() {
 
                             {/* Mobile Menu Button */}
                             <button
-                                className="md:hidden p-2 text-white"
+                                className="md:hidden p-1.5 text-white"
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                             >
-                                {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+                                {mobileMenuOpen ? <X className="w-6 h-6 sm:w-7 sm:h-7" /> : <Menu className="w-6 h-6 sm:w-7 sm:h-7" />}
                             </button>
                         </div>
                     </div>
