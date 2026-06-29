@@ -153,14 +153,16 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 style={{ background: 'linear-gradient(to top, #181818 0%, transparent 100%)' }}
                             />
 
-                            {/* Botão Fechar sem fundo */}
+                            {/* Botão Fechar desativado temporariamente para direcionar o foco aos botões de ação */}
+                            {/* 
                             <button
                                 onClick={onClose}
                                 className="absolute top-3 right-3 z-20 p-1.5 text-white/60 hover:text-white transition-colors duration-200"
                                 aria-label="Fechar"
                             >
                                 <X className="w-5 h-5" strokeWidth={2} />
-                            </button>
+                            </button> 
+                            */}
                         </div>
 
                         {/* ─── CORPO DO MODAL ─── */}
