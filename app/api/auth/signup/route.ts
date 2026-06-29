@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 
+import { createSession } from '@/lib/session';
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { name, email, password } = body;
@@ -27,6 +29,9 @@ export async function POST(request: NextRequest) {
       role: 'client',
     },
   });
+
+  // Generate secure JWT session cookie
+  await createSession(profile.id);
 
   return NextResponse.json({ user: { id: profile.id, name: profile.fullName, email: profile.email } }, { status: 201 });
 }

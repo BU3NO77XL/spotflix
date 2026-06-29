@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
 
+import { createSession } from '@/lib/session';
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { email, password } = body;
@@ -22,6 +24,9 @@ export async function POST(request: NextRequest) {
   if (!isValid) {
     return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
   }
+
+  // Generate secure JWT session cookie
+  await createSession(profile.id);
 
   return NextResponse.json({
     user: {
