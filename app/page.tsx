@@ -304,7 +304,7 @@ export default function Home() {
           />
         )}
 
-        {personalizedMovies.length > 0 && (
+        {userId && personalizedMovies.length > 0 && (
           <Carousel
             title="Para Você"
             movies={personalizedMovies}
