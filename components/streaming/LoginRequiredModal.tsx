@@ -86,13 +86,12 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-                    {/* Overlay — radial-gradient exatamente como o estilo original do MovieModal */}
+                    {/* Overlay — radial-gradient (clique fora desativado) */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        onClick={onClose}
                         className="fixed inset-0"
                         style={{
                             background: 'radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08), transparent 34%), rgba(0,0,0,0.82)'
