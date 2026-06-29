@@ -5,7 +5,9 @@ import { motion } from 'framer-motion';
 import { Play, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import NetflixBadge from '@/components/streaming/NetflixBadge';
+import NewSeasonBadge from '@/components/ui/NewSeasonBadge';
 import { checkIsOnNetflix } from '@/lib/netflixCache';
+import { checkHasNewSeason } from '@/lib/newSeasonCache';
 
 interface MiniCardProps {
   movie: Movie;
@@ -23,6 +25,16 @@ export default function MiniCard({
   accentColor = '#1DB954'
 }: MiniCardProps) {
   const [isOnNetflix, setIsOnNetflix] = useState(false);
+  const [hasNewSeason, setHasNewSeason] = useState(false);
+
+  useEffect(() => {
+    if (!movie.tmdb_id || movie.type !== 'series') return;
+    let cancelled = false;
+    checkHasNewSeason(movie.tmdb_id).then(result => {
+      if (!cancelled) setHasNewSeason(result);
+    });
+    return () => { cancelled = true; };
+  }, [movie.tmdb_id, movie.type]);
 
   useEffect(() => {
     if (!movie.tmdb_id) return;
@@ -49,7 +61,7 @@ export default function MiniCard({
             {/* Poster */}
             <div className="w-16 h-24 shrink-0 relative">
               <img
-                src={movie.poster_url}
+                src={movie.poster_url || undefined}
                 alt={movie.title}
                 className="w-full h-full object-cover"
               />
@@ -65,8 +77,8 @@ export default function MiniCard({
                   <span>{movie.year}</span>
                   {movie.score && (
                     <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                      <span>{movie.score}</span>
+                      <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                      <span>{(movie.score / 2).toFixed(1)}</span>
                     </div>
                   )}
                 </div>
@@ -80,9 +92,9 @@ export default function MiniCard({
       ) : (
         // Portrait Layout
         <div className="space-y-2">
-          <div className="relative aspect-2/3 rounded-lg overflow-hidden bg-[#1f1f1f] transition-transform duration-300">
+          <div className="relative aspect-2/3 rounded-sm sm:rounded-md overflow-hidden bg-[#1f1f1f] transition-transform duration-300">
             <img
-              src={movie.poster_url}
+              src={movie.poster_url || undefined}
               alt={movie.title}
               className="w-full h-full object-cover transition-transform duration-500"
             />
@@ -91,6 +103,13 @@ export default function MiniCard({
             {isOnNetflix && (
               <div className="absolute top-2 left-2 z-10">
                 <NetflixBadge />
+              </div>
+            )}
+
+            {/* New Season Badge */}
+            {hasNewSeason && (
+              <div className="absolute bottom-0 left-0 right-0 flex justify-center z-10">
+                <NewSeasonBadge />
               </div>
             )}
 

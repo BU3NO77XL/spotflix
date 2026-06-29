@@ -11,7 +11,9 @@ import MyListHero from '@/components/streaming/MyListHero';
 import { toast } from 'sonner';
 import MovieModal from '@/components/streaming/MovieModal';
 import NetflixBadge from '@/components/streaming/NetflixBadge';
+import NewSeasonBadge from '@/components/ui/NewSeasonBadge';
 import { checkIsOnNetflix } from '@/lib/netflixCache';
+import { checkHasNewSeason } from '@/lib/newSeasonCache';
 
 export default function MyList() {
     const router = useRouter();
@@ -24,6 +26,7 @@ export default function MyList() {
     const [descIndex, setDescIndex] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [netflixIds, setNetflixIds] = useState<Set<number>>(new Set());
+    const [newSeasonIds, setNewSeasonIds] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         setDescIndex(Math.floor(Math.random() * 5));
@@ -147,6 +150,18 @@ export default function MyList() {
             checkIsOnNetflix(tmdbId, type).then(r => r ? tmdbId : null)
         )).then(results => {
             if (!cancelled) setNetflixIds(new Set(results.filter(Boolean) as number[]));
+        });
+        return () => { cancelled = true; };
+    }, [currentList, activeTab]);
+
+    useEffect(() => {
+        const seriesItems = currentList.filter(m => m.type === 'series').map(m => Number(m.tmdb_id));
+        if (seriesItems.length === 0) return;
+        let cancelled = false;
+        Promise.all(seriesItems.map(tmdbId =>
+            checkHasNewSeason(tmdbId).then(r => r ? tmdbId : null)
+        )).then(results => {
+            if (!cancelled) setNewSeasonIds(new Set(results.filter(Boolean) as number[]));
         });
         return () => { cancelled = true; };
     }, [currentList, activeTab]);
@@ -309,12 +324,10 @@ export default function MyList() {
                                                 </div>
                                             )}
 
-                                            {/* Score Badge */}
-                                            {movie.score && (
-                                                <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/70 backdrop-blur-sm 
-                                    px-2 py-1 rounded-full">
-                                                    <Star className="w-3 h-3 text-[#1DB954] fill-[#1DB954]" />
-                                                    <span className="text-white text-xs font-semibold">{movie.score}</span>
+                                            {/* New Season Badge */}
+                                            {movie.type === 'series' && newSeasonIds.has(Number(movie.tmdb_id)) && (
+                                                <div className="absolute bottom-0 left-0 right-0 flex justify-center z-10">
+                                                    <NewSeasonBadge />
                                                 </div>
                                             )}
 
