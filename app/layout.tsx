@@ -24,12 +24,11 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#121212" },
-    { media: "(prefers-color-scheme: light)", color: "#121212" },
-  ],
+  themeColor: "#121212",
+  colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: "cover",
 };
 
@@ -44,23 +43,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" sizes="any" />
         <link rel="apple-touch-icon" href="/assets/favicon-180.png" sizes="180x180" />
         <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" />
         <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" />
         <link rel="manifest" href="/manifest.json" />
-        {/* Theme color para barra de status/navegação - escuro em todos os casos */}
-        <meta name="theme-color" content="#121212" />
-        <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#121212" media="(prefers-color-scheme: light)" />
-        <meta name="color-scheme" content="dark" />
         <meta name="msapplication-navbutton-color" content="#121212" />
         <meta name="msapplication-TileColor" content="#121212" />
         {/* iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="WEBFLIX" />
         {/* Android - força navbar virtual escura */}
         <meta name="mobile-web-app-capable" content="yes" />
