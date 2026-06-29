@@ -36,7 +36,7 @@ const FALLBACK_BACKDROPS = [
 const BENEFITS = [
     {
         icon: Film,
-        title: 'Milhares de Filmes  e Séries',
+        title: 'Milhares de Filmes e Séries',
         desc: 'Acesso completo ao catálogo ilimitado.',
     },
     {
@@ -113,7 +113,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                         style={{ background: '#181818' }}
                     >
                         {/* ─── HERO BACKDROP ─── */}
-                        <div className="relative h-[190px] w-full overflow-hidden rounded-t-xl">
+                        <div className="relative h-[120px] w-full overflow-hidden rounded-t-xl">
                             {/* Mosaico de imagens dinâmicas */}
                             <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-[2px]">
                                 {gridBackdrops.map((url, i) => (
@@ -170,7 +170,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                         </div>
 
                         {/* ─── CORPO DO MODAL ─── */}
-                        <div className="px-7 pt-1 pb-6 flex flex-col items-center text-center">
+                        <div className="relative z-20 -mt-2 px-7 pb-6 flex flex-col items-center text-center">
                             <motion.h2
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -197,7 +197,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                     color: 'rgba(255,255,255,0.70)',
                                     lineHeight: 1.5,
                                     maxWidth: '260px',
-                                    marginBottom: '20px',
+                                    marginBottom: '16px',
                                 }}
                             >
                                 Faça login na sua conta para ter acesso aos recursos.
