@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Heart, Bookmark, Sparkles, LogIn, ChevronRight } from 'lucide-react';
+import { X, Play, Bookmark, Sparkles, LogIn, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface LoginRequiredModalProps {
@@ -85,38 +85,39 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-                    {/* Backdrop Overlay com desfoque e gradiente radial */}
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+                    {/* Overlay — radial-gradient exatamente como o estilo original do MovieModal */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-md"
+                        className="fixed inset-0"
                         style={{
-                            background: 'radial-gradient(circle at 50% 30%, rgba(229, 9, 20, 0.15), rgba(0, 0, 0, 0.9) 70%)'
+                            background: 'radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08), transparent 34%), rgba(0,0,0,0.82)'
                         }}
                     />
 
-                    {/* Card Principal do Modal */}
+                    {/* Card Principal do Modal — estilo e fundo original #181818 */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative w-full max-w-md bg-[#161616] border border-white/10 rounded-2xl shadow-[0_32px_96px_rgba(0,0,0,0.95)] overflow-hidden z-10"
+                        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                        className="relative w-full max-w-sm rounded-xl shadow-[0_28px_80px_rgba(0,0,0,0.85)] overflow-hidden z-10"
+                        style={{ background: '#181818' }}
                     >
-                        {/* Header Visual com Mosaico de Filmes */}
-                        <div className="relative h-48 w-full overflow-hidden">
-                            {/* Mosaico de Imagens */}
-                            <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-1 scale-105">
+                        {/* ─── HERO BACKDROP ─── */}
+                        <div className="relative h-[190px] w-full overflow-hidden rounded-t-xl">
+                            {/* Mosaico de imagens dinâmicas */}
+                            <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-[2px]">
                                 {gridBackdrops.map((url, i) => (
                                     <div key={url + i} className="relative overflow-hidden bg-[#111]">
                                         <img
                                             src={url}
                                             alt=""
-                                            className={`w-full h-full object-cover transition-all duration-1000 transform hover:scale-110 ${loadedImages[i] ? 'opacity-80' : 'opacity-0'}`}
+                                            className={`w-full h-full object-cover transition-opacity duration-700 ${loadedImages[i] ? 'opacity-100' : 'opacity-0'}`}
                                             onLoad={() => setLoadedImages(prev => ({ ...prev, [i]: true }))}
                                             loading="eager"
                                         />
@@ -124,110 +125,129 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                 ))}
                             </div>
 
-                            {/* Overlay de Gradiente Escuro e Vermelho Netflix */}
+                            {/* Gradientes idênticos ao estilo original do MovieModal */}
                             <div
                                 className="absolute inset-0"
                                 style={{
-                                    background: `
-                                        linear-gradient(180deg, rgba(22,22,22,0.2) 0%, rgba(22,22,22,0.85) 70%, #161616 100%),
-                                        radial-gradient(circle at 50% 0%, rgba(229, 9, 20, 0.4), transparent 70%)
-                                    `
+                                    backgroundImage: `
+                                        linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.12) 30%, rgba(24,24,24,0.97) 100%),
+                                        linear-gradient(115deg, rgba(13,13,13,0.10) 18%, rgba(13,13,13,0.40) 58%, rgba(13,13,13,0.75) 100%),
+                                        radial-gradient(circle at 18% 24%, rgba(255,235,220,0.22), transparent 28%)
+                                    `,
                                 }}
                             />
 
-                            {/* Badge central flutuante com brilho */}
-                            <div className="absolute inset-0 flex items-center justify-center pb-2">
-                                <motion.div
-                                    initial={{ scale: 0, rotate: -10 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ delay: 0.15, type: 'spring', stiffness: 260, damping: 20 }}
-                                    className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#E50914] to-[#B80710] text-white shadow-[0_0_30px_rgba(229,9,20,0.6)] border border-white/20"
-                                >
-                                    <LogIn className="w-8 h-8 stroke-[2.5]" />
-                                </motion.div>
-                            </div>
+                            {/* Brilho âmbar discreto idêntico ao original */}
+                            <motion.div
+                                className="absolute inset-0 pointer-events-none"
+                                animate={{ opacity: [0.18, 0.35, 0.18] }}
+                                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+                                style={{
+                                    background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,210,150,0.32) 0%, transparent 70%)',
+                                }}
+                            />
+
+                            {/* Fade inferior integrando com o fundo #181818 */}
+                            <div
+                                className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
+                                style={{ background: 'linear-gradient(to top, #181818 0%, transparent 100%)' }}
+                            />
 
                             {/* Botão Fechar */}
                             <button
                                 onClick={onClose}
-                                className="absolute top-3.5 right-3.5 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 text-white/70 hover:text-white hover:bg-black/90 border border-white/10 transition-all duration-200"
+                                className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white/70 hover:text-white hover:bg-black/70 transition-all duration-200"
                                 aria-label="Fechar"
                             >
-                                <X className="w-5 h-5" strokeWidth={2} />
+                                <X className="w-4 h-4" strokeWidth={2.5} />
                             </button>
                         </div>
 
-                        {/* Conteúdo do Modal */}
-                        <div className="px-6 sm:px-8 pt-2 pb-8 flex flex-col items-center text-center">
+                        {/* ─── CORPO DO MODAL ─── */}
+                        <div className="px-7 pt-1 pb-8 flex flex-col items-center text-center">
                             <motion.h2
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1, duration: 0.3 }}
-                                className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2"
-                                style={{ fontFamily: '"Netflix Sans"' }}
+                                transition={{ delay: 0.12, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                                className="text-white mb-2 leading-tight"
+                                style={{
+                                    fontSize: '22px',
+                                    fontWeight: 900,
+                                    fontFamily: '"Netflix Sans"',
+                                    letterSpacing: '-0.02em',
+                                }}
                             >
-                                Entre para Continuar
+                                Entre para continuar
                             </motion.h2>
 
                             <motion.p
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.15, duration: 0.3 }}
-                                className="text-sm text-gray-400 mb-6 max-w-xs leading-relaxed"
-                                style={{ fontFamily: '"Netflix Sans"' }}
+                                transition={{ delay: 0.18, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                                style={{
+                                    fontSize: '14px',
+                                    fontFamily: '"Netflix Sans"',
+                                    fontWeight: 400,
+                                    color: 'rgba(255,255,255,0.70)',
+                                    lineHeight: 1.5,
+                                    maxWidth: '260px',
+                                    marginBottom: '20px',
+                                }}
                             >
-                                Crie sua conta ou faça login para ter acesso a todos os recursos exclusivos da plataforma.
+                                Faça login na sua conta para liberar todos os recursos da plataforma.
                             </motion.p>
 
-                            {/* Lista de Benefícios */}
+                            {/* Lista de Benefícios — com estilo neutro e elegante */}
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2, duration: 0.3 }}
-                                className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-3.5 mb-7 text-left space-y-3"
+                                transition={{ delay: 0.22, duration: 0.38 }}
+                                className="w-full bg-white/[0.04] border border-white/10 rounded-lg p-3 mb-6 text-left space-y-2.5"
                             >
                                 {BENEFITS.map((item, index) => {
                                     const Icon = item.icon;
                                     return (
                                         <div key={index} className="flex items-start gap-3">
-                                            <div className="p-1.5 rounded-lg bg-[#E50914]/15 text-[#E50914] shrink-0 mt-0.5">
-                                                <Icon className="w-4 h-4 stroke-[2.5]" />
+                                            <div className="p-1.5 rounded-md bg-white/10 text-white shrink-0 mt-0.5">
+                                                <Icon className="w-3.5 h-3.5" strokeWidth={2.5} />
                                             </div>
                                             <div>
-                                                <h4 className="text-xs font-bold text-white leading-snug">{item.title}</h4>
-                                                <p className="text-[11px] text-gray-400 leading-tight">{item.desc}</p>
+                                                <h4 className="text-xs font-bold text-white leading-tight" style={{ fontFamily: '"Netflix Sans"' }}>{item.title}</h4>
+                                                <p className="text-[11px] text-white/60 leading-tight mt-0.5" style={{ fontFamily: '"Netflix Sans"' }}>{item.desc}</p>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </motion.div>
 
-                            {/* Botões de Ação */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
+                            {/* Botão Fazer Login Original — Fundo Branco, Texto Preto */}
+                            <motion.button
+                                initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.25, duration: 0.3 }}
-                                className="w-full space-y-3"
+                                transition={{ delay: 0.28, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                                onClick={handleLogin}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                style={{
+                                    width: '100%',
+                                    background: 'white',
+                                    color: 'black',
+                                    fontWeight: 700,
+                                    fontSize: '15px',
+                                    fontFamily: '"Netflix Sans"',
+                                    letterSpacing: '0.01em',
+                                    borderRadius: '8px',
+                                    padding: '12px 24px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                                    transition: 'background 0.2s',
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#e6e6e6')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'white')}
                             >
-                                <motion.button
-                                    onClick={handleLogin}
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#E50914] via-[#F50723] to-[#E50914] text-white font-bold text-base shadow-[0_4px_25px_rgba(229,9,20,0.45)] hover:shadow-[0_6px_30px_rgba(229,9,20,0.6)] transition-all duration-200 flex items-center justify-center gap-2 group"
-                                    style={{ fontFamily: '"Netflix Sans"' }}
-                                >
-                                    <span>Fazer login ou Cadastrar</span>
-                                    <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                                </motion.button>
-
-                                <button
-                                    onClick={onClose}
-                                    className="w-full py-2.5 px-4 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
-                                    style={{ fontFamily: '"Netflix Sans"' }}
-                                >
-                                    Continuar apenas navegando
-                                </button>
-                            </motion.div>
+                                Fazer login
+                            </motion.button>
                         </div>
                     </motion.div>
                 </div>
