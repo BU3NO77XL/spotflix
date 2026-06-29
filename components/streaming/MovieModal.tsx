@@ -6,6 +6,7 @@ import { X, Play, Plus, Volume2, VolumeX, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { calcMatch } from '@/lib/match';
+import { movieModalContent, overlayFade, imageReveal, easeOutQuint } from '@/lib/motion';
 import { TMDBService } from './TMDBIntegration';
 import LoginRequiredModal from './LoginRequiredModal';
 
@@ -112,7 +113,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const matchPercentage = useMemo(() => {
         if (!matchReady) return null;
         return calcMatch(
-            details!.score,
+            details?.score as number,
             detailGenres.length > 0 ? detailGenres : (movie?.genre || []),
             currentRating,
             favoriteGenres,
@@ -223,43 +224,51 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     return (
         <ModalErrorBoundary>
         <>
+        <AnimatePresence>
         {isOpen && (
-            <div className="fixed inset-0 z-50"
-            >
+            <div className="fixed inset-0 z-50">
                     {/* Overlay with Radial Gradient */}
-                    <div
+                    <motion.div
+                        key="overlay"
                         onClick={onClose}
                         className="fixed inset-0 bg-[#000]/78"
                         style={{
                             background: 'radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.08), transparent 34%), rgba(0, 0, 0, 0.78)'
                         }}
+                        {...overlayFade}
                     />
 
                     {/* Modal Content */}
-                    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 py-8 md:p-8 overflow-y-auto scrollbar-hide"
+                    <motion.div
+                        key="modal-container"
+                        className="fixed inset-0 z-50 flex items-start justify-center px-4 py-8 md:p-8 overflow-y-auto scrollbar-hide"
+                        {...movieModalContent}
                     >
                         <div className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
                         >
                         <div className="relative h-[478px] w-full overflow-hidden">
                             {/* Backdrop Image Layer + Gradients */}
-                            <div 
-                                className="absolute inset-0"
-                                style={{
-                                    backgroundImage: bgUrl ? `
-                                        linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.12) 30%, rgba(24, 24, 24, 0.92) 100%),
-                                        linear-gradient(115deg, rgba(13, 13, 13, 0.15) 18%, rgba(13, 13, 13, 0.86) 58%, rgba(13, 13, 13, 1) 100%),
-                                        radial-gradient(circle at 18% 24%, rgba(255, 235, 220, 0.22), transparent 28%),
-                                        linear-gradient(135deg, #333 0%, #1a1a1a 100%),
-                                        url("${bgUrl}")
-                                    ` : 'none',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center top',
-                                    backgroundRepeat: 'no-repeat',
-                                }}
-                            />
-                            
+                            {bgUrl && (
+                                <motion.div
+                                    className="absolute inset-0"
+                                    style={{
+                                        backgroundImage: `
+                                            linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.12) 30%, rgba(24, 24, 24, 0.92) 100%),
+                                            linear-gradient(115deg, rgba(13, 13, 13, 0.15) 18%, rgba(13, 13, 13, 0.86) 58%, rgba(13, 13, 13, 1) 100%),
+                                            radial-gradient(circle at 18% 24%, rgba(255, 235, 220, 0.22), transparent 28%),
+                                            linear-gradient(135deg, #333 0%, #1a1a1a 100%),
+                                            url("${bgUrl}")
+                                        `,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center top',
+                                        backgroundRepeat: 'no-repeat',
+                                    }}
+                                    {...imageReveal}
+                                />
+                            )}
+
                             {/* Separate Layer for Screen Blending */}
-                            <div 
+                            <motion.div
                                 className="absolute inset-0 mix-blend-screen opacity-[0.4]"
                                 style={{
                                     backgroundImage: bgUrl ? `
@@ -269,6 +278,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center top',
                                 }}
+                                {...imageReveal}
                             />
 
                             {/* Bottom Fade */}
@@ -283,13 +293,22 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             </button>
 
                             {/* Title Shadow Layer — só renderiza quando não está carregando e não há logo */}
-                            {!logoLoading && !logoUrl && (
-                                <div className="absolute left-6 md:left-12 bottom-[108px] z-10 select-none pointer-events-none opacity-[0.34] blur-[8px] transform-gpu">
-                                    <h1 className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-black">
-                                        {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
-                                    </h1>
-                                </div>
-                            )}
+                            <AnimatePresence>
+                                {!logoLoading && !logoUrl && (
+                                    <motion.div
+                                        key="title-shadow"
+                                        initial={{ opacity: 0, y: 14 }}
+                                        animate={{ opacity: 0.34, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.45, ease: easeOutQuint }}
+                                        className="absolute left-6 md:left-12 bottom-[108px] z-10 select-none pointer-events-none blur-[8px] transform-gpu"
+                                    >
+                                        <h1 className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-black">
+                                            {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
+                                        </h1>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
                             {/* Main Title Area */}
                             <div className="absolute left-6 md:left-12 bottom-[108px] z-20">
@@ -311,9 +330,9 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                 src={`https://image.tmdb.org/t/p/original${logoUrl}`}
                                                 alt={movie.title}
                                                 className="h-20 md:h-32 object-contain filter drop-shadow-2xl max-w-[80vw] md:max-w-none"
-                                                initial={{ opacity: 0, y: 14, scale: 0.96 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                                                initial={{ opacity: 0, y: 14 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.45, ease: easeOutQuint }}
                                             />
                                         ) : (
                                             <motion.h1
@@ -422,29 +441,45 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
                         {/* Body Section */}
                         <div className="px-6 md:px-12 pb-12 pt-0 bg-[#181818]">
-                            <div className={cn("animate-pulse space-y-6 py-6", details ? "hidden" : "")}>
-                                <div className="flex gap-3">
-                                    <div className="h-4 w-20 bg-[#303030] rounded" />
-                                    <div className="h-4 w-12 bg-[#303030] rounded" />
-                                    <div className="h-4 w-24 bg-[#303030] rounded" />
-                                </div>
-                                <div className="h-4 w-full bg-[#303030] rounded" />
-                                <div className="h-4 w-3/4 bg-[#303030] rounded" />
-                                <div className="flex gap-6">
-                                    <div className="space-y-2 flex-1">
-                                        <div className="h-4 w-16 bg-[#303030] rounded" />
-                                        <div className="h-4 w-32 bg-[#303030] rounded" />
-                                        <div className="h-4 w-24 bg-[#303030] rounded" />
-                                    </div>
-                                    <div className="space-y-2 w-[200px] hidden md:block">
-                                        <div className="h-4 w-12 bg-[#303030] rounded" />
-                                        <div className="h-4 w-40 bg-[#303030] rounded" />
-                                        <div className="h-4 w-12 bg-[#303030] rounded" />
-                                        <div className="h-4 w-40 bg-[#303030] rounded" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className={cn(!details ? "hidden" : "")}>
+                            <AnimatePresence mode="wait">
+                                {!details ? (
+                                    <motion.div
+                                        key="body-skeleton"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.3, ease: easeOutQuint }}
+                                        className="animate-pulse space-y-6 py-6"
+                                    >
+                                        <div className="flex gap-3">
+                                            <div className="h-4 w-20 bg-[#303030] rounded" />
+                                            <div className="h-4 w-12 bg-[#303030] rounded" />
+                                            <div className="h-4 w-24 bg-[#303030] rounded" />
+                                        </div>
+                                        <div className="h-4 w-full bg-[#303030] rounded" />
+                                        <div className="h-4 w-3/4 bg-[#303030] rounded" />
+                                        <div className="flex gap-6">
+                                            <div className="space-y-2 flex-1">
+                                                <div className="h-4 w-16 bg-[#303030] rounded" />
+                                                <div className="h-4 w-32 bg-[#303030] rounded" />
+                                                <div className="h-4 w-24 bg-[#303030] rounded" />
+                                            </div>
+                                            <div className="space-y-2 w-[200px] hidden md:block">
+                                                <div className="h-4 w-12 bg-[#303030] rounded" />
+                                                <div className="h-4 w-40 bg-[#303030] rounded" />
+                                                <div className="h-4 w-12 bg-[#303030] rounded" />
+                                                <div className="h-4 w-40 bg-[#303030] rounded" />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="body-content"
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.4, ease: easeOutQuint }}
+                                    >
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
                                 {/* Left Column: Summary */}
                                 <div className="space-y-5">
@@ -592,12 +627,15 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </div>
                                 </div>
                             </div>
-                            </div>
+                                </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
-            )}
+        )}
+        </AnimatePresence>
         <LoginRequiredModal
             isOpen={showLoginModal}
             onClose={() => setShowLoginModal(false)}
