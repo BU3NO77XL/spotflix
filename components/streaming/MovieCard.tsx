@@ -96,6 +96,10 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
+                                    if (!localStorage.getItem('userBasicInfo')) {
+                                        window.dispatchEvent(new Event('requireLogin'));
+                                        return;
+                                    }
                                     const params = new URLSearchParams({ id: String(movie.tmdb_id), type: movie.type, ref: String(movie.tmdb_id) });
                                     if (movie.season_number) params.set('season', String(movie.season_number));
                                     if (movie.episode_number) params.set('episode', String(movie.episode_number));

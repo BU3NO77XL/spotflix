@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MyListHero from '@/components/streaming/MyListHero';
 import { toast } from 'sonner';
 import MovieModal from '@/components/streaming/MovieModal';
+import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 import NetflixBadge from '@/components/streaming/NetflixBadge';
 import NewSeasonBadge from '@/components/ui/NewSeasonBadge';
 import { checkIsOnNetflix } from '@/lib/netflixCache';
@@ -20,6 +21,7 @@ export default function MyList() {
     const queryClient = useQueryClient();
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'series' | 'movies'>('movies');
     const [userId, setUserId] = useState<number | null>(null);
     const [userName, setUserName] = useState('');
@@ -38,10 +40,20 @@ export default function MyList() {
         if (stored) {
             try {
                 const data = JSON.parse(stored);
-                setUserId(data.id);
-                setUserName(data.name || '');
+                if (data.id) {
+                    setUserId(data.id);
+                    setUserName(data.name || '');
+                    return;
+                }
             } catch { /* ignore */ }
         }
+        setLoginModalOpen(true);
+    }, []);
+
+    useEffect(() => {
+        const handleRequireLogin = () => setLoginModalOpen(true);
+        window.addEventListener('requireLogin', handleRequireLogin);
+        return () => window.removeEventListener('requireLogin', handleRequireLogin);
     }, []);
 
     useEffect(() => {
@@ -167,6 +179,10 @@ export default function MyList() {
     }, [currentList, activeTab]);
 
     const handleWatch = (movie: Movie) => {
+        if (!userId) {
+            setLoginModalOpen(true);
+            return;
+        }
         try {
             const url = `/watch?id=${movie.tmdb_id}&type=${movie.type}&ref=${movie.tmdb_id}`;
             console.log('[MY-LIST] handleWatch navigating to', url, 'movie:', { id: movie.id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type });
@@ -481,6 +497,17 @@ export default function MyList() {
                 isInWatchlist={selectedMovie?.tmdb_id ? watchlistTmdbIds.has(Number(selectedMovie.tmdb_id)) : false}
                 onRemoveFromList={(movie) => {
                     if (movie.tmdb_id && movie.type) removeFromWatchlistMutation.mutate({ tmdbId: Number(movie.tmdb_id), mediaType: movie.type });
+                }}
+            />
+
+            {/* Login Modal */}
+            <LoginRequiredModal
+                isOpen={loginModalOpen}
+                onClose={() => {
+                    setLoginModalOpen(false);
+                    if (!userId) {
+                        router.push('/');
+                    }
                 }}
             />
         </div>

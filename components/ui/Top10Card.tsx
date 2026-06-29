@@ -91,6 +91,10 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (!localStorage.getItem('userBasicInfo')) {
+                        window.dispatchEvent(new Event('requireLogin'));
+                        return;
+                    }
                     router.push(`/watch?id=${movie.tmdb_id}&type=${movie.type}&ref=${movie.tmdb_id}&rank=${rank}`);
                   }}
                   className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-gray-200 text-black flex items-center justify-center transition-all hover:scale-110 shadow-lg"

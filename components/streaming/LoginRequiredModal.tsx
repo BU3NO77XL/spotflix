@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Bookmark, Sparkles } from 'lucide-react';
+import { X, Play, Bookmark, Sparkles, Film } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface LoginRequiredModalProps {
@@ -35,6 +35,16 @@ const FALLBACK_BACKDROPS = [
 
 const BENEFITS = [
     {
+        icon: Film,
+        title: 'Milhares de Filmes  e Séries',
+        desc: 'Acesso completo ao catálogo ilimitado.',
+    },
+    {
+        icon: Sparkles,
+        title: 'Recomendações exclusivas',
+        desc: 'Descubra conteúdos baseados no seu gosto.',
+    },
+    {
         icon: Play,
         title: 'Continue de onde parou',
         desc: 'Sincronize seu histórico e episódios assistidos.',
@@ -43,11 +53,6 @@ const BENEFITS = [
         icon: Bookmark,
         title: 'Sua lista personalizada',
         desc: 'Salve filmes e séries favoritos para ver depois.',
-    },
-    {
-        icon: Sparkles,
-        title: 'Recomendações exclusivas',
-        desc: 'Descubra conteúdos baseados no seu gosto.',
     },
 ];
 
@@ -195,7 +200,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
                                     marginBottom: '20px',
                                 }}
                             >
-                                Faça login na sua conta para liberar todos os recursos da plataforma.
+                                Faça login na sua conta para ter acesso aos recursos.
                             </motion.p>
 
                             {/* Lista de Benefícios */}

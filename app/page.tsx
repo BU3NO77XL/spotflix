@@ -14,6 +14,7 @@ import ThematicCarousel from '@/components/streaming/ThematicCarousel';
 import MiniCarousel from '@/components/streaming/MiniCarousels';
 import AutoPlaySlider from '@/components/streaming/AutoPlaySlider';
 import MovieModal from '@/components/streaming/MovieModal';
+import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import { GENRE_NAME_TO_TMDB_ID } from '@/lib/genre-map';
 import { toast } from 'sonner';
@@ -34,6 +35,7 @@ export default function Home() {
   const queryClient = useQueryClient();
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [continueWatching, setContinueWatching] = useState<Movie[]>([]);
 
   const [tmdbLoading, setTmdbLoading] = useState(false);
@@ -72,6 +74,12 @@ export default function Home() {
           .catch(() => {});
       }
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    const handleRequireLogin = () => setLoginModalOpen(true);
+    window.addEventListener('requireLogin', handleRequireLogin);
+    return () => window.removeEventListener('requireLogin', handleRequireLogin);
   }, []);
 
   const { data: movies = [], isLoading } = useQuery({
@@ -349,6 +357,10 @@ export default function Home() {
   const personalizedMovies = movies.filter((m: Movie) => m.category === 'personalized');
 
   const handleWatch = (movie: Movie) => {
+    if (!userId) {
+      setLoginModalOpen(true);
+      return;
+    }
     const params = new URLSearchParams({ id: String(movie.id) });
     if (movie.rank) params.set('rank', String(movie.rank));
     if (movie.season_number) params.set('season', String(movie.season_number));
@@ -500,6 +512,12 @@ export default function Home() {
         onAddToList={handleAddToList}
         isInWatchlist={selectedMovieInList}
         onRemoveFromList={handleRemoveFromList}
+      />
+
+      {/* Login Modal */}
+      <LoginRequiredModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
       />
     </div>
   );
