@@ -1242,7 +1242,11 @@ function WatchContent() {
 
                         {/* Movie/Series Info */}
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-base mt-1">
-                            {watchMatch != null ? <span className="text-[#46d369] font-bold text-base sm:text-base">{watchMatch}% Match</span> : null}
+                            {watchMatch != null
+                                ? <span className="text-[#46d369] font-bold text-base sm:text-base">{watchMatch}% Match</span>
+                                : movie?.score != null
+                                ? <span className="text-[#46d369] font-bold text-base sm:text-base">{Math.round(Number(movie.score) * 10)}% Match</span>
+                                : null}
                             <span className="text-white font-bold text-base sm:text-base">{displayYear}</span>
 
                             {/* Age Rating Badge - Estilo Netflix */}
