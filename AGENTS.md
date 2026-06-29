@@ -44,6 +44,7 @@ Corrigir visuais, skeletons e filtros inconsistentes na home/página Watch; adic
 - Atualizados todos os fontFamily inline em LoginRequiredModal, MovieModal, HeroSection, WatchClient, Top10Card.
 - Removidos TODOS os fallbacks (Helvetica Neue, Arial, sans-serif) — só "Netflix Sans".
 - 3 commits em português: badge Netflix, fonte Netflix Sans, remoção de fallbacks.
+- Configurado CI/CD Pipeline via GitHub Actions (.github/workflows/ci.yml) com 4 estagios: Auditoria de Seguranca, Linter/Formato, Testes Unitarios (Vitest) + Typecheck, e Verificacao de Build de Producao antes do deploy na Vercel.
 - Reorganizadas todas as tabelas do Prisma schema com sequência lógica limpa (IDs/FKs -> Conteúdo/Atributos -> Rastreamento -> Timestamps -> Relacionamentos) e comentários em português.
 - Aplicado db push no dev.db.
 - API /api/watch-history aceita seasonNumber/episodeNumber/totalSeasons/totalEpisodes (POST, DELETE, GET).
