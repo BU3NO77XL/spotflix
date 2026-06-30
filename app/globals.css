@@ -57,7 +57,6 @@
   --input: 0 0% 15%;
   --ring: 142 70% 45%;
   --radius: 0.5rem;
-  color-scheme: dark;
 }
 
 @theme inline {
