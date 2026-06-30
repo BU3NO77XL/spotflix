@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.9.0",
-  "pnpm": {
-    "onlyBuiltDependencies": ["@prisma/engines", "better-sqlite3", "esbuild", "prisma", "sharp", "unrs-resolver"]
-  },
   "engines": {
     "node": ">=18.17",
     "npm": ">=9"
