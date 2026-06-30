@@ -111,16 +111,26 @@ export default function Home() {
     queryFn: () => base44.entities.Movie.list(),
   });
 
-  // Fetch TMDB data progressively on component mount if database is empty or genres are missing
+  // Fetch TMDB data progressively on component mount
   useEffect(() => {
     const loadTMDBData = async () => {
       if (tmdbDataLoaded) return;
+
+      const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+      const lastRefresh = parseInt(localStorage.getItem('lastCarouselRefresh') || '0');
+      const needsRefresh = movies.length > 0 && (Date.now() - lastRefresh) > THREE_DAYS;
       const needsGenreRefresh = movies.length > 0 && movies.some((m: Movie) => !m.genre || m.genre.length === 0);
-      if ((movies.length === 0 || needsGenreRefresh) && !isLoading) {
+
+      if ((movies.length === 0 || needsGenreRefresh || needsRefresh) && !isLoading) {
         setTmdbLoading(true);
 
-        // Se for refresh, limpa os filmes antigos primeiro para evitar duplicatas
-        if (needsGenreRefresh) {
+        // Se for refresh (3 dias), limpa tudo exceto personalized e atualiza timestamp
+        if (needsRefresh) {
+          const allMovies = await base44.entities.Movie.list();
+          const kept = allMovies.filter((m: Movie) => m.category === 'personalized');
+          localStorage.setItem('webflix_movies', JSON.stringify(kept));
+          localStorage.setItem('lastCarouselRefresh', String(Date.now()));
+        } else if (needsGenreRefresh) {
           const allMovies = await base44.entities.Movie.list();
           const kept = allMovies.filter((m: Movie) => m.category === 'personalized');
           localStorage.setItem('webflix_movies', JSON.stringify(kept));
@@ -144,16 +154,27 @@ export default function Home() {
 
           setTimeout(async () => {
             try {
-              const [upcoming, top10, recommended, action, family, scifi] = await Promise.all([
+              const [upcoming, top10, recommended, action, family, scifi, comedy, romance, horror, animation, popularSeries, topRatedSeries] = await Promise.all([
                 TMDBService.fetchUpcoming(),
                 TMDBService.fetchTop10(),
                 TMDBService.fetchRecommended(),
                 TMDBService.fetchActionMovies(),
                 TMDBService.fetchFamilyMovies(),
-                TMDBService.fetchSciFiMovies()
+                TMDBService.fetchSciFiMovies(),
+                TMDBService.fetchComedyMovies(),
+                TMDBService.fetchRomanceMovies(),
+                TMDBService.fetchHorrorMovies(),
+                TMDBService.fetchAnimationMovies(),
+                TMDBService.fetchPopularSeries(),
+                TMDBService.fetchTopRatedSeries()
               ]);
 
-              const additionalMovies = [...upcoming, ...top10, ...recommended, ...action, ...family, ...scifi];
+              const additionalMovies = [
+                ...upcoming, ...top10, ...recommended,
+                ...action, ...family, ...scifi,
+                ...comedy, ...romance, ...horror, ...animation,
+                ...popularSeries, ...topRatedSeries
+              ];
 
               if (additionalMovies.length > 0) {
                 await base44.entities.Movie.bulkCreate(additionalMovies);
@@ -379,6 +400,12 @@ export default function Home() {
   const actionMovies = movies.filter((m: Movie) => m.category === 'action');
   const familyMovies = movies.filter((m: Movie) => m.category === 'family');
   const sciFiMovies = movies.filter((m: Movie) => m.category === 'scifi');
+  const comedyMovies = movies.filter((m: Movie) => m.category === 'comedy');
+  const romanceMovies = movies.filter((m: Movie) => m.category === 'romance');
+  const horrorMovies = movies.filter((m: Movie) => m.category === 'horror');
+  const animationMovies = movies.filter((m: Movie) => m.category === 'animation');
+  const seriesPopularMovies = movies.filter((m: Movie) => m.category === 'series_popular');
+  const seriesTopRatedMovies = movies.filter((m: Movie) => m.category === 'series_top_rated');
   const personalizedMovies = movies.filter((m: Movie) => m.category === 'personalized');
 
   const handleWatch = (movie: Movie) => {
@@ -483,10 +510,66 @@ export default function Home() {
           />
         )}*/}
 
+        {seriesPopularMovies.length > 0 && (
+          <Carousel
+            title="Séries Populares"
+            movies={seriesPopularMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {seriesTopRatedMovies.length > 0 && (
+          <Carousel
+            title="Melhores Séries"
+            movies={seriesTopRatedMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {comedyMovies.length > 0 && (
+          <Carousel
+            title="Comédia"
+            movies={comedyMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {romanceMovies.length > 0 && (
+          <Carousel
+            title="Romance"
+            movies={romanceMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {topRatedMovies.length > 0 && (
+          <Carousel
+            title="Mais Bem Avaliados"
+            movies={topRatedMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
         {familyMovies.length > 0 && (
           <Carousel
             title="Família"
             movies={familyMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {horrorMovies.length > 0 && (
+          <Carousel
+            title="Terror"
+            movies={horrorMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
+        {animationMovies.length > 0 && (
+          <Carousel
+            title="Animação"
+            movies={animationMovies}
             onMovieClick={handleMoreInfo}
           />
         )}
@@ -499,6 +582,14 @@ export default function Home() {
           />
         )}
 
+        {actionMovies.length > 0 && (
+          <Carousel
+            title="Ação"
+            movies={actionMovies}
+            onMovieClick={handleMoreInfo}
+          />
+        )}
+
         {recommendedMovies.length > 0 && (
           <Carousel
             title="Recomendados"
@@ -506,14 +597,6 @@ export default function Home() {
             onMovieClick={handleMoreInfo}
           />
         )}
-
-        {/* {topRatedMovies.length > 0 && (
-          <AutoPlaySlider
-            title="Melhores Avaliados"
-            movies={topRatedMovies}
-            onMovieClick={handleMoreInfo}
-          />
-        )} */}
 
         {/* Show all movies if no categories */}
         {trendingMovies.length === 0 && topRatedMovies.length === 0 && movies.length > 0 && (

@@ -27,6 +27,15 @@ function tmdbUrl(path: string, extraParams: Record<string, string> = {}): string
 }
 
 export const TMDBService = {
+    // Retorna pagina rotativa (1-5) para carrosséis, mudando a cada 3 dias
+    getCarouselPage(): number {
+        const EPOCH = new Date('2025-01-01').getTime();
+        const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+        const elapsed = Date.now() - EPOCH;
+        const period = Math.floor(elapsed / THREE_DAYS);
+        return (period % 5) + 1;
+    },
+
     // Search movies and TV shows
     async search(query: string): Promise<Omit<Movie, 'id'>[]> {
         if (!query.trim()) return [];
@@ -62,7 +71,7 @@ export const TMDBService = {
             );
             if (!response.ok) { console.warn(`Error fetching trending content: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 12) || [], 'trending');
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'trending');
         } catch (error) { console.error('Error fetching trending:', error); return []; }
     },
 
@@ -75,100 +84,238 @@ export const TMDBService = {
             );
             if (!response.ok) { console.warn(`Error fetching daily trending content: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 8) || [], 'trending_today');
+            return this.transformTMDBData(data.results?.slice(0, 20) || [], 'trending_today');
         } catch (error) { console.error('Error fetching daily trending:', error); return []; }
     },
 
     // Fetch top rated movies
     async fetchTopRatedMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(tmdbUrl('/movie/top_rated', { page: '1', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            const page = String(this.getCarouselPage());
+            const response = await fetch(tmdbUrl('/movie/top_rated', { page, language: 'pt-BR' }), { next: { revalidate: 3600 } });
             if (!response.ok) { console.warn(`Error fetching top rated movies: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 12) || [], 'top_rated', 'movie');
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'top_rated', 'movie');
         } catch (error) { console.error('Error fetching top rated movies:', error); return []; }
     },
 
     // Fetch upcoming movies (coming soon to theaters)
     async fetchUpcoming(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(tmdbUrl('/movie/upcoming', { page: '1', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            const page = String(this.getCarouselPage());
+            const response = await fetch(tmdbUrl('/movie/upcoming', { page, language: 'pt-BR' }), { next: { revalidate: 3600 } });
             if (!response.ok) { console.warn(`Error fetching upcoming movies: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 12) || [], 'coming_soon', 'movie');
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'coming_soon', 'movie');
         } catch (error) { console.error('Error fetching upcoming:', error); return []; }
     },
 
-    // Fetch popular for Top 10
+    // Fetch top 10 from trending/all/week (conteudo mais variado)
     async fetchTop10(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(tmdbUrl('/movie/popular', { page: '1', language: 'pt-BR' }), { next: { revalidate: 3600 } });
-            if (!response.ok) { console.warn(`Error fetching top 10 movies: ${response.status}`); return []; }
+            const response = await fetch(
+                tmdbUrl('/trending/all/week', { language: 'pt-BR' }),
+                { next: { revalidate: 3600 } }
+            );
+            if (!response.ok) { console.warn(`Error fetching top 10: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 10) || [], 'top_10', 'movie');
+            return this.transformTMDBData(data.results?.slice(0, 20) || [], 'top_10');
         } catch (error) { console.error('Error fetching top 10:', error); return []; }
     },
 
     // Fetch recommended content
     async fetchRecommended(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(tmdbUrl('/movie/popular', { page: '2', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            const page = String(this.getCarouselPage());
+            const response = await fetch(tmdbUrl('/movie/popular', { page, language: 'pt-BR' }), { next: { revalidate: 3600 } });
             if (!response.ok) { console.warn(`Error fetching recommended movies: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 12) || [], 'recommended');
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'recommended');
         } catch (error) { console.error('Error fetching recommended:', error); return []; }
     },
 
-    // Fetch action movies
+    // Fetch action movies (qualidade: votos >= 200, nota >= 6)
     async fetchActionMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(tmdbUrl('/discover/movie', { with_genres: '28', sort_by: 'popularity.desc', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            const response = await fetch(tmdbUrl('/discover/movie', {
+                with_genres: '28',
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                'vote_average.gte': '6',
+                language: 'pt-BR'
+            }), { next: { revalidate: 3600 } });
             if (!response.ok) { console.warn(`Error fetching action movies: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 12) || [], 'action', 'movie');
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'action', 'movie');
         } catch (error) { console.error('Error fetching action:', error); return []; }
     },
 
     // Fetch family movies
     async fetchFamilyMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(tmdbUrl('/discover/movie', { with_genres: '10751', sort_by: 'popularity.desc', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            const response = await fetch(tmdbUrl('/discover/movie', {
+                with_genres: '10751',
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                'vote_average.gte': '6',
+                language: 'pt-BR'
+            }), { next: { revalidate: 3600 } });
             if (!response.ok) { console.warn(`Error fetching family movies: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 12) || [], 'family', 'movie');
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'family', 'movie');
         } catch (error) { console.error('Error fetching family:', error); return []; }
     },
 
     // Fetch sci-fi movies
     async fetchSciFiMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const response = await fetch(tmdbUrl('/discover/movie', { with_genres: '878', sort_by: 'popularity.desc', language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            const response = await fetch(tmdbUrl('/discover/movie', {
+                with_genres: '878',
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                'vote_average.gte': '6',
+                language: 'pt-BR'
+            }), { next: { revalidate: 3600 } });
             if (!response.ok) { console.warn(`Error fetching sci-fi movies: ${response.status}`); return []; }
             const data = await response.json();
-            return this.transformTMDBData(data.results?.slice(0, 12) || [], 'scifi', 'movie');
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'scifi', 'movie');
         } catch (error) { console.error('Error fetching sci-fi:', error); return []; }
     },
 
-    // Fetch movies by genre IDs (uma chamada por gênero, ordenada por melhor avaliação)
+    // Fetch comedy movies
+    async fetchComedyMovies(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const response = await fetch(tmdbUrl('/discover/movie', {
+                with_genres: '35',
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                'vote_average.gte': '6',
+                language: 'pt-BR'
+            }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching comedy movies: ${response.status}`); return []; }
+            const data = await response.json();
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'comedy', 'movie');
+        } catch (error) { console.error('Error fetching comedy:', error); return []; }
+    },
+
+    // Fetch romance movies
+    async fetchRomanceMovies(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const response = await fetch(tmdbUrl('/discover/movie', {
+                with_genres: '10749',
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                'vote_average.gte': '6',
+                language: 'pt-BR'
+            }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching romance movies: ${response.status}`); return []; }
+            const data = await response.json();
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'romance', 'movie');
+        } catch (error) { console.error('Error fetching romance:', error); return []; }
+    },
+
+    // Fetch horror movies
+    async fetchHorrorMovies(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const response = await fetch(tmdbUrl('/discover/movie', {
+                with_genres: '27',
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                'vote_average.gte': '6',
+                language: 'pt-BR'
+            }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching horror movies: ${response.status}`); return []; }
+            const data = await response.json();
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'horror', 'movie');
+        } catch (error) { console.error('Error fetching horror:', error); return []; }
+    },
+
+    // Fetch animation movies
+    async fetchAnimationMovies(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const response = await fetch(tmdbUrl('/discover/movie', {
+                with_genres: '16',
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                'vote_average.gte': '6',
+                language: 'pt-BR'
+            }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching animation movies: ${response.status}`); return []; }
+            const data = await response.json();
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'animation', 'movie');
+        } catch (error) { console.error('Error fetching animation:', error); return []; }
+    },
+
+    // Fetch popular series
+    async fetchPopularSeries(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const page = String(this.getCarouselPage());
+            const response = await fetch(tmdbUrl('/tv/popular', { page, language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching popular series: ${response.status}`); return []; }
+            const data = await response.json();
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'series_popular', 'series');
+        } catch (error) { console.error('Error fetching popular series:', error); return []; }
+    },
+
+    // Fetch top rated series
+    async fetchTopRatedSeries(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const page = String(this.getCarouselPage());
+            const response = await fetch(tmdbUrl('/tv/top_rated', { page, language: 'pt-BR' }), { next: { revalidate: 3600 } });
+            if (!response.ok) { console.warn(`Error fetching top rated series: ${response.status}`); return []; }
+            const data = await response.json();
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'series_top_rated', 'series');
+        } catch (error) { console.error('Error fetching top rated series:', error); return []; }
+    },
+
+    // Fetch trending series
+    async fetchTrendingSeries(): Promise<Omit<Movie, 'id'>[]> {
+        try {
+            const response = await fetch(
+                tmdbUrl('/trending/tv/week', { language: 'pt-BR' }),
+                { next: { revalidate: 3600 } }
+            );
+            if (!response.ok) { console.warn(`Error fetching trending series: ${response.status}`); return []; }
+            const data = await response.json();
+            return this.transformTMDBData(data.results?.slice(0, 24) || [], 'series_trending', 'series');
+        } catch (error) { console.error('Error fetching trending series:', error); return []; }
+    },
+
+    // Fetch movies and series by genre IDs (Para Você - mistura filmes + séries)
     async fetchByGenreIds(genreIds: number[]): Promise<Omit<Movie, 'id'>[]> {
         if (!genreIds.length) return [];
         try {
             const results = await Promise.all(
-                genreIds.map((id) =>
+                genreIds.flatMap((id) => [
                     fetch(
                         tmdbUrl('/discover/movie', {
                             with_genres: String(id),
                             sort_by: 'vote_average.desc',
                             'vote_count.gte': '200',
+                            'vote_average.gte': '6',
                             language: 'pt-BR'
                         }),
                         { next: { revalidate: 3600 } }
                     ).then(async (r) => {
                         if (!r.ok) return [];
                         const d = await r.json();
-                        return this.transformTMDBData(d.results?.slice(0, 12) || [], 'personalized', 'movie');
+                        return this.transformTMDBData(d.results?.slice(0, 16) || [], 'personalized', 'movie');
+                    }).catch(() => [] as Omit<Movie, 'id'>[]),
+                    fetch(
+                        tmdbUrl('/discover/tv', {
+                            with_genres: String(id),
+                            sort_by: 'vote_average.desc',
+                            'vote_count.gte': '200',
+                            'vote_average.gte': '6',
+                            language: 'pt-BR'
+                        }),
+                        { next: { revalidate: 3600 } }
+                    ).then(async (r) => {
+                        if (!r.ok) return [];
+                        const d = await r.json();
+                        return this.transformTMDBData(d.results?.slice(0, 16) || [], 'personalized', 'series');
                     }).catch(() => [] as Omit<Movie, 'id'>[])
-                )
+                ])
             );
             const seen = new Set<string>();
             const merged = results.flat().filter((m) => {

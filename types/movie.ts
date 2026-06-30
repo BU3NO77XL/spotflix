@@ -14,7 +14,7 @@ export interface Movie {
     trailer_url?: string;
     score?: number;
     is_featured?: boolean;
-    category?: 'trending' | 'trending_today' | 'top_rated' | 'coming_soon' | 'recommended' | 'top_10' | 'action' | 'family' | 'scifi' | 'critics' | 'personalized';
+    category?: 'trending' | 'trending_today' | 'top_rated' | 'coming_soon' | 'recommended' | 'top_10' | 'action' | 'family' | 'scifi' | 'critics' | 'personalized' | 'comedy' | 'romance' | 'horror' | 'animation' | 'series_popular' | 'series_top_rated' | 'series_trending';
     tmdb_id?: number;
     listItemId?: string;
     rank?: number;
