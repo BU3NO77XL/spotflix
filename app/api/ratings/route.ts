@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');
@@ -7,67 +7,60 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'userId é obrigatório.' }, { status: 400 });
   }
 
-  const items = await prisma.rating.findMany({
-    where: { profileId: Number(userId) },
-  });
+  const { data: items } = await supabaseAdmin
+    .from('ratings')
+    .select('tmdb_id, value')
+    .eq('profile_id', Number(userId));
 
   const ratings: Record<string, string> = {};
-  for (const item of items) {
-    ratings[String(item.tmdbId)] = item.value;
+  for (const item of items || []) {
+    ratings[String(item.tmdb_id)] = item.value;
   }
 
   return NextResponse.json({ ratings });
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { userId, tmdbId, mediaType, value } = body;
+  const { userId, tmdbId, mediaType, value } = await request.json();
 
   if (!userId || !tmdbId || !mediaType || !value) {
     return NextResponse.json({ error: 'userId, tmdbId, mediaType e value são obrigatórios.' }, { status: 400 });
   }
 
-  const item = await prisma.rating.upsert({
-    where: {
-      profileId_tmdbId_mediaType: {
-        profileId: Number(userId),
-        tmdbId: Number(tmdbId),
-        mediaType,
-      },
-    },
-    update: { value },
-    create: {
-      profileId: Number(userId),
-      tmdbId: Number(tmdbId),
-      mediaType,
+  const { data: item, error } = await supabaseAdmin
+    .from('ratings')
+    .upsert({
+      profile_id: Number(userId),
+      tmdb_id: Number(tmdbId),
+      media_type: mediaType,
       value,
-    },
-  });
+    }, {
+      onConflict: 'profile_id,tmdb_id,media_type',
+      ignoreDuplicates: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: 'Erro ao salvar avaliação.' }, { status: 500 });
+  }
 
   return NextResponse.json({ item }, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest) {
-  const body = await request.json();
-  const { userId, tmdbId, mediaType } = body;
+  const { userId, tmdbId, mediaType } = await request.json();
 
   if (!userId || !tmdbId || !mediaType) {
     return NextResponse.json({ error: 'userId, tmdbId e mediaType são obrigatórios.' }, { status: 400 });
   }
 
-  try {
-    await prisma.rating.delete({
-      where: {
-        profileId_tmdbId_mediaType: {
-          profileId: Number(userId),
-          tmdbId: Number(tmdbId),
-          mediaType,
-        },
-      },
-    });
-  } catch {
-    // ignore if not found
-  }
+  await supabaseAdmin
+    .from('ratings')
+    .delete()
+    .eq('profile_id', Number(userId))
+    .eq('tmdb_id', Number(tmdbId))
+    .eq('media_type', mediaType);
 
   return NextResponse.json({ success: true });
 }

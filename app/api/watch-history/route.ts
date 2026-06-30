@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');
@@ -7,10 +7,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'userId é obrigatório.' }, { status: 400 });
   }
 
-  const items = await prisma.watchHistory.findMany({
-    where: { profileId: Number(userId) },
-    orderBy: { watchedAt: 'desc' },
-  });
+  const { data: items, error } = await supabaseAdmin
+    .from('watch_history')
+    .select('*')
+    .eq('profile_id', Number(userId))
+    .order('watched_at', { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: 'Erro ao buscar histórico.' }, { status: 500 });
+  }
 
   return NextResponse.json({ items });
 }
@@ -23,67 +28,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'userId, tmdbId e mediaType são obrigatórios.' }, { status: 400 });
   }
 
-  const sn = seasonNumber ?? 0;
-  const en = episodeNumber ?? 0;
-  const ts = totalSeasons ?? 0;
-  const te = totalEpisodes ?? 0;
-
-  const item = await prisma.watchHistory.upsert({
-    where: {
-      profileId_tmdbId_mediaType: {
-        profileId: Number(userId),
-        tmdbId: Number(tmdbId),
-        mediaType,
-      },
-    },
-    update: {
-      seasonNumber: sn,
-      episodeNumber: en,
-      totalSeasons: ts || undefined,
-      totalEpisodes: te || undefined,
-      progressPercent: progressPercent ?? 0,
-      watchedAt: new Date(),
-      title: title || undefined,
-      posterUrl: posterUrl || undefined,
-      backdropUrl: backdropUrl || undefined,
-    },
-    create: {
-      profileId: Number(userId),
-      tmdbId: Number(tmdbId),
-      mediaType,
-      seasonNumber: sn,
-      episodeNumber: en,
-      totalSeasons: ts,
-      totalEpisodes: te,
+  const { data: item, error } = await supabaseAdmin
+    .from('watch_history')
+    .upsert({
+      profile_id: Number(userId),
+      tmdb_id: Number(tmdbId),
+      media_type: mediaType,
+      season_number: seasonNumber ?? 0,
+      episode_number: episodeNumber ?? 0,
+      total_seasons: totalSeasons ?? 0,
+      total_episodes: totalEpisodes ?? 0,
       title: title || '',
-      posterUrl: posterUrl || null,
-      backdropUrl: backdropUrl || null,
-      progressPercent: progressPercent ?? 0,
-    },
-  });
+      poster_url: posterUrl || null,
+      backdrop_url: backdropUrl || null,
+      progress_percent: progressPercent ?? 0,
+      watched_at: new Date().toISOString(),
+    }, {
+      onConflict: 'profile_id,tmdb_id,media_type',
+      ignoreDuplicates: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: 'Erro ao salvar histórico.' }, { status: 500 });
+  }
 
   return NextResponse.json({ item }, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest) {
-  const body = await request.json();
-  const { userId, tmdbId, mediaType } = body;
+  const { userId, tmdbId, mediaType } = await request.json();
 
   if (!userId || !tmdbId || !mediaType) {
     return NextResponse.json({ error: 'userId, tmdbId e mediaType são obrigatórios.' }, { status: 400 });
   }
 
-  try {
-    await prisma.watchHistory.delete({
-      where: {
-        profileId_tmdbId_mediaType: {
-          profileId: Number(userId),
-          tmdbId: Number(tmdbId),
-          mediaType,
-        },
-      },
-    });
-  } catch { /* ignore */ }
+  await supabaseAdmin
+    .from('watch_history')
+    .delete()
+    .eq('profile_id', Number(userId))
+    .eq('tmdb_id', Number(tmdbId))
+    .eq('media_type', mediaType);
 
   return NextResponse.json({ success: true });
 }

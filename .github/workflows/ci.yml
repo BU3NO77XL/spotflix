@@ -71,9 +71,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm run db:generate
-
       - name: Run TypeScript Typecheck
         run: pnpm run typecheck
 
@@ -100,11 +97,10 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm run db:generate
-
       - name: Build Next.js Production Bundle
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY || 'mock_tmdb_key' }}
-          DATABASE_URL: "file:./dev.db"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder' }}
         run: pnpm run build

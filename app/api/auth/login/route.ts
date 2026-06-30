@@ -1,46 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifyPassword } from '@/lib/auth';
-
 import { createSession } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { email, password } = body;
+  const { email, password } = await request.json();
 
   if (!email || !password) {
     return NextResponse.json({ error: 'Email e senha são obrigatórios.' }, { status: 400 });
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { email },
-    include: { preferences: true },
-  });
-  if (!profile || !profile.passwordHash) {
+  const { data: profile, error } = await supabaseAdmin
+    .from('profiles')
+    .select('*, preferences(*)')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (error || !profile || !profile.password_hash) {
     return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
   }
 
-  const isValid = verifyPassword(password, profile.passwordHash);
+  const isValid = verifyPassword(password, profile.password_hash);
   if (!isValid) {
     return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
   }
 
-  // Generate secure JWT session cookie
   await createSession(profile.id);
 
   return NextResponse.json({
     user: {
       id: profile.id,
       email: profile.email,
-      name: profile.fullName,
+      name: profile.full_name,
       role: profile.role,
-      avatarUrl: profile.avatarUrl,
+      avatarUrl: profile.avatar_url,
       preferences: profile.preferences
         ? {
-            avatarIndex: profile.preferences.avatarIndex,
+            avatarIndex: profile.preferences.avatar_index,
             genres: profile.preferences.genres ? profile.preferences.genres.split(',') : [],
           }
         : null,
     },
-  }, { status: 200 });
+  });
 }

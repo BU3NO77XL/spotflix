@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { calcMatch } from '@/lib/match';
 
 export async function GET(request: NextRequest) {
@@ -16,24 +16,23 @@ export async function GET(request: NextRequest) {
   const genres = genresParam ? genresParam.split(',') : [];
   const score = tmdbScore ? parseFloat(tmdbScore) : undefined;
 
-  const profile = await prisma.profile.findUnique({
-    where: { id: Number(userId) },
-    include: { preferences: true },
-  });
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('*, preferences(*)')
+    .eq('id', Number(userId))
+    .single();
 
   const favoriteGenres = profile?.preferences?.genres
     ? profile.preferences.genres.split(',')
     : [];
 
-  const rating = await prisma.rating.findUnique({
-    where: {
-      profileId_tmdbId_mediaType: {
-        profileId: Number(userId),
-        tmdbId: Number(tmdbId),
-        mediaType,
-      },
-    },
-  });
+  const { data: rating } = await supabaseAdmin
+    .from('ratings')
+    .select('value')
+    .eq('profile_id', Number(userId))
+    .eq('tmdb_id', Number(tmdbId))
+    .eq('media_type', mediaType)
+    .maybeSingle();
 
   const match = calcMatch(score, genres, (rating?.value as any) || null, favoriteGenres);
 
@@ -41,27 +40,28 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { userId, items } = body;
+  const { userId, items } = await request.json();
 
   if (!userId || !items?.length) {
     return NextResponse.json({ error: 'userId e items são obrigatórios.' }, { status: 400 });
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { id: Number(userId) },
-    include: { preferences: true },
-  });
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('*, preferences(*)')
+    .eq('id', Number(userId))
+    .single();
 
   const favoriteGenres = profile?.preferences?.genres
     ? profile.preferences.genres.split(',')
     : [];
 
-  const ratings = await prisma.rating.findMany({
-    where: { profileId: Number(userId) },
-  });
+  const { data: ratingsData } = await supabaseAdmin
+    .from('ratings')
+    .select('tmdb_id, media_type, value')
+    .eq('profile_id', Number(userId));
 
-  const ratingMap = new Map(ratings.map(r => [`${r.tmdbId}_${r.mediaType}`, r.value]));
+  const ratingMap = new Map((ratingsData || []).map(r => [`${r.tmdb_id}_${r.media_type}`, r.value]));
 
   const matches: Record<string, number> = {};
   for (const item of items) {

@@ -1,28 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { userId } = body;
+  const { userId } = await request.json();
 
   if (!userId) {
     return NextResponse.json({ error: 'userId é obrigatório.' }, { status: 400 });
   }
 
-  const preference = await prisma.preference.findUnique({
-    where: { profileId: Number(userId) },
-  });
+  const { data: preference } = await supabaseAdmin
+    .from('preferences')
+    .select('id')
+    .eq('profile_id', Number(userId))
+    .single();
 
   if (!preference) {
     return NextResponse.json({ error: 'Preferências não encontradas.' }, { status: 404 });
   }
 
-  const updated = await prisma.preference.update({
-    where: { profileId: Number(userId) },
-    data: { recommendationsUpdatedAt: new Date() },
-  });
+  const { data: updated } = await supabaseAdmin
+    .from('preferences')
+    .update({ recommendations_updated_at: new Date().toISOString() })
+    .eq('profile_id', Number(userId))
+    .select()
+    .single();
 
   return NextResponse.json({
-    recommendationsUpdatedAt: updated.recommendationsUpdatedAt?.toISOString(),
+    recommendationsUpdatedAt: updated?.recommendations_updated_at || null,
   }, { status: 200 });
 }

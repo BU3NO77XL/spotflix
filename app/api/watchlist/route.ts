@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');
@@ -7,61 +7,62 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'userId é obrigatório.' }, { status: 400 });
   }
 
-  const items = await prisma.watchlistItem.findMany({
-    where: { profileId: Number(userId) },
-    orderBy: { addedAt: 'desc' },
-  });
+  const { data: items, error } = await supabaseAdmin
+    .from('watchlist')
+    .select('*')
+    .eq('profile_id', Number(userId))
+    .order('added_at', { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: 'Erro ao buscar watchlist.' }, { status: 500 });
+  }
 
   return NextResponse.json({ items });
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { userId, tmdbId, mediaType, title, posterUrl, backdropUrl } = body;
+  const { userId, tmdbId, mediaType, title, posterUrl, backdropUrl } = await request.json();
 
   if (!userId || !tmdbId || !mediaType) {
     return NextResponse.json({ error: 'userId, tmdbId e mediaType são obrigatórios.' }, { status: 400 });
   }
 
-  const item = await prisma.watchlistItem.upsert({
-    where: {
-      profileId_tmdbId_mediaType: {
-        profileId: Number(userId),
-        tmdbId: Number(tmdbId),
-        mediaType,
-      },
-    },
-    update: { title, posterUrl, backdropUrl },
-    create: {
-      profileId: Number(userId),
-      tmdbId: Number(tmdbId),
-      mediaType,
+  const { data: item, error } = await supabaseAdmin
+    .from('watchlist')
+    .upsert({
+      profile_id: Number(userId),
+      tmdb_id: Number(tmdbId),
+      media_type: mediaType,
       title: title || '',
-      posterUrl: posterUrl || null,
-      backdropUrl: backdropUrl || null,
-    },
-  });
+      poster_url: posterUrl || null,
+      backdrop_url: backdropUrl || null,
+    }, {
+      onConflict: 'profile_id,tmdb_id,media_type',
+      ignoreDuplicates: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: 'Erro ao adicionar à watchlist.' }, { status: 500 });
+  }
 
   return NextResponse.json({ item }, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest) {
-  const body = await request.json();
-  const { userId, tmdbId, mediaType } = body;
+  const { userId, tmdbId, mediaType } = await request.json();
 
   if (!userId || !tmdbId || !mediaType) {
     return NextResponse.json({ error: 'userId, tmdbId e mediaType são obrigatórios.' }, { status: 400 });
   }
 
-  await prisma.watchlistItem.delete({
-    where: {
-      profileId_tmdbId_mediaType: {
-        profileId: Number(userId),
-        tmdbId: Number(tmdbId),
-        mediaType,
-      },
-    },
-  });
+  await supabaseAdmin
+    .from('watchlist')
+    .delete()
+    .eq('profile_id', Number(userId))
+    .eq('tmdb_id', Number(tmdbId))
+    .eq('media_type', mediaType);
 
   return NextResponse.json({ success: true });
 }

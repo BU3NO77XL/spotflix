@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');
@@ -8,12 +8,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'userId é obrigatório.' }, { status: 400 });
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { id: Number(userId) },
-    include: { preferences: true },
-  });
+  const { data: profile, error } = await supabaseAdmin
+    .from('profiles')
+    .select('*, preferences(*)')
+    .eq('id', Number(userId))
+    .single();
 
-  if (!profile) {
+  if (error || !profile) {
     return NextResponse.json({ error: 'Perfil não encontrado.' }, { status: 404 });
   }
 
@@ -21,14 +22,14 @@ export async function GET(request: NextRequest) {
     user: {
       id: profile.id,
       email: profile.email,
-      name: profile.fullName,
+      name: profile.full_name,
       role: profile.role,
-      avatarUrl: profile.avatarUrl,
+      avatarUrl: profile.avatar_url,
       preferences: profile.preferences
         ? {
-            avatarIndex: profile.preferences.avatarIndex,
+            avatarIndex: profile.preferences.avatar_index,
             genres: profile.preferences.genres ? profile.preferences.genres.split(',') : [],
-            recommendationsUpdatedAt: profile.preferences.recommendationsUpdatedAt?.toISOString() || null,
+            recommendationsUpdatedAt: profile.preferences.recommendations_updated_at || null,
           }
         : null,
     },
