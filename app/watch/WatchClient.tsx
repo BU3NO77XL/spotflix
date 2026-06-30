@@ -1313,6 +1313,7 @@ function WatchContent() {
                                                     episodeNumber: isSeries ? selectedEpisode : undefined,
                                                     totalSeasons: isSeries ? seriesDetails?.number_of_seasons : undefined,
                                                     totalEpisodes: isSeries ? seriesDetails?.number_of_episodes : undefined,
+                                                    seasonEpisodes: isSeries ? seriesDetails?.seasons?.find(s => s.season_number === selectedSeason)?.episode_count : undefined,
                                                     title: movie.title,
                                                     posterUrl: movie.poster_url,
                                                     backdropUrl: movie.backdrop_url,

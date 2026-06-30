@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { userId, tmdbId, mediaType, seasonNumber, episodeNumber, totalSeasons, totalEpisodes, title, posterUrl, backdropUrl, progressPercent } = body;
+  const { userId, tmdbId, mediaType, seasonNumber, episodeNumber, totalSeasons, totalEpisodes, seasonEpisodes, title, posterUrl, backdropUrl, progressPercent } = body;
 
   if (!userId || !tmdbId || !mediaType) {
     return NextResponse.json({ error: 'userId, tmdbId e mediaType são obrigatórios.' }, { status: 400 });
@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       episode_number: episodeNumber ?? 0,
       total_seasons: totalSeasons ?? 0,
       total_episodes: totalEpisodes ?? 0,
+      season_episodes: seasonEpisodes ?? 0,
       title: title || '',
       poster_url: posterUrl || null,
       backdrop_url: backdropUrl || null,

@@ -27,6 +27,7 @@ interface WatchHistoryItem {
   episode_number: number;
   total_seasons: number;
   total_episodes: number;
+  season_episodes: number;
   title: string;
   poster_url: string;
   backdrop_url: string;
@@ -263,6 +264,7 @@ export default function Home() {
         episode_number: h.media_type === 'series' ? h.episode_number : undefined,
         total_seasons: h.media_type === 'series' ? h.total_seasons : undefined,
         total_episodes: h.media_type === 'series' ? h.total_episodes : undefined,
+        season_episodes: h.media_type === 'series' ? h.season_episodes : undefined,
       };
     });
     setContinueWatching(initialMapped);
@@ -293,6 +295,7 @@ export default function Home() {
             genre: details.genres?.length ? details.genres : movie.genre,
             total_episodes: (details as any).number_of_episodes,
             total_seasons: (details as any).number_of_seasons,
+            season_episodes: (details as any).seasons?.find((s: any) => s.season_number === movie.season_number)?.episode_count || movie.season_episodes,
           };
         } catch {
           return movie;

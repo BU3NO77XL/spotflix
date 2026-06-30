@@ -154,9 +154,12 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                     if (!sn || !en) return null;
                     const totalEp = movie.total_episodes || 0;
                     const totalSeasons = movie.total_seasons || 0;
+                    const seasonEp = movie.season_episodes || 0;
                     const avgEp = totalEp && totalSeasons ? Math.ceil(totalEp / totalSeasons) : 0;
-                    const cumulativeEp = avgEp > 0 ? (sn - 1) * avgEp + en : 0;
-                    const isComplete = totalEp > 0 && cumulativeEp >= totalEp;
+                    const lastSeason = sn >= totalSeasons;
+                    const lastEp = seasonEp > 0 ? en >= seasonEp : (avgEp > 0 ? en >= avgEp : false);
+                    const isComplete = lastSeason && lastEp;
+                    const cumulativeEp = totalEp > 0 && avgEp > 0 ? (sn - 1) * avgEp + en : 0;
                     const pct = isComplete ? 100 : (totalEp > 0 && cumulativeEp > 0
                         ? Math.min(100, Math.max(10, Math.round((cumulativeEp / totalEp) * 100)))
                         : 60);
@@ -187,9 +190,12 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                         const en = movie.episode_number;
                         const totalEp = movie.total_episodes || 0;
                         const totalSeasons = movie.total_seasons || 0;
+                        const seasonEp = movie.season_episodes || 0;
                         const avgEp = totalEp && totalSeasons ? Math.ceil(totalEp / totalSeasons) : 0;
-                        const cumulativeEp = avgEp > 0 ? (sn - 1) * avgEp + en : 0;
-                        const isComplete = totalEp > 0 && cumulativeEp >= totalEp;
+                        const lastSeason = sn >= totalSeasons;
+                        const lastEp = seasonEp > 0 ? en >= seasonEp : (avgEp > 0 ? en >= avgEp : false);
+                        const isComplete = lastSeason && lastEp;
+                        const cumulativeEp = totalEp > 0 && avgEp > 0 ? (sn - 1) * avgEp + en : 0;
                         if (isComplete) {
                             return <span className="bg-[#46d369]/20 text-[#46d369] text-[10px] px-1.5 py-0.5 rounded font-bold">Completo</span>;
                         }

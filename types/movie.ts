@@ -22,6 +22,7 @@ export interface Movie {
     episode_number?: number;
     total_episodes?: number;
     total_seasons?: number;
+    season_episodes?: number;
 }
 
 export interface UserListItem {
