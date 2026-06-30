@@ -276,7 +276,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         backgroundImage: `
                                             linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.12) 30%, rgba(24, 24, 24, 0.92) 100%),
                                             linear-gradient(115deg, rgba(13, 13, 13, 0.15) 18%, rgba(13, 13, 13, 0.86) 58%, rgba(13, 13, 13, 1) 100%),
-                                            radial-gradient(circle at 18% 24%, rgba(255, 235, 220, 0.22), transparent 28%),
+                                            radial-gradient(circle at 16% 22%, rgba(255, 245, 230, 0.4), transparent 40%),
                                             linear-gradient(135deg, #333 0%, #1a1a1a 100%),
                                             url("${bgUrl}")
                                         `,
