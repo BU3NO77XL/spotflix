@@ -397,10 +397,6 @@ export default function Home() {
         movie = { ...movie, rank: top10Index + 1 };
       }
     }
-    if (movie.season_number || movie.episode_number) {
-      handleWatch(movie);
-      return;
-    }
     setSelectedMovie(movie);
     setModalOpen(true);
   };

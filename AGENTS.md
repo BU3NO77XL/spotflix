@@ -79,7 +79,7 @@ Corrigir visuais, skeletons e filtros inconsistentes na home/página Watch; adic
 - WatchHistory para filmes armazena seasonNumber=0, episodeNumber=0; unique key composta.
 - RawWatchHistory (undefined estável) como dependência de useEffect para evitar loop.
 - Top10Badge substitui NetflixBadge nos cards Top 10 para não sobrepor.
-- "Continue Assistindo" usa watch history em vez de watchlist; handleMoreInfo com season/episode vai direto para Watch.
+- "Continue Assistindo" usa watch history em vez de watchlist.
 - Hook useState em vez de useRef para userId no WatchClient para re-renderizar ao obter ID.
 
 ## Next Steps
