@@ -6,6 +6,7 @@ import { Play, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import NetflixBadge from '@/components/streaming/NetflixBadge';
 import NewSeasonBadge from '@/components/ui/NewSeasonBadge';
+import ProgressiveImage from '@/components/streaming/ProgressiveImage';
 import { checkIsOnNetflix } from '@/lib/netflixCache';
 import { checkHasNewSeason } from '@/lib/newSeasonCache';
 
@@ -60,10 +61,10 @@ export default function MiniCard({
           <div className="flex">
             {/* Poster */}
             <div className="w-16 h-24 shrink-0 relative">
-              <img
-                src={movie.poster_url || undefined}
+              <ProgressiveImage
+                src={movie.poster_url || null}
                 alt={movie.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
               />
               {/* Animated overlay */}
               <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -92,11 +93,11 @@ export default function MiniCard({
       ) : (
         // Portrait Layout
         <div className="space-y-2">
-          <div className="relative aspect-2/3 rounded-sm sm:rounded-md overflow-hidden bg-[#1f1f1f] transition-transform duration-300">
-            <img
-              src={movie.poster_url || undefined}
+          <div className="relative aspect-2/3 rounded-sm sm:rounded-md overflow-hidden bg-[#1f1f1f] transition-all duration-500 ease-out group-hover:scale-[1.03] group-hover:ring-1 group-hover:ring-white/10 group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.6)]">
+            <ProgressiveImage
+              src={movie.poster_url || null}
               alt={movie.title}
-              className="w-full h-full object-cover transition-transform duration-500"
+              className="w-full h-full"
             />
 
             {/* Netflix Badge */}
@@ -128,7 +129,7 @@ export default function MiniCard({
             {/* Hover Play Button */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <button
-                className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200"
+                className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90"
                 style={{ backgroundColor: accentColor }}
               >
                 <Play className="w-5 h-5 text-white fill-current ml-0.5" />
