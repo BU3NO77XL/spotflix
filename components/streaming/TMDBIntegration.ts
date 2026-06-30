@@ -607,21 +607,37 @@ export const TMDBService = {
         }
     },
 
-    // Fetch movie images (backdrops)
-    async fetchMovieImages(tmdbId: number, isSeries: boolean = false): Promise<string[]> {
+    // Fetch movie images (backdrops) with language priority (pt-BR > pt > en > others)
+    async fetchMovieImages(tmdbId: number, isSeries: boolean = false, languages?: string): Promise<string[]> {
         try {
-            // Fetch specifically 'xx' (no language/text-less) images
             const path = isSeries ? `/tv/${tmdbId}/images` : `/movie/${tmdbId}/images`;
-            const response = await fetch(tmdbUrl(path, { include_image_language: 'xx' }));
+            const params: Record<string, string> = {};
+            if (languages) {
+                params.include_image_language = languages;
+                params.language = 'pt-BR';
+            } else {
+                params.include_image_language = 'xx';
+            }
+            const response = await fetch(tmdbUrl(path, params));
 
             if (!response.ok) {
                 return [];
             }
 
             const data = await response.json();
-            const backdrops = data.backdrops || [];
+            let backdrops = data.backdrops || [];
 
-            // Return top 10 without specific language sorting
+            if (languages) {
+                const priority = languages.split(',');
+                backdrops = backdrops.sort((a: any, b: any) => {
+                    const aIdx = priority.indexOf(a.iso_639_1);
+                    const bIdx = priority.indexOf(b.iso_639_1);
+                    const aScore = aIdx >= 0 ? aIdx : priority.length + (a.iso_639_1 === null || a.iso_639_1 === 'xx' ? 0 : 1);
+                    const bScore = bIdx >= 0 ? bIdx : priority.length + (b.iso_639_1 === null || b.iso_639_1 === 'xx' ? 0 : 1);
+                    return aScore - bScore;
+                });
+            }
+
             return backdrops.slice(0, 10).map((img: any) => `${TMDB_IMAGE_BASE}/original${img.file_path}`);
         } catch (error) {
             console.error('Error fetching images:', error);

@@ -6,9 +6,10 @@ import { X, Play, Plus, Volume2, VolumeX, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { calcMatch } from '@/lib/match';
-import { overlayFade, imageReveal, easeOutQuint, movieModalContent } from '@/lib/motion';
+import { overlayFade, imageReveal, easeOutQuint, movieModalContent, fadeIn, slideUpFade, staggerContainer } from '@/lib/motion';
 import { TMDBService } from './TMDBIntegration';
 import RatingTooltip from '@/components/ui/RatingTooltip';
+import NetflixBadge from '@/components/streaming/NetflixBadge';
 
 type Rating = 'love' | 'like' | 'dislike';
 
@@ -45,6 +46,10 @@ interface MovieModalProps {
 export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToList, isInWatchlist, onRemoveFromList }: MovieModalProps) {
     const [cast, setCast] = useState<any[]>([]);
     const [similar, setSimilar] = useState<Movie[]>([]);
+    const [similarLoading, setSimilarLoading] = useState(true);
+    const [similarImagesLoaded, setSimilarImagesLoaded] = useState<Set<number>>(new Set());
+    const [trailers, setTrailers] = useState<{ key: string; name: string; type: string; site: string; official: boolean; size: number }[]>([]);
+    const [keywords, setKeywords] = useState<string[]>([]);
     const [isMuted, setIsMuted] = useState(true);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoLoading, setLogoLoading] = useState(true);
@@ -188,9 +193,21 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                 });
             }).catch(() => {});
 
-            TMDBService.fetchSimilar(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(similarMovies => {
-                setSimilar(similarMovies.slice(0, 6) as Movie[]);
-            });
+            TMDBService.fetchSimilar(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(async (similarMovies) => {
+                const sliced = similarMovies.slice(0, 6) as Movie[];
+                const enriched = await Promise.all(sliced.map(async (m) => {
+                    const images = await TMDBService.fetchMovieImages(Number(m.tmdb_id || m.id), m.type === 'series', 'pt-BR,pt,en');
+                    if (images.length > 0) {
+                        return { ...m, backdrop_url: images[0] };
+                    }
+                    return m;
+                }));
+                setSimilar(enriched);
+                setSimilarLoading(false);
+            }).catch(() => setSimilarLoading(false));
+
+            TMDBService.fetchMovieVideos(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(setTrailers).catch(() => {});
+            TMDBService.fetchMovieKeywords(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(kw => setKeywords(kw.map(k => k.name))).catch(() => {});
 
             TMDBService.fetchMovieLogos(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(logos => {
                 if (logos && logos.length > 0) {
@@ -543,89 +560,173 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             </div>
 
                             {/* More Like This */}
-                            {similar.length > 0 && (
-                                <div className="mt-12">
-                                    <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Títulos semelhantes</h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
+                            <motion.div
+                                className="mt-12"
+                                variants={fadeIn}
+                                initial="initial"
+                                animate={similar.length > 0 || similarLoading ? "animate" : "initial"}
+                            >
+                                <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Títulos semelhantes</h3>
+                                {similarLoading ? (
+                                    <div className="flex flex-wrap gap-x-5 gap-y-4">
+                                        {Array.from({ length: 6 }).map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className="bg-[#2f2f2f] rounded-[4px] overflow-hidden flex flex-col flex-1 min-w-[200px] w-[calc(33.333%-13.33px)] animate-pulse"
+                                            >
+                                                <div className="w-full aspect-video bg-[#3a3a3a]" />
+                                                <div className="px-4 pt-4 pb-1">
+                                                    <div className="h-3 bg-[#3a3a3a] rounded w-3/4" />
+                                                </div>
+                                                <div className="flex items-center justify-between px-4 pb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-5 bg-[#3a3a3a] rounded-[3px] w-14" />
+                                                        <div className="h-5 bg-[#3a3a3a] rounded-[4px] w-9" />
+                                                        <div className="h-4 bg-[#3a3a3a] rounded w-10" />
+                                                    </div>
+                                                    <div className="w-10 h-10 rounded-full bg-[#3a3a3a]" />
+                                                </div>
+                                                <div className="px-[14px] pb-[14px] flex-1 space-y-1.5">
+                                                    <div className="h-3 bg-[#3a3a3a] rounded w-full" />
+                                                    <div className="h-3 bg-[#3a3a3a] rounded w-5/6" />
+                                                    <div className="h-3 bg-[#3a3a3a] rounded w-4/6" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : similar.length > 0 && (
+                                    <motion.div
+                                        className="flex flex-wrap gap-x-5 gap-y-4"
+                                        variants={staggerContainer}
+                                        initial="initial"
+                                        animate="animate"
+                                    >
                                         {similar.map((item, idx) => {
-                                            const similarMatch = calcMatch(
-                                                item.score,
-                                                item.genre || [],
-                                                null,
-                                                favoriteGenres,
-                                            );
+                                            const loaded = similarImagesLoaded.has(idx);
                                             return (
-                                            <div 
+                                            <motion.div
                                                 key={idx}
                                                 onClick={() => onWatch(item)}
-                                                className="bg-[#232323] rounded-md overflow-hidden group cursor-pointer shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                                                className="bg-[#2f2f2f] rounded-[4px] overflow-hidden group cursor-pointer flex flex-col flex-1 min-w-[200px] w-[calc(33.333%-13.33px)]"
+                                                variants={slideUpFade}
                                             >
-                                                <div className="relative h-[141px]">
-                                                    <img src={item.backdrop_url || item.poster_url} alt="" className="w-full h-full object-cover" />
-                                                    <span className="absolute bottom-2.5 right-2.5 text-base font-semibold text-white/92 bg-black/60 px-2 py-1 rounded-[3px]">{item.year}</span>
+                                                <div className="relative w-full aspect-video bg-[#3a3a3a]">
+                                                    <img
+                                                        src={item.backdrop_url || item.poster_url}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        onLoad={() => setSimilarImagesLoaded(prev => new Set(prev).add(idx))}
+                                                        className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                                                    />
+                                                    {loaded && (
+                                                        <>
+                                                            <NetflixBadge className="absolute top-[7px] left-[7px] z-10" />
+                                                            {item.duration && (
+                                                                <span className="absolute top-[7px] right-[7px] bg-black/60 px-[6px] py-[2px] rounded-[3px] text-[12px] font-normal text-white/92 leading-none">{item.duration}</span>
+                                                            )}
+                                                        </>
+                                                    )}
                                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                                                         <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40">
                                                             <Play className="w-5 h-5 fill-white" />
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="p-4 pt-3.5 pb-4.5">
-                                                    <div className="flex items-center justify-between mb-3">
+                                                    <div className="px-4 pt-4 pb-1">
+                                                        <p className="text-white text-[13px] font-medium leading-tight truncate">{item.title}</p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between px-4 pb-3">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[#46d369] text-base font-bold">{similarMatch}% Match</span>
-                                                            <span className="px-1.5 border border-white/38 text-[13px] font-semibold rounded-[4px] text-white/88 leading-none py-1">{item.rating || '14+'}</span>
+                                                        <span className="px-[6.5px] border border-[#bcbcbc] text-[13px] font-semibold rounded-[3px] text-white/88 leading-none py-[5px]">{item.rating || '14'}</span>
+                                                        <span className="px-[6.5px] border border-[#808080] text-[13px] font-semibold rounded-[4px] text-white/88 leading-none py-[5px]">HD</span>
+                                                        <span className="text-[#bcbcbc] text-[15px] font-normal">{item.year}</span>
                                                         </div>
-                                                        <button className="w-7 h-7 rounded-full border-2 border-white/62 flex items-center justify-center text-white hover:bg-white/10">
-                                                            <Plus className="w-4 h-4" />
+                                                        <button className="w-10 h-10 rounded-full bg-[#2a2a2a] border-2 border-white/50 flex items-center justify-center text-white">
+                                                            <Plus className="w-5 h-5" strokeWidth={1.5} />
                                                         </button>
                                                     </div>
-                                                    <p className="text-[#d2d2d2] text-[15px] line-clamp-3 leading-[1.45]">{item.synopsis}</p>
-                                                </div>
-                                            </div>
+                                                    <div className="px-[14px] pb-[14px] flex-1">
+                                                        <p className="text-[#d2d2d2] text-[14px] leading-[20px] line-clamp-4">{item.synopsis}</p>
+                                                    </div>
+                                            </motion.div>
                                             );
                                         })}
+                                    </motion.div>
+                                )}
+                            </motion.div>
+
+                            {/* Trailers & More */}
+                            {trailers.length > 0 && (
+                                <motion.div
+                                    className="mt-12"
+                                    variants={fadeIn}
+                                    initial="initial"
+                                    animate="animate"
+                                >
+                                    <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Trailers e mais</h3>
+                                    <div className="flex gap-[33px]">
+                                        {trailers.map((trailer, i) => (
+                                            <a
+                                                key={i}
+                                                href={`https://www.youtube.com/watch?v=${trailer.key}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="group block flex-1 min-w-0 max-w-[236px]"
+                                            >
+                                                <div className="relative w-full aspect-[236/132] overflow-hidden rounded-t-[4px] bg-white/10">
+                                                    <img
+                                                        src={`https://img.youtube.com/vi/${trailer.key}/mqdefault.jpg`}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Play className="w-5 h-5 fill-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="w-full px-4 py-4 flex items-center justify-center">
+                                                    <p className="text-white text-[16px] font-medium leading-tight text-center line-clamp-2">{trailer.name}</p>
+                                                </div>
+                                            </a>
+                                        ))}
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
 
                             {/* About Section */}
-                            <div className="mt-12 pt-6 border-t border-white/10">
-                                <h3 className="text-2xl font-bold text-white mb-6">Sobre {movie.title}</h3>
-                                <div className="grid grid-cols-[128px_1fr] gap-x-4.5 gap-y-2.5 text-[15px] leading-[1.5]">
+                            <div className="mt-12">
+                                <div className="flex items-center gap-1.5 mb-5">
+                                    <span className="text-white text-[24px] font-normal leading-[30px]">Sobre</span>
+                                    <span className="text-white text-[24px] font-medium leading-[30px]">{movie.title}</span>
+                                </div>
+                                <div className="flex flex-col gap-2 text-[15px] leading-[20px]">
                                     {movie.type === 'series' ? (
                                         <>
-                                            <div className="text-white/45">Criado por:</div>
-                                            <div className="text-[#d2d2d2]">{details?.created_by || 'Informação indisponível'}</div>
-                                            <div className="text-white/45">Elenco:</div>
-                                            <div className="text-[#d2d2d2]">{cast.map(c => c.name).join(', ')}</div>
-                                            <div className="text-white/45">Gêneros:</div>
-                                            <div className="text-[#d2d2d2]">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</div>
+                                            <p><span className="text-[#777777]">Criado por: </span><span className="text-white">{details?.created_by || 'Informação indisponível'}</span></p>
+                                            <p><span className="text-[#777777]">Elenco: </span><span className="text-white">{cast.map(c => c.name).join(', ')}</span></p>
+                                            <p><span className="text-[#777777]">Gêneros: </span><span className="text-white">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</span></p>
                                             {details?.number_of_seasons && details?.number_of_episodes && (
-                                                <>
-                                                    <div className="text-white/45">Temporadas:</div>
-                                                    <div className="text-[#d2d2d2]">{details.number_of_seasons} temporada{details.number_of_seasons > 1 ? 's' : ''} • {details.number_of_episodes} episódios</div>
-                                                </>
+                                                <p><span className="text-[#777777]">Temporadas: </span><span className="text-white">{details.number_of_seasons} temporada{details.number_of_seasons > 1 ? 's' : ''} • {details.number_of_episodes} episódios</span></p>
                                             )}
                                         </>
                                     ) : (
                                         <>
-                                            <div className="text-white/45">Direção:</div>
-                                            <div className="text-[#d2d2d2]">{details?.director || 'Informação indisponível'}</div>
-                                            <div className="text-white/45">Elenco:</div>
-                                            <div className="text-[#d2d2d2]">{cast.map(c => c.name).join(', ')}</div>
-                                            <div className="text-white/45">Roteiro:</div>
-                                            <div className="text-[#d2d2d2]">Informação indisponível</div>
-                                            <div className="text-white/45">Gêneros:</div>
-                                            <div className="text-[#d2d2d2]">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</div>
+                                            <p><span className="text-[#777777]">Direção: </span><span className="text-white">{details?.director || 'Informação indisponível'}</span></p>
+                                            <p><span className="text-[#777777]">Elenco: </span><span className="text-white">{cast.map(c => c.name).join(', ')}</span></p>
+                                            <p><span className="text-[#777777]">Gêneros: </span><span className="text-white">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</span></p>
                                         </>
                                     )}
                                     
-                                    <div className="text-white/45">Classificação:</div>
-                                    <div className="text-[#d2d2d2]">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="px-2 py-0.5 border border-gray-600 rounded text-[10px] w-fit text-white">{details?.ageRating || movie.rating || '14+'}</span>
-                                            <span className="text-[10px] text-gray-500">recomendado para maiores de {details?.ageRating || movie.rating || '14'} anos</span>
-                                        </div>
+                                    {keywords.length > 0 && (
+                                        <p><span className="text-[#777777]">Este programa é: </span><span className="text-white">{keywords.join(', ')}</span></p>
+                                    )}
+                                    
+                                    <div className="flex items-center gap-3.5 text-[15px] leading-[20px]">
+                                        <span className="text-[#777777]">Classificação:</span>
+                                        <span className="px-[6.5px] py-[2px] border border-[#bcbcbc] rounded text-[13px] font-semibold text-white/88 leading-none">{details?.ageRating || movie.rating || '14+'}</span>
+                                        <span className="text-white">recomendado para maiores de {details?.ageRating || movie.rating || '14'} anos</span>
                                     </div>
                                 </div>
                             </div>
