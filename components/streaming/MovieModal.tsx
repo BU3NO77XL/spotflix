@@ -635,7 +635,10 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                         </div>
                                                     </div>
                                                 </div>
-                                                    <div className="px-4 pt-4 pb-1">
+                                                    <div className="px-4 pt-3 pb-0.5">
+                                                        {item.score != null && (
+                                                            <p className="text-[#46d369] text-[11px] font-bold leading-none mb-1.5">{Math.round(item.score * 10)}% Match</p>
+                                                        )}
                                                         <p className="text-white text-[13px] font-medium leading-tight truncate">{item.title}</p>
                                                     </div>
                                                     <div className="flex items-center justify-between px-4 pb-3">
