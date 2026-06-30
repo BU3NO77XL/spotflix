@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
       name: profile.full_name,
       role: profile.role,
       avatarUrl: profile.avatar_url,
+      createdAt: profile.created_at,
       preferences: profile.preferences
         ? {
             avatarIndex: profile.preferences.avatar_index,

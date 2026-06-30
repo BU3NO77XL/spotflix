@@ -251,7 +251,7 @@ export default function Header() {
                                                     <p className="text-gray-400 text-sm">{userData?.email || 'usuario@email.com'}</p>
                                                 </div>
                                                 <div className="py-2">
-                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => { setUserDropdownOpen(false); router.push('/profile'); }}>
                                                         <span aria-hidden>{renderUserIcon('Perfil')}</span>
                                                         <span>Perfil</span>
                                                     </button>
