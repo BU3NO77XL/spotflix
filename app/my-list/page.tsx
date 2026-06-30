@@ -116,18 +116,18 @@ export default function MyList() {
             const movie = movies.find(m => m.id === item.movie_id);
             return movie ? { ...movie, listItemId: item.id } : null;
         }).filter(Boolean) as (Movie & { listItemId: string })[],
-        ...watchlistData.items.map((item: { id: number; tmdbId: number; title: string; mediaType: string; posterUrl?: string | null; backdropUrl?: string | null }) => {
-            const movie = movies.find((m: Movie) => Number(m.tmdb_id) === item.tmdbId);
+        ...watchlistData.items.map((item: { id: number; tmdb_id: number; title: string; media_type: string; poster_url?: string | null; backdrop_url?: string | null }) => {
+            const movie = movies.find((m: Movie) => Number(m.tmdb_id) === item.tmdb_id);
             if (movie) return { ...movie, listItemId: `api_${item.id}` };
-            const normalizedType = item.mediaType === 'tv' ? 'series' : item.mediaType;
+            const normalizedType = item.media_type === 'tv' ? 'series' : item.media_type;
             return {
                 id: `api_${item.id}`,
-                tmdb_id: item.tmdbId,
+                tmdb_id: item.tmdb_id,
                 title: item.title,
                 type: (normalizedType === 'series' ? 'series' : 'movie') as 'movie' | 'series',
                 year: new Date().getFullYear(),
-                poster_url: item.posterUrl || '',
-                backdrop_url: item.backdropUrl || '',
+                poster_url: item.poster_url || '',
+                backdrop_url: item.backdrop_url || '',
                 genre: [] as string[],
                 listItemId: `api_${item.id}`,
             } as Movie & { listItemId: string };
@@ -153,7 +153,7 @@ export default function MyList() {
     const currentList = searchQuery
         ? baseList.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()))
         : baseList;
-    const watchlistTmdbIds = new Set(watchlistData.items.map((item: { tmdbId: number }) => item.tmdbId));
+    const watchlistTmdbIds = new Set(watchlistData.items.map((item: { tmdb_id: number }) => item.tmdb_id));
 
     useEffect(() => {
         const items = currentList.map(m => ({ tmdbId: Number(m.tmdb_id), type: m.type }));

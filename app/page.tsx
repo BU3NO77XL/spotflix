@@ -303,7 +303,7 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [rawWatchHistory, movies]);
 
-  const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdbId));
+  const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdb_id));
   const selectedMovieInList = selectedMovie ? watchlistTmdbIds.has(Number(selectedMovie.tmdb_id)) : false;
 
   const addToListMutation = useMutation({

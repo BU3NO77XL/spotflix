@@ -611,7 +611,7 @@ function WatchContent() {
     });
 
     const movie = movieById || movieByTmdb;
-    const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdbId));
+    const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdb_id));
     const isInWatchlist = movie && movie.tmdb_id ? watchlistTmdbIds.has(Number(movie.tmdb_id)) : false;
 
     useEffect(() => {
@@ -651,7 +651,7 @@ function WatchContent() {
             .then(r => r.json())
             .then(data => {
                 const items = data.items || [];
-                const match = items.find((i: any) => Number(i.tmdbId) === Number(movie.tmdb_id) && i.mediaType === movie.type);
+                const match = items.find((i: any) => Number(i.tmdb_id) === Number(movie.tmdb_id) && i.media_type === movie.type);
                 if (match && match.seasonNumber > 0 && match.episodeNumber > 0) {
                     setSavedHistory({ seasonNumber: match.seasonNumber, episodeNumber: match.episodeNumber });
                 }
