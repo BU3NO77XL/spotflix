@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import NetflixAvatar from '@/components/NetflixAvatar';
+import { AVATAR_COUNT } from '@/lib/avatars';
 
-// Lista de gêneros populares de filmes e séries
 const POPULAR_GENRES = [
   'Ação',
   'Aventura',
@@ -22,15 +22,16 @@ const POPULAR_GENRES = [
   'Crime'
 ];
 
+const INITIAL_AVATARS = 6;
+
 export default function PreferencesPage() {
   const router = useRouter();
 
-  // Estados para a seleção de avatar e gêneros
   const [selectedAvatar, setSelectedAvatar] = useState(0);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [userName, setUserName] = useState('');
+  const [showAllAvatars, setShowAllAvatars] = useState(false);
 
-  // Carregar informações do usuário
   useEffect(() => {
     const userInfo = localStorage.getItem('userBasicInfo');
     if (userInfo) {
@@ -39,7 +40,6 @@ export default function PreferencesPage() {
     }
   }, []);
 
-  // Função para finalizar o processo de cadastro
   const handleFinish = async () => {
     if (selectedGenres.length < 3) {
       toast.error('Por favor, selecione pelo menos 3 gêneros.');
@@ -94,7 +94,6 @@ export default function PreferencesPage() {
     }
   };
 
-  // Função para selecionar/deselecionar um gênero
   const toggleGenre = (genre: string) => {
     if (selectedGenres.includes(genre)) {
       setSelectedGenres(selectedGenres.filter(g => g !== genre));
@@ -105,22 +104,17 @@ export default function PreferencesPage() {
     }
   };
 
-  // Função para selecionar um avatar
   const selectAvatar = (index: number) => {
     setSelectedAvatar(index);
   };
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#121212]">
-      {/* Fundo igual à home */}
       <div className="absolute inset-0 z-0 bg-[#121212]" />
 
-      {/* Conteúdo Principal */}
       <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Área de Conteúdo */}
         <div className="flex-1 px-6 pb-12 pt-12">
           <div className="max-w-4xl mx-auto">
-            {/* Título Principal */}
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
                 Olá, {userName || 'usuário'}!
@@ -130,7 +124,6 @@ export default function PreferencesPage() {
               </p>
             </div>
 
-            {/* Seleção de Avatar */}
             <div className="mb-12">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xl font-semibold text-white">Escolha seu avatar</h3>
@@ -138,8 +131,8 @@ export default function PreferencesPage() {
                   Passo 1 de 2
                 </span>
               </div>
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
-                {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                {Array.from({ length: INITIAL_AVATARS }, (_, i) => i).map((index) => (
                   <button
                     key={index}
                     onClick={() => selectAvatar(index)}
@@ -151,10 +144,15 @@ export default function PreferencesPage() {
                     <NetflixAvatar selectedIndex={index} className="w-full h-full" />
                   </button>
                 ))}
+                <button
+                  onClick={() => setShowAllAvatars(true)}
+                  className="aspect-square rounded-xl overflow-hidden ring-1 ring-white/10 hover:ring-white/30 transition-all flex items-center justify-center bg-white/5 hover:bg-white/10"
+                >
+                  <span className="text-sm text-gray-400 font-medium">+{AVATAR_COUNT - INITIAL_AVATARS}</span>
+                </button>
               </div>
             </div>
 
-            {/* Seleção de Gêneros */}
             <div className="mb-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div>
@@ -200,7 +198,6 @@ export default function PreferencesPage() {
               </div>
             </div>
 
-            {/* Botão Finalizar */}
             <div className="flex justify-center mt-8">
               <button
                 onClick={handleFinish}
@@ -213,7 +210,6 @@ export default function PreferencesPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="py-6 px-6 border-t border-white/5">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -237,6 +233,39 @@ export default function PreferencesPage() {
           </div>
         </div>
       </div>
+
+      {showAllAvatars && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80" onClick={() => setShowAllAvatars(false)} />
+          <div className="relative bg-[#1a1a1a] rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h3 className="text-xl font-semibold text-white">Escolha seu avatar</h3>
+              <button
+                onClick={() => setShowAllAvatars(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              >
+                <X size={18} className="text-white" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
+                {Array.from({ length: AVATAR_COUNT }, (_, i) => i).map((index) => (
+                  <button
+                    key={index}
+                    onClick={() => { selectAvatar(index); setShowAllAvatars(false); }}
+                    className={`aspect-square rounded-xl overflow-hidden transition-all ${selectedAvatar === index
+                        ? 'ring-4 ring-[#1DB954]'
+                        : 'ring-1 ring-white/10 hover:ring-white/30'
+                      }`}
+                  >
+                    <NetflixAvatar selectedIndex={index} className="w-full h-full" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
