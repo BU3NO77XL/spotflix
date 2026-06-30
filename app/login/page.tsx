@@ -203,7 +203,7 @@ export default function LoginPage() {
             border: '1px solid rgba(255, 255, 255, 0.05)'
           }}
         >
-          {/* Brand Logo */}
+          {/* Brand Logo
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1DB954] flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
@@ -215,6 +215,7 @@ export default function LoginPage() {
               </h1>
             </div>
           </div>
+          */}
 
           {/* Toggle entre Login e Cadastro */}
           <div className="flex gap-2 mb-6 p-1 bg-white/5 rounded-xl">
