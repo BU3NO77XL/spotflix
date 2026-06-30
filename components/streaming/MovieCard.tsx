@@ -191,8 +191,8 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                         if (isComplete) {
                             return <span className="bg-[#46d369]/20 text-[#46d369] text-[10px] px-1.5 py-0.5 rounded font-bold">Completo</span>;
                         }
-                        if (movie.total_episodes) {
-                            return <span className="text-gray-400 text-[10px]">Ep. {en}/{movie.total_episodes}</span>;
+                        if (avgEp > 0) {
+                            return <span className="text-gray-400 text-[10px]">Ep. {en}/{avgEp}</span>;
                         }
                         if (movie.total_seasons) {
                             return <span className="text-gray-400 text-[10px]">T{sn}/{movie.total_seasons}</span>;
