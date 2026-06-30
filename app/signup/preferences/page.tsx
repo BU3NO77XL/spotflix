@@ -132,7 +132,12 @@ export default function PreferencesPage() {
                 </span>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-                {Array.from({ length: INITIAL_AVATARS }, (_, i) => i).map((index) => (
+                {(() => {
+                  if (selectedAvatar < INITIAL_AVATARS) return Array.from({ length: INITIAL_AVATARS }, (_, i) => i);
+                  const indices = Array.from({ length: INITIAL_AVATARS - 1 }, (_, i) => i);
+                  indices.push(selectedAvatar);
+                  return indices;
+                })().map((index) => (
                   <button
                     key={index}
                     onClick={() => selectAvatar(index)}

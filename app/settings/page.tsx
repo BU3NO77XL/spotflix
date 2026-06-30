@@ -194,7 +194,13 @@ export default function SettingsPage() {
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-6">
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-4">
-              {Array.from({ length: showAllAvatars ? AVATAR_COUNT : INITIAL_AVATARS }, (_, i) => i).map((index) => (
+              {(() => {
+                if (showAllAvatars) return Array.from({ length: AVATAR_COUNT }, (_, i) => i);
+                if (selectedAvatar < INITIAL_AVATARS) return Array.from({ length: INITIAL_AVATARS }, (_, i) => i);
+                const indices = Array.from({ length: INITIAL_AVATARS - 1 }, (_, i) => i);
+                indices.push(selectedAvatar);
+                return indices;
+              })().map((index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedAvatar(index)}
