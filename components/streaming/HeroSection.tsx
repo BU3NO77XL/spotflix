@@ -90,14 +90,14 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
         if (isInitialMount.current) isInitialMount.current = false;
     }, [currentIndex, featuredMovies, logosCache]);
 
-    // 3. Auto-rotation with high-performance interval
+    // 3. Auto-rotation with smooth crossfade every 12 seconds
     useEffect(() => {
         if (featuredMovies?.length <= 1) return;
 
         const interval = setInterval(() => {
             setDirection(1);
             setCurrentIndex((prev) => (prev + 1) % featuredMovies.length);
-        }, 300000); // 5 minutes interval for relaxed UX
+        }, 12000); // 12 seconds for dynamic feel
 
         return () => clearInterval(interval);
     }, [featuredMovies?.length]);
