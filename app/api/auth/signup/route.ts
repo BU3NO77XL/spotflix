@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { hashPassword } from '@/lib/auth';
 import { createSession } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
@@ -20,28 +19,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Este email já está em uso.' }, { status: 409 });
   }
 
-  const authId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const passwordHash = hashPassword(password);
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
 
-  const { data: profile, error } = await supabaseAdmin
+  if (authError) {
+    return NextResponse.json({ error: 'Erro ao criar conta.' }, { status: 500 });
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .insert({
-      auth_id: authId,
+      auth_id: authData.user.id,
       email,
       full_name: name,
-      password_hash: passwordHash,
       role: 'client',
     })
     .select()
     .single();
 
-  if (error || !profile) {
+  if (profileError || !profile) {
+    await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
     return NextResponse.json({ error: 'Erro ao criar conta.' }, { status: 500 });
   }
 
-  await createSession(profile.id);
+  await createSession(email, password);
 
   return NextResponse.json({
-    user: { id: profile.id, name: profile.full_name, email: profile.email },
+    user: {
+      id: profile.id,
+      name: profile.full_name,
+      email: profile.email,
+      role: profile.role,
+      avatarUrl: profile.avatar_url,
+      preferences: null,
+    },
   }, { status: 201 });
 }

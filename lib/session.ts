@@ -1,51 +1,59 @@
-import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
-const secretKey = process.env.JWT_SECRET || 'super-secret-fallback-key-spotflix-2026';
-const key = new TextEncoder().encode(secretKey);
-
-export async function encrypt(payload: any) {
-  return await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d') // Sessão de 7 dias
-    .sign(key);
+function getExpires() {
+  return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 }
 
-export async function decrypt(input: string): Promise<any> {
-  try {
-    const { payload } = await jwtVerify(input, key, {
-      algorithms: ['HS256'],
-    });
-    return payload;
-  } catch (error) {
-    return null;
+export async function createSession(email: string, password: string) {
+  const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error || !data.session) {
+    throw new Error('Credenciais inválidas.');
   }
-}
 
-export async function createSession(userId: number) {
-  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  const session = await encrypt({ userId, expires });
-  
   const cookieStore = await cookies();
-  cookieStore.set('session', session, {
-    expires,
+  const expires = getExpires();
+
+  cookieStore.set('sb-access-token', data.session.access_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
+    expires,
+  });
+
+  cookieStore.set('sb-refresh-token', data.session.refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    expires,
   });
 }
 
 export async function clearSession() {
   const cookieStore = await cookies();
-  cookieStore.delete('session');
+  cookieStore.delete('sb-access-token');
+  cookieStore.delete('sb-refresh-token');
 }
 
 export async function getSession() {
   const cookieStore = await cookies();
-  const session = cookieStore.get('session')?.value;
-  if (!session) return null;
-  return await decrypt(session);
+  const accessToken = cookieStore.get('sb-access-token')?.value;
+  if (!accessToken) return null;
+
+  const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
+  if (error || !data.user) return null;
+
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('*')
+    .eq('auth_id', data.user.id)
+    .single();
+
+  return { user: data.user, profile };
 }

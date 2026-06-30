@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { verifyPassword } from '@/lib/auth';
 import { createSession } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
@@ -10,22 +9,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email e senha são obrigatórios.' }, { status: 400 });
   }
 
-  const { data: profile, error } = await supabaseAdmin
+  try {
+    await createSession(email, password);
+  } catch {
+    return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
+  }
+
+  const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('*, preferences(*)')
     .eq('email', email)
     .maybeSingle();
 
-  if (error || !profile || !profile.password_hash) {
-    return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
+  if (!profile) {
+    return NextResponse.json({ error: 'Perfil não encontrado.' }, { status: 404 });
   }
-
-  const isValid = verifyPassword(password, profile.password_hash);
-  if (!isValid) {
-    return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
-  }
-
-  await createSession(profile.id);
 
   return NextResponse.json({
     user: {
