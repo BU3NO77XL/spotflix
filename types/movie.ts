@@ -23,6 +23,7 @@ export interface Movie {
     total_episodes?: number;
     total_seasons?: number;
     season_episodes?: number;
+    original_language?: string;
 }
 
 export interface UserListItem {

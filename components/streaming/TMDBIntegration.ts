@@ -941,7 +941,8 @@ export const TMDBService = {
                 score: item.vote_average ? parseFloat(item.vote_average.toFixed(1)) : 8.0,
                 is_featured: (category === 'trending' && index < 3) || (category === 'trending_today' && index < 6),
                 category: category,
-                tmdb_id: item.id
+                tmdb_id: item.id,
+                original_language: item.original_language || ''
             };
         });
     },
@@ -1077,4 +1078,5 @@ interface TMDBItem {
     vote_average?: number;
     number_of_seasons?: number;
     genre_ids?: number[];
+    original_language?: string;
 }
