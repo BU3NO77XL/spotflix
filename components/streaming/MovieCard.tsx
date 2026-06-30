@@ -148,23 +148,23 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                 </div>
 
                 {/* Netflix Style Progress Bar for History items */}
-                {movie.season_number && movie.episode_number && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30 z-20 overflow-hidden">
-                        <div 
-                            className="h-full bg-[#E50914] transition-all duration-300" 
-                            style={{ 
-                                width: `${(() => {
-                                    if (!movie.season_number || !movie.episode_number) return 60;
-                                    if (movie.total_seasons && movie.season_number >= movie.total_seasons) return 100;
-                                    if (movie.total_seasons && movie.total_seasons > 0) {
-                                        return Math.min(100, Math.max(15, Math.round((((movie.season_number - 1) + (movie.episode_number / 20)) / movie.total_seasons) * 100)));
-                                    }
-                                    return 60;
-                                })()}%` 
-                            }} 
-                        />
-                    </div>
-                )}
+                {(() => {
+                    const sn = movie.season_number;
+                    const en = movie.episode_number;
+                    if (!sn || !en) return null;
+                    const avgEp = movie.total_episodes && movie.total_seasons ? Math.ceil(movie.total_episodes / movie.total_seasons) : 0;
+                    const lastSeason = movie.total_seasons ? sn >= movie.total_seasons : false;
+                    const lastEp = avgEp > 0 ? en >= avgEp : false;
+                    const isComplete = lastSeason && lastEp;
+                    const pct = isComplete ? 100 : (movie.total_seasons && movie.total_seasons > 0
+                        ? Math.min(100, Math.max(15, Math.round((((sn - 1) + (en / (avgEp || 20))) / movie.total_seasons) * 100)))
+                        : 60);
+                    return (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30 z-20 overflow-hidden">
+                            <div className="h-full bg-[#E50914] transition-all duration-300" style={{ width: `${pct}%` }} />
+                        </div>
+                    );
+                })()}
             </div>
 
             {/* Info permanente abaixo do poster (ano, registro e progresso de episódios) */}
@@ -180,21 +180,25 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                             </span>
                         )}
                     </div>
-                    {movie.season_number && movie.episode_number ? (
-                        (movie.total_seasons && movie.season_number >= movie.total_seasons) || (movie.total_episodes && movie.episode_number >= movie.total_episodes) ? (
-                            <span className="bg-[#46d369]/20 text-[#46d369] text-[10px] px-1.5 py-0.5 rounded font-bold">
-                                Completo
-                            </span>
-                        ) : movie.total_episodes ? (
-                            <span className="text-gray-400 text-[10px]">
-                                Ep. {movie.episode_number}/{movie.total_episodes}
-                            </span>
-                        ) : movie.total_seasons ? (
-                            <span className="text-gray-400 text-[10px]">
-                                T{movie.season_number}/{movie.total_seasons}
-                            </span>
-                        ) : null
-                    ) : null}
+                    {(() => {
+                        if (!movie.season_number || !movie.episode_number) return null;
+                        const sn = movie.season_number;
+                        const en = movie.episode_number;
+                        const avgEp = movie.total_episodes && movie.total_seasons ? Math.ceil(movie.total_episodes / movie.total_seasons) : 0;
+                        const lastSeason = movie.total_seasons ? sn >= movie.total_seasons : false;
+                        const lastEp = avgEp > 0 ? en >= avgEp : false;
+                        const isComplete = lastSeason && lastEp;
+                        if (isComplete) {
+                            return <span className="bg-[#46d369]/20 text-[#46d369] text-[10px] px-1.5 py-0.5 rounded font-bold">Completo</span>;
+                        }
+                        if (movie.total_episodes) {
+                            return <span className="text-gray-400 text-[10px]">Ep. {en}/{movie.total_episodes}</span>;
+                        }
+                        if (movie.total_seasons) {
+                            return <span className="text-gray-400 text-[10px]">T{sn}/{movie.total_seasons}</span>;
+                        }
+                        return null;
+                    })()}
                 </div>
             )}
 
