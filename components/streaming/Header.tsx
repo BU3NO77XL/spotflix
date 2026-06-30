@@ -32,6 +32,7 @@ export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [mounted, setMounted] = useState(false);
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -43,6 +44,8 @@ export default function Header() {
         return stored ? JSON.parse(stored) : null;
       } catch { return null; }
     });
+
+    useEffect(() => { setMounted(true); }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -225,7 +228,9 @@ export default function Header() {
 
                             {/* User Dropdown */}
                             <div className="relative flex items-center gap-2">
-                                {userData ? (
+                                {!mounted ? (
+                                    <div className="w-9 h-9 rounded-full bg-white/10" aria-hidden />
+                                ) : userData ? (
                                     <>
                                     <button
                                         onClick={() => {
