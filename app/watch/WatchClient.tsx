@@ -652,8 +652,8 @@ function WatchContent() {
             .then(data => {
                 const items = data.items || [];
                 const match = items.find((i: any) => Number(i.tmdb_id) === Number(movie.tmdb_id) && i.media_type === movie.type);
-                if (match && match.seasonNumber > 0 && match.episodeNumber > 0) {
-                    setSavedHistory({ seasonNumber: match.seasonNumber, episodeNumber: match.episodeNumber });
+                if (match && match.season_number > 0 && match.episode_number > 0) {
+                    setSavedHistory({ seasonNumber: match.season_number, episodeNumber: match.episode_number });
                 }
             })
             .catch(() => {});

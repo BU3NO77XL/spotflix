@@ -21,13 +21,17 @@ import { toast } from 'sonner';
 
 interface WatchHistoryItem {
   id: number;
-  tmdbId: number;
-  mediaType: string;
-  seasonNumber: number;
-  episodeNumber: number;
+  tmdb_id: number;
+  media_type: string;
+  season_number: number;
+  episode_number: number;
+  total_seasons: number;
+  total_episodes: number;
   title: string;
-  progressPercent: number;
-  watchedAt: string;
+  poster_url: string;
+  backdrop_url: string;
+  progress_percent: number;
+  watched_at: string;
 }
 
 export default function Home() {
@@ -243,22 +247,22 @@ export default function Home() {
     let cancelled = false;
 
     const initialMapped: Movie[] = historyItems.map((h: any) => {
-      const match = allMovies.find(m => Number(m.tmdb_id) === Number(h.tmdbId));
+      const match = allMovies.find(m => Number(m.tmdb_id) === Number(h.tmdb_id));
       return {
-        id: match?.id || String(h.tmdbId),
-        tmdb_id: h.tmdbId,
+        id: match?.id || String(h.tmdb_id),
+        tmdb_id: h.tmdb_id,
         title: match?.title || h.title,
-        type: (h.mediaType || match?.type || 'movie') as 'movie' | 'series',
+        type: (h.media_type || match?.type || 'movie') as 'movie' | 'series',
         year: match?.year || 0,
-        poster_url: match?.poster_url || h.posterUrl || '',
-        backdrop_url: match?.backdrop_url || h.backdropUrl || '',
+        poster_url: match?.poster_url || h.poster_url || '',
+        backdrop_url: match?.backdrop_url || h.backdrop_url || '',
         genre: match?.genre || [],
         score: match?.score,
         rating: match?.rating,
-        season_number: h.mediaType === 'series' ? h.seasonNumber : undefined,
-        episode_number: h.mediaType === 'series' ? h.episodeNumber : undefined,
-        total_seasons: h.mediaType === 'series' ? h.totalSeasons : undefined,
-        total_episodes: h.mediaType === 'series' ? h.totalEpisodes : undefined,
+        season_number: h.media_type === 'series' ? h.season_number : undefined,
+        episode_number: h.media_type === 'series' ? h.episode_number : undefined,
+        total_seasons: h.media_type === 'series' ? h.total_seasons : undefined,
+        total_episodes: h.media_type === 'series' ? h.total_episodes : undefined,
       };
     });
     setContinueWatching(initialMapped);
