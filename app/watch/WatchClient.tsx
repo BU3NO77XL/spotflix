@@ -2271,7 +2271,7 @@ function WatchContent() {
                         <SectionSkeleton />
                     ) : similarMovies.length > 0 && (
                         <section className="py-8" aria-label="Títulos semelhantes a este filme">
-                            <h2 className="text-white text-xl md:text-2xl font-semibold px-2 mb-3">Títulos Semelhantes</h2>
+                            <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight px-2 mb-3">Títulos Semelhantes</h2>
                             <div className="relative -mx-4 sm:-mx-8 lg:-mx-12">
                                 <Carousel
                                     title="Títulos Semelhantes"

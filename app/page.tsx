@@ -356,8 +356,7 @@ export default function Home() {
     return [...pool]
       .filter(m => !m.synopsis || m.synopsis.length <= 250)
       .sort(() => Math.random() - 0.5);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movies.length]); // só re-embaralha quando a lista de filmes muda
+  }, [movies]);
   const trendingMovies = movies.filter((m: Movie) => m.category === 'trending');
   const topRatedMovies = movies.filter((m: Movie) => m.category === 'top_rated');
   const comingSoonMovies = movies.filter((m: Movie) => m.category === 'coming_soon');
