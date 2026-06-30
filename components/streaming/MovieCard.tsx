@@ -152,12 +152,13 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                     const sn = movie.season_number;
                     const en = movie.episode_number;
                     if (!sn || !en) return null;
-                    const avgEp = movie.total_episodes && movie.total_seasons ? Math.ceil(movie.total_episodes / movie.total_seasons) : 0;
-                    const lastSeason = movie.total_seasons ? sn >= movie.total_seasons : false;
-                    const lastEp = avgEp > 0 ? en >= avgEp : false;
-                    const isComplete = lastSeason && lastEp;
-                    const pct = isComplete ? 100 : (movie.total_seasons && movie.total_seasons > 0
-                        ? Math.min(100, Math.max(15, Math.round((((sn - 1) + (en / (avgEp || 20))) / movie.total_seasons) * 100)))
+                    const totalEp = movie.total_episodes || 0;
+                    const totalSeasons = movie.total_seasons || 0;
+                    const avgEp = totalEp && totalSeasons ? Math.ceil(totalEp / totalSeasons) : 0;
+                    const cumulativeEp = avgEp > 0 ? (sn - 1) * avgEp + en : 0;
+                    const isComplete = totalEp > 0 && cumulativeEp >= totalEp;
+                    const pct = isComplete ? 100 : (totalEp > 0 && cumulativeEp > 0
+                        ? Math.min(100, Math.max(10, Math.round((cumulativeEp / totalEp) * 100)))
                         : 60);
                     return (
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30 z-20 overflow-hidden">
@@ -184,18 +185,19 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                         if (!movie.season_number || !movie.episode_number) return null;
                         const sn = movie.season_number;
                         const en = movie.episode_number;
-                        const avgEp = movie.total_episodes && movie.total_seasons ? Math.ceil(movie.total_episodes / movie.total_seasons) : 0;
-                        const lastSeason = movie.total_seasons ? sn >= movie.total_seasons : false;
-                        const lastEp = avgEp > 0 ? en >= avgEp : false;
-                        const isComplete = lastSeason && lastEp;
+                        const totalEp = movie.total_episodes || 0;
+                        const totalSeasons = movie.total_seasons || 0;
+                        const avgEp = totalEp && totalSeasons ? Math.ceil(totalEp / totalSeasons) : 0;
+                        const cumulativeEp = avgEp > 0 ? (sn - 1) * avgEp + en : 0;
+                        const isComplete = totalEp > 0 && cumulativeEp >= totalEp;
                         if (isComplete) {
                             return <span className="bg-[#46d369]/20 text-[#46d369] text-[10px] px-1.5 py-0.5 rounded font-bold">Completo</span>;
                         }
-                        if (avgEp > 0) {
-                            return <span className="text-gray-400 text-[10px]">Ep. {en}/{avgEp}</span>;
+                        if (totalEp > 0 && cumulativeEp > 0) {
+                            return <span className="text-gray-400 text-[10px]">Ep. {cumulativeEp}/{totalEp}</span>;
                         }
-                        if (movie.total_seasons) {
-                            return <span className="text-gray-400 text-[10px]">T{sn}/{movie.total_seasons}</span>;
+                        if (totalSeasons > 0) {
+                            return <span className="text-gray-400 text-[10px]">T{sn}/{totalSeasons}</span>;
                         }
                         return null;
                     })()}
