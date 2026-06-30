@@ -9,19 +9,19 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npm run db:generate && next build",
-    "postinstall": "npm run db:generate",
+    "build": "pnpm db:generate && next build",
+    "postinstall": "pnpm db:generate",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prisma": "prisma",
-    "db:generate": "prisma generate && prisma generate --schema=prisma/schema.supabase.prisma",
+    "db:generate": "prisma generate && prisma generate --config=prisma.config.supabase.ts",
     "db:generate:sqlite": "prisma generate",
-    "db:generate:supabase": "prisma generate --schema=prisma/schema.supabase.prisma",
+    "db:generate:supabase": "prisma generate --config=prisma.config.supabase.ts",
     "db:push": "prisma db push",
     "db:push:sqlite": "prisma db push",
-    "db:push:supabase": "prisma db push --schema=prisma/schema.supabase.prisma"
+    "db:push:supabase": "prisma db push --config=prisma.config.supabase.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",
