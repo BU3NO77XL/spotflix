@@ -36,18 +36,13 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    const [userData, setUserData] = useState<{ name: string; email: string; avatarUrl?: string | null; preferences?: { avatarIndex?: number; genres?: string } | null } | null>(null);
-
-    useEffect(() => {
-      const stored = localStorage.getItem('userBasicInfo');
-      if (stored) {
-        try {
-          setUserData(JSON.parse(stored));
-        } catch {}
-      } else {
-        setUserData(null);
-      }
-    }, [pathname]);
+    const [userData, setUserData] = useState<{ name: string; email: string; avatarUrl?: string | null; preferences?: { avatarIndex?: number; genres?: string } | null } | null>(() => {
+      try {
+        if (typeof window === 'undefined') return null;
+        const stored = localStorage.getItem('userBasicInfo');
+        return stored ? JSON.parse(stored) : null;
+      } catch { return null; }
+    });
 
     useEffect(() => {
         const handleScroll = () => {

@@ -50,19 +50,27 @@ export default function Home() {
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [genreNames, setGenreNames] = useState<string[]>([]);
   const [recommendationsTimestamp, setRecommendationsTimestamp] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(() => {
+    try {
+      if (typeof window === 'undefined') return null;
+      const stored = localStorage.getItem('userBasicInfo');
+      return stored ? JSON.parse(stored).id : null;
+    } catch { return null; }
+  });
 
   // Busca perfil + preferências do banco via API
   useEffect(() => {
-    const stored = localStorage.getItem('userBasicInfo');
-    if (!stored) return;
+    let localId: number | null = null;
     try {
+      const stored = localStorage.getItem('userBasicInfo');
+      if (!stored) return;
       const local = JSON.parse(stored);
       setUserName(local.name || '');
+      localId = local.id;
+    } catch { /* silent */ }
 
-      if (local.id) {
-        setUserId(local.id);
-        fetch(`/api/auth/profile?userId=${local.id}`)
+    if (localId) {
+        fetch(`/api/auth/profile?userId=${localId}`)
           .then((res) => res.ok ? res.json() : null)
           .then((data) => {
             if (data?.user) {
@@ -78,7 +86,6 @@ export default function Home() {
           })
           .catch(() => {});
       }
-    } catch {}
   }, []);
 
   useEffect(() => {

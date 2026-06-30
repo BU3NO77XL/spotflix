@@ -23,37 +23,38 @@ const INITIAL_AVATARS = 6;
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState<number | null>(null);
-  const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
+  const [userId, setUserId] = useState<number | null>(() => {
+    try { if (typeof window === 'undefined') return null; const s = localStorage.getItem('userBasicInfo'); return s ? JSON.parse(s).id : null; } catch { return null; }
+  });
+  const [userName, setUserName] = useState(() => {
+    try { if (typeof window === 'undefined') return ''; const s = localStorage.getItem('userBasicInfo'); return s ? JSON.parse(s).name || '' : ''; } catch { return ''; }
+  });
+  const [userEmail, setUserEmail] = useState(() => {
+    try { if (typeof window === 'undefined') return ''; const s = localStorage.getItem('userBasicInfo'); return s ? JSON.parse(s).email || '' : ''; } catch { return ''; }
+  });
   const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState('');
+  const [nameInput, setNameInput] = useState(userName);
   const [savingName, setSavingName] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(0);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedAvatar, setSelectedAvatar] = useState(() => {
+    try { if (typeof window === 'undefined') return 0; const s = localStorage.getItem('userBasicInfo'); return s ? JSON.parse(s).preferences?.avatarIndex ?? 0 : 0; } catch { return 0; }
+  });
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(() => {
+    try { if (typeof window === 'undefined') return []; const s = localStorage.getItem('userBasicInfo'); return s ? JSON.parse(s).preferences?.genres || [] : []; } catch { return []; }
+  });
   const [showAllAvatars, setShowAllAvatars] = useState(false);
-  const [contentLang, setContentLang] = useState('pt-BR');
-  const [autoPlay, setAutoPlay] = useState(true);
+  const [contentLang, setContentLang] = useState(() => {
+    try { if (typeof window === 'undefined') return 'pt-BR'; return localStorage.getItem('contentLang') || 'pt-BR'; } catch { return 'pt-BR'; }
+  });
+  const [autoPlay, setAutoPlay] = useState(() => {
+    try { if (typeof window === 'undefined') return true; return localStorage.getItem('autoPlay') !== 'false'; } catch { return true; }
+  });
   const [savingPrefs, setSavingPrefs] = useState(false);
 
   useEffect(() => {
-    const raw = localStorage.getItem('userBasicInfo');
-    if (!raw) {
+    if (!userId) {
       router.push('/login');
-      return;
     }
-    const info = JSON.parse(raw);
-    setUserId(info.id);
-    setUserName(info.name || '');
-    setUserEmail(info.email || '');
-    setNameInput(info.name || '');
-    setSelectedAvatar(info.preferences?.avatarIndex ?? 0);
-    setSelectedGenres(info.preferences?.genres || []);
-    const savedLang = localStorage.getItem('contentLang') || 'pt-BR';
-    setContentLang(savedLang);
-    const savedAutoPlay = localStorage.getItem('autoPlay') !== 'false';
-    setAutoPlay(savedAutoPlay);
-  }, [router]);
+  }, [userId, router]);
 
   const handleSaveName = async () => {
     if (!userId || !nameInput.trim()) return;

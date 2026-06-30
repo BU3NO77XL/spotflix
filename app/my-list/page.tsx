@@ -23,8 +23,20 @@ export default function MyList() {
     const [modalOpen, setModalOpen] = useState(false);
     const [loginModalOpen, setLoginModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'series' | 'movies'>('movies');
-    const [userId, setUserId] = useState<number | null>(null);
-    const [userName, setUserName] = useState('');
+    const [userId, setUserId] = useState<number | null>(() => {
+        try {
+            if (typeof window === 'undefined') return null;
+            const stored = localStorage.getItem('userBasicInfo');
+            return stored ? JSON.parse(stored).id : null;
+        } catch { return null; }
+    });
+    const [userName, setUserName] = useState(() => {
+        try {
+            if (typeof window === 'undefined') return '';
+            const stored = localStorage.getItem('userBasicInfo');
+            return stored ? JSON.parse(stored).name || '' : '';
+        } catch { return ''; }
+    });
     const [descIndex, setDescIndex] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [netflixIds, setNetflixIds] = useState<Set<number>>(new Set());
@@ -36,20 +48,11 @@ export default function MyList() {
     const [ratings, setRatings] = useState<Record<string, 'love' | 'like' | 'dislike'>>({});
 
     useEffect(() => {
-        const stored = localStorage.getItem('userBasicInfo');
-        if (stored) {
-            try {
-                const data = JSON.parse(stored);
-                if (data.id) {
-                    setUserId(data.id);
-                    setUserName(data.name || '');
-                    return;
-                }
-            } catch { /* ignore */ }
+        if (!userId) {
+            router.replace('/');
+            setTimeout(() => window.dispatchEvent(new Event('requireLogin')), 100);
         }
-        router.replace('/');
-        setTimeout(() => window.dispatchEvent(new Event('requireLogin')), 100);
-    }, [router]);
+    }, [userId, router]);
 
     useEffect(() => {
         const handleRequireLogin = () => setLoginModalOpen(true);
