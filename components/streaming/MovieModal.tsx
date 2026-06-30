@@ -254,7 +254,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                         onClick={onClose}
                         className="fixed inset-0 bg-[#000]/78"
                         style={{
-                            background: 'radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.08), transparent 34%), rgba(0, 0, 0, 0.78)'
+                            background: 'radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.06), transparent 34%), rgba(0, 0, 0, 0.88)'
                         }}
                         {...overlayFade}
                     />
@@ -301,6 +301,9 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                 }}
                                 {...imageReveal}
                             />
+
+                            {/* Full Backdrop Overlay */}
+                            <div className="absolute inset-0 bg-black/55 z-10" />
 
                             {/* Bottom Fade */}
                             <div className="absolute inset-x-0 bottom-0 h-[180px] bg-linear-to-t from-[#181818] via-[#181818]/94 to-transparent z-10" />
