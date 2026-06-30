@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+export async function PATCH(request: NextRequest) {
+  const body = await request.json();
+  const { userId, name } = body;
+
+  if (!userId) {
+    return NextResponse.json({ error: 'userId é obrigatório.' }, { status: 400 });
+  }
+
+  const updates: Record<string, any> = {};
+  if (name) updates.full_name = name;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'Nenhum campo para atualizar.' }, { status: 400 });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .update(updates)
+    .eq('id', Number(userId))
+    .select()
+    .single();
+
+  if (error || !data) {
+    return NextResponse.json({ error: 'Erro ao atualizar perfil.' }, { status: 500 });
+  }
+
+  return NextResponse.json({ user: { id: data.id, name: data.full_name, email: data.email } });
+}
+
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');
 

@@ -251,7 +251,7 @@ export default function Header() {
                                             />
                                             <div className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md">
                                                 <div className="p-4 border-b border-white/10">
-                                                    <p className="text-white font-semibold">Minha Conta</p>
+                                                    <p className="text-white font-semibold">{userData?.name || 'Minha Conta'}</p>
                                                     <p className="text-gray-400 text-sm">{userData?.email || 'usuario@email.com'}</p>
                                                 </div>
                                                 <div className="py-2">
@@ -259,7 +259,7 @@ export default function Header() {
                                                         <span aria-hidden>{renderUserIcon('Perfil')}</span>
                                                         <span>Perfil</span>
                                                     </button>
-                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
+                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => { setUserDropdownOpen(false); router.push('/settings'); }}>
                                                         <span aria-hidden>{renderUserIcon('Configurações')}</span>
                                                         <span>Configurações</span>
                                                     </button>
