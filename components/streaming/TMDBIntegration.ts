@@ -62,11 +62,11 @@ export const TMDBService = {
         }
     },
 
-    // Fetch trending content (weekly)
+    // Fetch trending content (daily)
     async fetchTrending(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                tmdbUrl('/trending/all/week', { language: 'pt-BR' }),
+                tmdbUrl('/trending/all/day', { language: 'pt-BR' }),
                 { next: { revalidate: 3600 } }
             );
             if (!response.ok) { console.warn(`Error fetching trending content: ${response.status}`); return []; }
@@ -110,11 +110,11 @@ export const TMDBService = {
         } catch (error) { console.error('Error fetching upcoming:', error); return []; }
     },
 
-    // Fetch top 10 from trending/all/week (conteudo mais variado)
+    // Fetch top 10 from trending/all/day (conteudo mais variado)
     async fetchTop10(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const response = await fetch(
-                tmdbUrl('/trending/all/week', { language: 'pt-BR' }),
+                tmdbUrl('/trending/all/day', { language: 'pt-BR' }),
                 { next: { revalidate: 3600 } }
             );
             if (!response.ok) { console.warn(`Error fetching top 10: ${response.status}`); return []; }
