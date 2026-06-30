@@ -18,6 +18,7 @@ import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 import SectionReveal from '@/components/ui/SectionReveal';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import { GENRE_NAME_TO_TMDB_ID } from '@/lib/genre-map';
+import { batchCheckPlatforms, isOnNetflixOrHbo } from '@/lib/platformCache';
 import { toast } from 'sonner';
 
 interface WatchHistoryItem {
@@ -51,6 +52,7 @@ export default function Home() {
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [genreNames, setGenreNames] = useState<string[]>([]);
   const [recommendationsTimestamp, setRecommendationsTimestamp] = useState<string | null>(null);
+  const [platformFilterReady, setPlatformFilterReady] = useState(false);
   const [userId, setUserId] = useState<number | null>(() => {
     try {
       if (typeof window === 'undefined') return null;
@@ -206,6 +208,13 @@ export default function Home() {
 
     loadTMDBData();
   }, [movies.length, isLoading, queryClient, tmdbDataLoaded]);
+
+  // Batch check platforms for all loaded movies
+  useEffect(() => {
+    if (!tmdbDataLoaded || movies.length === 0) return;
+    const allMovies = movies as Movie[];
+    batchCheckPlatforms(allMovies).then(() => setPlatformFilterReady(true));
+  }, [tmdbDataLoaded, movies.length, queryClient]);
 
   // Carrega filmes personalizados baseado nas preferências do banco
   useEffect(() => {
@@ -379,8 +388,8 @@ export default function Home() {
     },
   });
 
-  const featuredMovies = movies.filter((m: Movie) => m.is_featured);
-  const trendingTodayMovies = movies.filter((m: Movie) => m.category === 'trending_today');
+  const featuredMovies = movies.filter((m: Movie) => m.is_featured && isOnNetflixOrHbo(m));
+  const trendingTodayMovies = movies.filter((m: Movie) => m.category === 'trending_today' && isOnNetflixOrHbo(m));
 
   // Embaralha uma vez quando os filmes carregam, varia o backdrop inicial a cada visita
   const shuffledHeroMovies = useMemo(() => {
@@ -393,21 +402,21 @@ export default function Home() {
       .filter(m => !m.synopsis || m.synopsis.length <= 250)
       .sort(() => Math.random() - 0.5);
   }, [movies]);
-  const trendingMovies = movies.filter((m: Movie) => m.category === 'trending');
-  const topRatedMovies = movies.filter((m: Movie) => m.category === 'top_rated');
-  const comingSoonMovies = movies.filter((m: Movie) => m.category === 'coming_soon');
-  const recommendedMovies = movies.filter((m: Movie) => m.category === 'recommended');
-  const top10Movies = movies.filter((m: Movie) => m.category === 'top_10');
-  const actionMovies = movies.filter((m: Movie) => m.category === 'action');
-  const familyMovies = movies.filter((m: Movie) => m.category === 'family');
-  const sciFiMovies = movies.filter((m: Movie) => m.category === 'scifi');
-  const comedyMovies = movies.filter((m: Movie) => m.category === 'comedy');
-  const romanceMovies = movies.filter((m: Movie) => m.category === 'romance');
-  const horrorMovies = movies.filter((m: Movie) => m.category === 'horror');
-  const animationMovies = movies.filter((m: Movie) => m.category === 'animation');
-  const seriesPopularMovies = movies.filter((m: Movie) => m.category === 'series_popular');
-  const seriesTopRatedMovies = movies.filter((m: Movie) => m.category === 'series_top_rated');
-  const personalizedMovies = movies.filter((m: Movie) => m.category === 'personalized');
+  const trendingMovies = movies.filter((m: Movie) => m.category === 'trending' && isOnNetflixOrHbo(m));
+  const topRatedMovies = movies.filter((m: Movie) => m.category === 'top_rated' && isOnNetflixOrHbo(m));
+  const comingSoonMovies = movies.filter((m: Movie) => m.category === 'coming_soon' && isOnNetflixOrHbo(m));
+  const recommendedMovies = movies.filter((m: Movie) => m.category === 'recommended' && isOnNetflixOrHbo(m));
+  const top10Movies = movies.filter((m: Movie) => m.category === 'top_10' && isOnNetflixOrHbo(m));
+  const actionMovies = movies.filter((m: Movie) => m.category === 'action' && isOnNetflixOrHbo(m));
+  const familyMovies = movies.filter((m: Movie) => m.category === 'family' && isOnNetflixOrHbo(m));
+  const sciFiMovies = movies.filter((m: Movie) => m.category === 'scifi' && isOnNetflixOrHbo(m));
+  const comedyMovies = movies.filter((m: Movie) => m.category === 'comedy' && isOnNetflixOrHbo(m));
+  const romanceMovies = movies.filter((m: Movie) => m.category === 'romance' && isOnNetflixOrHbo(m));
+  const horrorMovies = movies.filter((m: Movie) => m.category === 'horror' && isOnNetflixOrHbo(m));
+  const animationMovies = movies.filter((m: Movie) => m.category === 'animation' && isOnNetflixOrHbo(m));
+  const seriesPopularMovies = movies.filter((m: Movie) => m.category === 'series_popular' && isOnNetflixOrHbo(m));
+  const seriesTopRatedMovies = movies.filter((m: Movie) => m.category === 'series_top_rated' && isOnNetflixOrHbo(m));
+  const personalizedMovies = movies.filter((m: Movie) => m.category === 'personalized' && isOnNetflixOrHbo(m));
 
   const handleWatch = (movie: Movie) => {
     if (!userId) {
@@ -624,7 +633,7 @@ export default function Home() {
         {trendingMovies.length === 0 && topRatedMovies.length === 0 && movies.length > 0 && (
           <Carousel
             title="Todos os Filmes e Séries"
-            movies={movies}
+            movies={movies.filter(m => isOnNetflixOrHbo(m as Movie))}
             onMovieClick={handleMoreInfo}
           />
         )}
