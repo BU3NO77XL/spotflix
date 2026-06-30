@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+
+const emptyItems = { items: [] as { id: number; tmdb_id: number; title: string; media_type: string; poster_url?: string | null; backdrop_url?: string | null }[] };
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/dataClient';
@@ -78,7 +80,7 @@ export default function MyList() {
         queryFn: () => base44.entities.Movie.list(),
     });
 
-    const { data: watchlistData = { items: [] } } = useQuery({
+    const { data: watchlistData = emptyItems } = useQuery({
         queryKey: ['watchlist', userId],
         queryFn: () => fetch(`/api/watchlist?userId=${userId}`).then(r => r.json()),
         enabled: !!userId,
@@ -114,7 +116,7 @@ export default function MyList() {
         },
     });
 
-    const allItems: (Movie & { listItemId: string })[] = [
+    const allItems: (Movie & { listItemId: string })[] = useMemo(() => [
         ...userList.filter(item => item.list_type === 'favorites').map(item => {
             const movie = movies.find(m => m.id === item.movie_id);
             return movie ? { ...movie, listItemId: item.id } : null;
@@ -135,10 +137,10 @@ export default function MyList() {
                 listItemId: `api_${item.id}`,
             } as Movie & { listItemId: string };
         }) as (Movie & { listItemId: string })[],
-    ];
+    ], [userList, movies, watchlistData.items]);
 
-    const seriesList = allItems.filter(m => m.type === 'series');
-    const movieList = allItems.filter(m => m.type === 'movie');
+    const seriesList = useMemo(() => allItems.filter(m => m.type === 'series'), [allItems]);
+    const movieList = useMemo(() => allItems.filter(m => m.type === 'movie'), [allItems]);
 
     useEffect(() => {
             try {
@@ -153,9 +155,9 @@ export default function MyList() {
     }, [seriesList.length, activeTab]);
 
     const baseList = activeTab === 'series' ? seriesList : movieList;
-    const currentList = searchQuery
+    const currentList = useMemo(() => searchQuery
         ? baseList.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()))
-        : baseList;
+        : baseList, [searchQuery, baseList]);
     const watchlistTmdbIds = new Set(watchlistData.items.map((item: { tmdb_id: number }) => item.tmdb_id));
 
     useEffect(() => {
@@ -165,7 +167,11 @@ export default function MyList() {
         Promise.all(items.map(({ tmdbId, type }) =>
             checkIsOnNetflix(tmdbId, type).then(r => r ? tmdbId : null)
         )).then(results => {
-            if (!cancelled) setNetflixIds(new Set(results.filter(Boolean) as number[]));
+            if (cancelled) return;
+            const next = new Set(results.filter(Boolean) as number[]);
+            if (next.size !== netflixIds.size || ![...next].every(id => netflixIds.has(id))) {
+                setNetflixIds(next);
+            }
         });
         return () => { cancelled = true; };
     }, [currentList, activeTab]);
@@ -177,7 +183,11 @@ export default function MyList() {
         Promise.all(seriesItems.map(tmdbId =>
             checkHasNewSeason(tmdbId).then(r => r ? tmdbId : null)
         )).then(results => {
-            if (!cancelled) setNewSeasonIds(new Set(results.filter(Boolean) as number[]));
+            if (cancelled) return;
+            const next = new Set(results.filter(Boolean) as number[]);
+            if (next.size !== newSeasonIds.size || ![...next].every(id => newSeasonIds.has(id))) {
+                setNewSeasonIds(next);
+            }
         });
         return () => { cancelled = true; };
     }, [currentList, activeTab]);
