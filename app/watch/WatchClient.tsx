@@ -598,7 +598,10 @@ function WatchContent() {
         initialDataUpdatedAt: 0,
     });
 
-    const movieRaw = movieById || movieByTmdb;
+    // Override direto do filme para navegação instantânea entre similares
+    const [localMovieOverride, setLocalMovieOverride] = useState<Movie | null>(null);
+    useEffect(() => { if (!localOverride) setLocalMovieOverride(null); }, [localOverride]);
+    const movieRaw = localMovieOverride || movieById || movieByTmdb;
     // URL type tem prioridade sobre o type armazenado (corrige cache corrompido)
     const movie = movieRaw ? { ...movieRaw, type: (mediaType as 'movie' | 'series') || movieRaw.type } : null;
     const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdb_id));
@@ -1066,9 +1069,8 @@ function WatchContent() {
     };
 
     const handleSimilarMovieClick = (similarMovie: Movie) => {
-        // Verificar se temos um filme válido
         if (similarMovie && Object.keys(similarMovie).length > 0) {
-            // Navegação direta (fast-path via localOverride se já em /watch)
+            setLocalMovieOverride(similarMovie);
             navigateToWatch(similarMovie);
         }
     };
@@ -1801,6 +1803,24 @@ function WatchContent() {
                                                         onClick={() => {
                                                             if (!isCurrentMovie) {
                                                                 const clickTime = performance.now();
+
+                                                                setLocalMovieOverride({
+                                                                    id: `tmdb-${part.id}`,
+                                                                    title: part.title,
+                                                                    type: 'movie' as const,
+                                                                    year: part.release_date ? new Date(part.release_date).getFullYear() : new Date().getFullYear(),
+                                                                    rating: 'NR',
+                                                                    duration: '',
+                                                                    genre: [],
+                                                                    synopsis: '',
+                                                                    cast: [],
+                                                                    director: '',
+                                                                    poster_url: part.poster_path ? `https://image.tmdb.org/t/p/w500${part.poster_path}` : '',
+                                                                    backdrop_url: '',
+                                                                    score: 0,
+                                                                    tmdb_id: part.id,
+                                                                    category: 'trending' as const,
+                                                                });
 
                                                                 // Troca o filme LOCALMENTE — zero round-trip ao servidor
                                                                 setLocalOverride({
