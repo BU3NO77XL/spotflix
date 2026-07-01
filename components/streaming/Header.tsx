@@ -236,7 +236,14 @@ export default function Header() {
                                         }}
                                         className="flex items-center gap-2"
                                     >
-                                        <NetflixAvatar name={userData?.name || 'User'} selectedIndex={userData?.preferences?.avatarIndex ?? null} size={36} />
+                                        <div className="relative">
+                                            <NetflixAvatar name={userData?.name || 'User'} selectedIndex={userData?.preferences?.avatarIndex ?? null} size={36} />
+                                            {userData?.role === 'admin' && (
+                                                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-yellow-500 rounded-full flex items-center justify-center ring-2 ring-[#141414]">
+                                                    <Star className="w-2 h-2 text-black fill-current" />
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
                                     </button>
 

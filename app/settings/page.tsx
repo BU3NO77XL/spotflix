@@ -125,7 +125,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#121212] text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pt-24 sm:pt-28">
-        <button onClick={() => router.push('/')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
+        <button onClick={() => window.location.href = '/'} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
           <ChevronLeft className="w-5 h-5" />
           <span>Voltar</span>
         </button>

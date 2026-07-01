@@ -101,15 +101,20 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#121212] text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pt-24 sm:pt-28">
-        <button onClick={() => router.push('/')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
+        <button onClick={() => window.location.href = '/'} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
           <ChevronLeft className="w-5 h-5" />
           <span>Voltar</span>
         </button>
 
         {/* Profile Header */}
         <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8 mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="shrink-0">
+          <div className="relative shrink-0">
             <NetflixAvatar name={userName} selectedIndex={avatarIndex} size={96} />
+            {userRole === 'admin' && (
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center ring-2 ring-[#1a1a1a]">
+                <Star className="w-3 h-3 text-black fill-current" />
+              </div>
+            )}
           </div>
           <div className="flex-1 text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl font-bold mb-1">{userName || 'Usuário'}</h1>

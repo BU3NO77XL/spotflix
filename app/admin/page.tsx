@@ -208,7 +208,7 @@ export default function AdminPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="min-w-0">
-            <button onClick={() => router.push('/profile')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-3">
+            <button onClick={() => window.location.href = '/profile'} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-3">
               <ChevronLeft className="w-5 h-5" />
               <span>Voltar</span>
             </button>
