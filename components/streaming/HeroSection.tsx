@@ -280,7 +280,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
             <div 
                 className="absolute bottom-0 left-0 right-0 h-[222px] z-20 pointer-events-none"
                 style={{
-                    background: 'linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, rgba(20, 20, 20, 0.15) 12.06%, rgba(20, 20, 20, 0.35) 25.99%, rgba(20, 20, 20, 0.58) 52.22%, rgba(20, 20, 20, 1) 100%)'
+                    background: 'linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, rgba(18, 18, 18, 0.15) 12.06%, rgba(18, 18, 18, 0.35) 25.99%, rgba(18, 18, 18, 0.58) 52.22%, rgba(18, 18, 18, 1) 100%)'
                 }}
             />
         </section>

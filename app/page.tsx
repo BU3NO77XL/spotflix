@@ -384,35 +384,37 @@ export default function Home() {
     },
   });
 
-  const featuredMovies = safeMovies.filter((m: Movie) => m.is_featured && m.original_language === 'en');
-  const trendingTodayMovies = safeMovies.filter((m: Movie) => m.category === 'trending_today' && m.original_language === 'en');
+  const featuredMovies = safeMovies.filter((m: Movie) => m.is_featured && (!m.original_language || m.original_language === 'en'));
+  const trendingTodayMovies = safeMovies.filter((m: Movie) => m.category === 'trending_today' && (!m.original_language || m.original_language === 'en'));
+  const personalizedMovies = safeMovies.filter((m: Movie) => m.category === 'personalized' && (!m.original_language || m.original_language === 'en'));
 
   // Embaralha uma vez quando os filmes carregam, varia o backdrop inicial a cada visita
   const shuffledHeroMovies = useMemo(() => {
-    const pool = trendingTodayMovies.length > 0
+    const trendingPool = trendingTodayMovies.length > 0
       ? trendingTodayMovies
       : featuredMovies.length > 0
         ? featuredMovies
-        : safeMovies.slice(0, 10);
-    return [...pool]
+        : [];
+    const pool = [...trendingPool, ...personalizedMovies];
+    if (pool.length === 0) return safeMovies.slice(0, 10);
+    return [...new Map(pool.map(m => [m.tmdb_id, m])).values()]
       .filter(m => !m.synopsis || m.synopsis.length <= 250)
       .sort(() => Math.random() - 0.5);
   }, [safeMovies]);
-  const trendingMovies = safeMovies.filter((m: Movie) => m.category === 'trending' && m.original_language === 'en');
-  const topRatedMovies = safeMovies.filter((m: Movie) => m.category === 'top_rated' && m.original_language === 'en');
-  const comingSoonMovies = safeMovies.filter((m: Movie) => m.category === 'coming_soon' && m.original_language === 'en');
-  const recommendedMovies = safeMovies.filter((m: Movie) => m.category === 'recommended' && m.original_language === 'en');
-  const top10Movies = safeMovies.filter((m: Movie) => m.category === 'top_10' && m.original_language === 'en');
-  const actionMovies = safeMovies.filter((m: Movie) => m.category === 'action' && m.original_language === 'en');
-  const familyMovies = safeMovies.filter((m: Movie) => m.category === 'family' && m.original_language === 'en');
-  const sciFiMovies = safeMovies.filter((m: Movie) => m.category === 'scifi' && m.original_language === 'en');
-  const comedyMovies = safeMovies.filter((m: Movie) => m.category === 'comedy' && m.original_language === 'en');
-  const romanceMovies = safeMovies.filter((m: Movie) => m.category === 'romance' && m.original_language === 'en');
-  const horrorMovies = safeMovies.filter((m: Movie) => m.category === 'horror' && m.original_language === 'en');
-  const animationMovies = safeMovies.filter((m: Movie) => m.category === 'animation' && m.original_language === 'en');
-  const seriesPopularMovies = safeMovies.filter((m: Movie) => m.category === 'series_popular' && m.original_language === 'en');
-  const seriesTopRatedMovies = safeMovies.filter((m: Movie) => m.category === 'series_top_rated' && m.original_language === 'en');
-  const personalizedMovies = safeMovies.filter((m: Movie) => m.category === 'personalized' && m.original_language === 'en');
+  const trendingMovies = safeMovies.filter((m: Movie) => m.category === 'trending' && (!m.original_language || m.original_language === 'en'));
+  const topRatedMovies = safeMovies.filter((m: Movie) => m.category === 'top_rated' && (!m.original_language || m.original_language === 'en'));
+  const comingSoonMovies = safeMovies.filter((m: Movie) => m.category === 'coming_soon' && (!m.original_language || m.original_language === 'en'));
+  const recommendedMovies = safeMovies.filter((m: Movie) => m.category === 'recommended' && (!m.original_language || m.original_language === 'en'));
+  const top10Movies = safeMovies.filter((m: Movie) => m.category === 'top_10' && (!m.original_language || m.original_language === 'en'));
+  const actionMovies = safeMovies.filter((m: Movie) => m.category === 'action' && (!m.original_language || m.original_language === 'en'));
+  const familyMovies = safeMovies.filter((m: Movie) => m.category === 'family' && (!m.original_language || m.original_language === 'en'));
+  const sciFiMovies = safeMovies.filter((m: Movie) => m.category === 'scifi' && (!m.original_language || m.original_language === 'en'));
+  const comedyMovies = safeMovies.filter((m: Movie) => m.category === 'comedy' && (!m.original_language || m.original_language === 'en'));
+  const romanceMovies = safeMovies.filter((m: Movie) => m.category === 'romance' && (!m.original_language || m.original_language === 'en'));
+  const horrorMovies = safeMovies.filter((m: Movie) => m.category === 'horror' && (!m.original_language || m.original_language === 'en'));
+  const animationMovies = safeMovies.filter((m: Movie) => m.category === 'animation' && (!m.original_language || m.original_language === 'en'));
+  const seriesPopularMovies = safeMovies.filter((m: Movie) => m.category === 'series_popular' && (!m.original_language || m.original_language === 'en'));
+  const seriesTopRatedMovies = safeMovies.filter((m: Movie) => m.category === 'series_top_rated' && (!m.original_language || m.original_language === 'en'));
 
   const handleWatch = (movie: Movie) => {
     if (!userId) {
@@ -456,7 +458,7 @@ export default function Home() {
         featuredMovies={shuffledHeroMovies.length > 0 ? shuffledHeroMovies : safeMovies.filter((m: Movie) => !m.synopsis || m.synopsis.length <= 250).slice(0, 3)}
         onWatch={handleWatch}
         onMoreInfo={handleMoreInfo}
-        top10Ranks={Object.fromEntries(top10Movies.map((m, i) => [m.tmdb_id, i + 1]).filter(([id]) => id != null) as [number, number][])}
+        top10Ranks={Object.fromEntries(top10Movies.slice(0, 10).map((m, i) => [m.tmdb_id, i + 1]).filter(([id]) => id != null) as [number, number][])}
       />
 
       {/* Carousels */}
@@ -625,7 +627,7 @@ export default function Home() {
         {trendingMovies.length === 0 && topRatedMovies.length === 0 && safeMovies.length > 0 && (
           <Carousel
             title="Todos os Filmes e Séries"
-            movies={safeMovies.filter(m => m.original_language === 'en')}
+            movies={safeMovies.filter(m => !m.original_language || m.original_language === 'en')}
             onMovieClick={handleMoreInfo}
           />
         )}
