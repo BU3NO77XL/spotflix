@@ -40,7 +40,7 @@ export default function AchievementBadge({ achievement }: { achievement: Achieve
         {achievement.name}
       </p>
       {achievement.unlocked && achievement.percent >= 100 && (
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+        <div className="absolute -top-2 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
           <Check className="w-2.5 h-2.5 text-white" />
         </div>
       )}
