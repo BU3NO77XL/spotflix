@@ -278,7 +278,9 @@ function WatchContent() {
     const [showRightTrailersArrow, setShowRightTrailersArrow] = useState(false);
     const [selectedModalMovie, setSelectedModalMovie] = useState<Movie | null>(null);
     const [ratingParticlesPos, setRatingParticlesPos] = useState<{ x: number; y: number } | null>(null);
+    const [listParticlesPos, setListParticlesPos] = useState<{ x: number; y: number } | null>(null);
     const ratingBtnRef = useRef<HTMLButtonElement>(null);
+    const listBtnRef = useRef<HTMLButtonElement>(null);
     // Estado para backdrops rotativos
     const [backdrops, setBackdrops] = useState<string[]>([]);
     const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
@@ -1051,19 +1053,6 @@ function WatchContent() {
         },
     });
 
-    const handleAddToList = () => {
-        if (!movie || Object.keys(movie).length === 0) return;
-        if (!userId) {
-            setShowLoginModal(true);
-            return;
-        }
-        if (isInWatchlist) {
-            removeFromListMutation.mutate();
-        } else {
-            addToListMutation.mutate();
-        }
-    };
-
     const handleLikeAction = () => {
         if (currentRating) {
             handleRatingAction(Number(movie?.tmdb_id), movie?.type || 'movie', null);
@@ -1331,7 +1320,24 @@ function WatchContent() {
                             </button>
                             <div className="flex items-center gap-3">
                                 <button
-                                    onClick={handleAddToList}
+                                    ref={listBtnRef}
+                                    onClick={() => {
+                                        if (!movie || Object.keys(movie).length === 0) return;
+                                        if (!userId) {
+                                            setShowLoginModal(true);
+                                            return;
+                                        }
+                                        if (isInWatchlist) {
+                                            removeFromListMutation.mutate();
+                                        } else {
+                                            addToListMutation.mutate();
+                                            const el = listBtnRef.current;
+                                            if (el) {
+                                                const r = el.getBoundingClientRect();
+                                                setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+                                            }
+                                        }
+                                    }}
                                     className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
                                         rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
                                         focus:outline-none focus:ring-0 text-white`}
@@ -1407,6 +1413,13 @@ function WatchContent() {
                                     x={ratingParticlesPos.x}
                                     y={ratingParticlesPos.y}
                                     onComplete={() => setRatingParticlesPos(null)}
+                                />
+                            )}
+                            {listParticlesPos && (
+                                <RatingParticles
+                                    x={listParticlesPos.x}
+                                    y={listParticlesPos.y}
+                                    onComplete={() => setListParticlesPos(null)}
                                 />
                             )}
                             <button

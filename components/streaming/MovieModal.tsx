@@ -59,7 +59,9 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [detailGenres, setDetailGenres] = useState<string[]>([]);
     const [showRatingTooltip, setShowRatingTooltip] = useState(false);
     const [ratingParticlesPos, setRatingParticlesPos] = useState<{ x: number; y: number } | null>(null);
+    const [listParticlesPos, setListParticlesPos] = useState<{ x: number; y: number } | null>(null);
     const ratingBtnRef = useRef<HTMLButtonElement>(null);
+    const listBtnRef = useRef<HTMLButtonElement>(null);
     const [userId, setUserId] = useState<number | null>(null);
 
     // Ref para cancelar fetches ao fechar o modal antes de completar
@@ -384,11 +386,17 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </button>
 
                                     <button
+                                        ref={listBtnRef}
                                         onClick={() => {
                                             if (isInWatchlist && onRemoveFromList) {
                                                 onRemoveFromList(movie);
                                             } else {
                                                 handleAddToListGuarded(movie);
+                                                const el = listBtnRef.current;
+                                                if (el) {
+                                                    const r = el.getBoundingClientRect();
+                                                    setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+                                                }
                                             }
                                         }}
                                         className="w-12 h-12 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"
@@ -456,6 +464,13 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     x={ratingParticlesPos.x}
                                     y={ratingParticlesPos.y}
                                     onComplete={() => setRatingParticlesPos(null)}
+                                />
+                            )}
+                            {listParticlesPos && (
+                                <RatingParticles
+                                    x={listParticlesPos.x}
+                                    y={listParticlesPos.y}
+                                    onComplete={() => setListParticlesPos(null)}
                                 />
                             )}
 
