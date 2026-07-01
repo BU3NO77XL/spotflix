@@ -689,10 +689,12 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         <p><span className="text-[#777777]">Este programa é: </span><span className="text-white">{keywords.join(', ')}</span></p>
                                     )}
                                     
-                                    <div className="flex items-center gap-3.5 text-[15px] leading-[20px]">
-                                        <span className="text-[#777777]">Classificação:</span>
-                                        <span className="px-[6.5px] py-[2px] border border-[#bcbcbc] rounded text-[13px] font-semibold text-white/88 leading-none">{details?.ageRating || movie.rating || '14+'}</span>
-                                        <span className="text-white">recomendado para maiores de {details?.ageRating || movie.rating || '14'} anos</span>
+                                    <div className="flex flex-col gap-1 text-[15px] leading-[20px]">
+                                        <div className="flex items-center gap-3.5">
+                                            <span className="text-[#777777]">Classificação:</span>
+                                            <span className="px-[6.5px] py-[2px] border border-[#bcbcbc] rounded text-[13px] font-semibold text-white/88 leading-none">{details?.ageRating || movie.rating || '14+'}</span>
+                                        </div>
+                                        <span className="text-white/70 text-sm">recomendado para maiores de {details?.ageRating || movie.rating || '14'} anos</span>
                                     </div>
                                 </div>
                             </div>
