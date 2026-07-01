@@ -14,66 +14,10 @@ interface Top10CardProps {
   index: number;
 }
 
-const BASE_H = 200;
-const GAP = 130;
-const GAP_1 = 105;
-const NUM_W = 165;
-const NUM_W_1 = 155;
-const FONT_SZ = 260;
-const STROKE_W = 6;
-
-function scale(val: number, h: number): number {
-  return Math.round(val * h / BASE_H);
-}
-
-const hMap = [
-  { bp: '', h: 175 },
-  { bp: 'md:', h: 175 },
-  { bp: 'lg:', h: 220 },
-  { bp: 'xl:', h: 265 },
-] as const;
-
-function cardWidth(h: number, rank: number, posterW: number): number {
-  const gap = rank === 1 ? GAP_1 : GAP;
-  return Math.round(gap * h / BASE_H) + posterW;
-}
-
-const pwMap: Record<string, number> = {
-  '': 125,
-  'md:': 125,
-  'lg:': 155,
-  'xl:': 190,
-};
-
 export default function Top10Card({ movie, rank, onClick, index }: Top10CardProps) {
   const router = useRouter();
 
-  const gapVal = rank === 1 ? GAP_1 : GAP;
-  const numWVal = rank === 1 ? NUM_W_1 : NUM_W;
-
-  const wClasses = hMap.map(({ bp, h }) => {
-    const w = cardWidth(h, rank, pwMap[bp] ?? 125);
-    return `${bp}w-[${w}px]`;
-  }).join(' ');
-
-  const mlClasses = hMap.map(({ bp, h }) => {
-    const ml = scale(gapVal, h);
-    return `${bp}ml-[${ml}px]`;
-  }).join(' ');
-
-  const numWClasses = hMap.map(({ bp, h }) => {
-    const nw = scale(numWVal, h);
-    return `${bp}w-[${nw}px]`;
-  }).join(' ');
-
-  const fsClasses = hMap.map(({ bp, h }) => {
-    const fs = scale(FONT_SZ, h);
-    return `${bp}text-[${fs}px]`;
-  }).join(' ');
-
-  const lhClasses = hMap.map(({ bp, h }) => {
-    return `${bp}leading-[${h}px]`;
-  }).join(' ');
+  const isFirst = rank === 1;
 
   return (
     <motion.div
@@ -84,26 +28,29 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       className={cn(
         "group relative shrink-0 cursor-pointer",
         "h-[175px] md:h-[175px] lg:h-[220px] xl:h-[265px]",
-        wClasses
+        isFirst
+          ? "w-[217px] lg:w-[271px] xl:w-[329px]"
+          : "w-[239px] lg:w-[298px] xl:w-[362px]"
       )}
     >
-      {/* Número — estilo Netflix: absolute left:0, z-index:-1, stroke #666, fundo transparente */}
+      {/* Número — Netflix style: absolute left:0, z-index:-1, stroke #666, fill transparent */}
       <div
         className={cn(
-          "absolute left-0 top-0 overflow-hidden select-none pointer-events-none",
-          numWClasses,
-          "h-[175px] md:h-[175px] lg:h-[220px] xl:h-[265px]"
+          "absolute left-0 top-0 overflow-hidden select-none pointer-events-none h-[175px] md:h-[175px] lg:h-[220px] xl:h-[265px]",
+          isFirst
+            ? "w-[136px] lg:w-[171px] xl:w-[205px]"
+            : "w-[144px] lg:w-[182px] xl:w-[219px]"
         )}
         style={{ zIndex: -1 }}
       >
         <span
           className={cn(
             "font-bold block text-transparent text-right w-full",
-            fsClasses,
-            lhClasses
+            "text-[228px] lg:text-[286px] xl:text-[345px]",
+            "leading-[175px] lg:leading-[220px] xl:leading-[265px]"
           )}
           style={{
-            WebkitTextStroke: `${STROKE_W}px #666`,
+            WebkitTextStroke: '6px #666',
             fontFamily: '"Netflix Sans"',
           }}
         >
@@ -114,7 +61,9 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       {/* Poster Container */}
       <div className={cn(
         "relative z-10 rounded-sm sm:rounded-md overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-30",
-        mlClasses,
+        isFirst
+          ? "ml-[92px] lg:ml-[116px] xl:ml-[139px]"
+          : "ml-[114px] lg:ml-[143px] xl:ml-[172px]",
         "w-[125px] h-[175px] md:w-[125px] md:h-[175px] lg:w-[155px] lg:h-[220px] xl:w-[190px] xl:h-[265px]"
       )}>
         {/* Image */}
