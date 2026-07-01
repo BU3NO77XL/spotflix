@@ -123,6 +123,9 @@ export default function ProfilePage() {
                 ? userEmail.slice(0, 2) + '***' + userEmail.slice(userEmail.indexOf('@'))
                 : '---'}
             </p>
+            {userRole === 'admin' && (
+              <p className="text-white font-bold text-sm mb-1">Administrador</p>
+            )}
             <p className="text-sm text-gray-400 flex items-center justify-center sm:justify-start gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               Membro desde {formatDate(createdAt)}
