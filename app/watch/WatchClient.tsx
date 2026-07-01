@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, memo, useRef, useMemo } from 'react';
+import { useState, useEffect, Suspense, memo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,14 +27,11 @@ import RatingTooltip from '@/components/ui/RatingTooltip';
 // Hook para preload de imagens
 const useImagePreload = (urls: string[]) => {
     const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-    
-    // Estabiliza o array para evitar re-execução desnecessária
-    const stableUrls = useMemo(() => urls, [JSON.stringify(urls)]);
 
     useEffect(() => {
-        if (stableUrls.length === 0) return;
+        if (urls.length === 0) return;
 
-        const preloadPromises = stableUrls.map(url => {
+        const preloadPromises = urls.map(url => {
             return new Promise<string>((resolve, reject) => {
                 const img = new window.Image();
                 img.onload = () => {
@@ -47,7 +44,7 @@ const useImagePreload = (urls: string[]) => {
         });
 
         Promise.allSettled(preloadPromises);
-    }, [stableUrls]);
+    }, [urls]);
 
     return loadedImages;
 };
