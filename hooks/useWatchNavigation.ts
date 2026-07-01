@@ -55,7 +55,9 @@ export function useWatchNavigation(setLocalOverride?: (override: any) => void) {
             window.history.replaceState(null, '', url);
         } else {
             // SLOW PATH: vindo de outra página, usar router.push (com cache já populado)
-            const url = movie.id && !movie.id.startsWith('search-') && !movie.id.startsWith('tmdb-') && !movie.id.startsWith('similar-') && !movie.id.startsWith('creator-')
+            const movieIdStr = String(movie.id ?? '');
+            const hasRealId = movie.id && !movieIdStr.startsWith('search-') && !movieIdStr.startsWith('tmdb-') && !movieIdStr.startsWith('similar-') && !movieIdStr.startsWith('creator-');
+            const url = hasRealId
                 ? `/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${type}`
                 : `/watch?ref=${movie.tmdb_id}&type=${type}`;
 

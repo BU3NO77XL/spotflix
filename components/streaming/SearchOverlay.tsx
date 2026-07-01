@@ -62,7 +62,10 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                         local.tmdb_id === searchResult.tmdb_id
                     );
 
-                    return localMatch || { ...searchResult, id: `search-${i}` };
+                    if (localMatch) {
+                        return { ...localMatch, id: String(localMatch.id), type: searchResult.type };
+                    }
+                    return { ...searchResult, id: `search-${i}` };
                 }) as Movie[];
 
                 setResults(enhancedResults);
