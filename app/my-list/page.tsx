@@ -224,7 +224,7 @@ export default function MyList() {
 
             <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8 lg:pt-12 pb-8">
                 {/* Tabs + Search */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-12 sm:-mt-16 lg:-mt-20 relative z-30">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-16 sm:-mt-16 lg:-mt-20 relative z-30">
                     {baseList.length > 0 && (
                         <div className="relative sm:hidden">
                             <input
