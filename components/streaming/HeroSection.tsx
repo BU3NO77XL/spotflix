@@ -7,6 +7,15 @@ import ProgressiveImage from './ProgressiveImage';
 import { Movie } from '@/types/movie';
 import { TMDBService } from './TMDBIntegration';
 
+const IMAGE_BASE = 'https://image.tmdb.org/t/p';
+
+function heroBackdropUrl(movie: Movie): string | null {
+  const path = movie.backdrop_url || movie.poster_url;
+  if (!path) return null;
+  // Replace any TMDB size with 'original' for max quality
+  return path.replace(/https:\/\/image\.tmdb\.org\/t\/p\/\w+/, `${IMAGE_BASE}/original`);
+}
+
 interface HeroSectionProps {
     featuredMovies: Movie[];
     onWatch: (movie: Movie) => void;
@@ -55,9 +64,9 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
                 }
             });
 
-            // Prefetch backdrops into browser cache
+            // Prefetch backdrops into browser cache (use original quality)
             featuredMovies.forEach(movie => {
-                const url = movie.backdrop_url || movie.poster_url;
+                const url = heroBackdropUrl(movie);
                 if (url && !preloadedBackdrops.has(url)) {
                     const img = new Image();
                     img.src = url;
@@ -105,7 +114,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
     if (!displayContent) return null;
 
     const { movie, logo } = displayContent;
-    const currentImageUrl = movie.backdrop_url || movie.poster_url;
+    const currentImageUrl = heroBackdropUrl(movie);
     const rank = movie.tmdb_id != null ? top10Ranks?.[movie.tmdb_id] : undefined;
 
     // Optimized Animation Variants
@@ -193,7 +202,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
             {/* Content Layer */}
             <div className="absolute inset-0 z-20 flex items-start justify-start">
                 <div className="w-full h-full px-4 md:px-[38px] pt-[154px]">
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="popLayout">
                         <motion.div
                             key={`content-${movie.id}`}
                             variants={contentVariants}
