@@ -24,7 +24,7 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10Ranks }: HeroSectionProps) {
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(-1);
     const [direction, setDirection] = useState(1);
     
     const [logosCache, setLogosCache] = useState<Record<string, string | null>>({});
@@ -41,6 +41,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
     useEffect(() => {
         if (featuredMovies?.length && !snapshot) {
             setSnapshot(featuredMovies);
+            setCurrentIndex(Math.floor(Math.random() * featuredMovies.length));
         }
     }, [featuredMovies]);
 
