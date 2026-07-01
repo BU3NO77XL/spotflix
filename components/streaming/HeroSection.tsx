@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Info } from 'lucide-react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ProgressiveImage from './ProgressiveImage';
@@ -27,26 +27,31 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(1);
     
-    // Cache for assets to ensure instant loading during transitions
     const [logosCache, setLogosCache] = useState<Record<string, string | null>>({});
     const [preloadedBackdrops, setPreloadedBackdrops] = useState<Set<string>>(new Set());
     
-    // State synchronization: update everything at once to prevent "millisecond delay"
     const [displayContent, setDisplayContent] = useState<{
         movie: Movie;
         logo: string | null;
         isReady: boolean;
     } | null>(null);
 
-    const isInitialMount = useRef(true);
+    // Snapshot do featuredMovies na primeira vez que tiver dados — estabiliza o hero
+    const [snapshot, setSnapshot] = useState<Movie[] | null>(null);
+    useEffect(() => {
+        if (featuredMovies?.length && !snapshot) {
+            setSnapshot(featuredMovies);
+        }
+    }, [featuredMovies]);
 
-    // 1. Initial Pre-fetching: Load everything for all featured movies upfront
+    const heroMovies = snapshot || featuredMovies;
+
+    // 1. Prefetch logos/backdrops (roda uma vez, quando o snapshot estabiliza)
     useEffect(() => {
         const prefetchAssets = async () => {
-            if (!featuredMovies?.length) return;
+            if (!heroMovies?.length) return;
 
-            // Prefetch logos for all movies in the carousel
-            const logoPromises = featuredMovies.map(async (movie) => {
+            const logoPromises = heroMovies.map(async (movie) => {
                 if (logosCache[movie.id] !== undefined) return;
                 
                 try {
@@ -64,8 +69,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
                 }
             });
 
-            // Prefetch backdrops into browser cache (use original quality)
-            featuredMovies.forEach(movie => {
+            heroMovies.forEach(movie => {
                 const url = heroBackdropUrl(movie);
                 if (url && !preloadedBackdrops.has(url)) {
                     const img = new Image();
@@ -78,38 +82,53 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
         };
 
         prefetchAssets();
-    }, [featuredMovies]);
+    }, [heroMovies]);
 
-    // 2. Synchronized State Update: Ensure background and info change together
+    // 2. Exibe o primeiro filme assim que o snapshot estiver pronto
     useEffect(() => {
-        const movie = featuredMovies[currentIndex];
+        if (!heroMovies?.length || displayContent) return;
+        const movie = heroMovies[0];
         if (!movie) return;
-
-        // If we already have the logo in cache, we can switch immediately
-        const logo = logosCache[movie.id] || null;
-        
-        // Batch the update to ensure everything changes in the same frame
         setDisplayContent({
             movie,
-            logo,
+            logo: logosCache[movie.id] || null,
             isReady: true
         });
+    }, [heroMovies]);
 
-        // Set initial mount to false after first successful display
-        if (isInitialMount.current) isInitialMount.current = false;
-    }, [currentIndex, featuredMovies, logosCache]);
-
-    // 3. Auto-rotation with smooth crossfade every 12 seconds
+    // 3. Rotação: só atualiza quando currentIndex muda
     useEffect(() => {
-        if (featuredMovies?.length <= 1) return;
+        if (!heroMovies?.length || !displayContent) return;
+        const movie = heroMovies[currentIndex];
+        if (!movie) return;
+        setDisplayContent({
+            movie,
+            logo: logosCache[movie.id] || null,
+            isReady: true
+        });
+    }, [currentIndex]);
+
+    // 4. Atualiza logo quando o prefetch termina — sem resetar o AnimatePresence
+    useEffect(() => {
+        if (!displayContent) return;
+        const { movie } = displayContent;
+        if (logosCache[movie.id] === undefined) return;
+        const newLogo = logosCache[movie.id];
+        if (displayContent.logo === newLogo) return;
+        setDisplayContent(prev => prev ? { ...prev, logo: newLogo } : null);
+    }, [logosCache]);
+
+    // 5. Auto-rotation a cada 2 minutos
+    useEffect(() => {
+        if (heroMovies?.length <= 1) return;
 
         const interval = setInterval(() => {
             setDirection(1);
-            setCurrentIndex((prev) => (prev + 1) % featuredMovies.length);
-        }, 12000); // 12 seconds for dynamic feel
+            setCurrentIndex((prev) => (prev + 1) % heroMovies.length);
+        }, 120000);
 
         return () => clearInterval(interval);
-    }, [featuredMovies?.length]);
+    }, [heroMovies?.length]);
 
     if (!displayContent) return null;
 
