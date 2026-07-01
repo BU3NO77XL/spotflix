@@ -1,14 +1,13 @@
 'use client';
 
 import { AchievementWithProgress } from '@/lib/achievements';
-import { Star, Film, Tv, Heart, Flame, Trophy, Compass, MessageCircle } from 'lucide-react';
+import { Star, Film, Tv, Heart, Trophy, Compass, MessageCircle, Check } from 'lucide-react';
 
 const ICON_MAP: Record<string, typeof Star> = {
   star: Star,
   film: Film,
   tv: Tv,
   heart: Heart,
-  flame: Flame,
   trophy: Trophy,
   compass: Compass,
   'message-circle': MessageCircle,
@@ -41,8 +40,8 @@ export default function AchievementBadge({ achievement }: { achievement: Achieve
         {achievement.name}
       </p>
       {achievement.unlocked && achievement.percent >= 100 && (
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-          <Star className="w-2.5 h-2.5 text-black fill-current" />
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+          <Check className="w-2.5 h-2.5 text-white" />
         </div>
       )}
     </div>

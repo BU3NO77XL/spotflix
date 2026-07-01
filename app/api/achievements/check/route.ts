@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { ACHIEVEMENT_DEFINITIONS, Achievement } from '@/lib/achievements';
+import { ACHIEVEMENT_DEFINITIONS } from '@/lib/achievements';
 
 const DEFINITIONS_MAP = new Map(ACHIEVEMENT_DEFINITIONS.map(d => [d.key, d]));
+
+const WATCHED_ACHIEVEMENTS = ['first_steps', 'series_binger', 'movie_buff', 'explorer', 'veteran', 'series_lover', 'legend'];
+const WATCHLIST_ACHIEVEMENTS = ['collector'];
 
 async function ensureRow(profileId: number, key: string, max: number) {
   const { data: existing } = await supabaseAdmin
@@ -28,37 +31,6 @@ async function ensureRow(profileId: number, key: string, max: number) {
     .single();
 
   return inserted || { id: 0, progress_current: 0, unlocked_at: null };
-}
-
-async function incrementAndCheck(profileId: number, key: string, def: Achievement) {
-  const row = await ensureRow(profileId, key, def.max_progress);
-  if (!row || row.unlocked_at) return { already_unlocked: true };
-
-  const newProgress = Math.min(row.progress_current + 1, def.max_progress);
-  const nowUnlocked = newProgress >= def.max_progress;
-
-  await supabaseAdmin
-    .from('user_achievements')
-    .update({
-      progress_current: newProgress,
-      unlocked_at: nowUnlocked ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', row.id);
-
-  return { new_progress: newProgress, unlocked: nowUnlocked };
-}
-
-const WATCHED_ACHIEVEMENTS = ['first_steps', 'series_binger', 'movie_buff', 'explorer', 'veteran', 'series_lover', 'legend'];
-const RATINGS_ACHIEVEMENTS = ['critic', 'tastemaker'];
-const WATCHLIST_ACHIEVEMENTS = ['collector'];
-
-async function countUserData(profileId: number, table: string, field: string) {
-  const { count } = await supabaseAdmin
-    .from(table)
-    .select('*', { count: 'exact', head: true })
-    .eq('profile_id', profileId);
-  return count || 0;
 }
 
 async function countEpisodeWatchHistory(profileId: number) {
@@ -88,14 +60,6 @@ async function countTotalWatchHistory(profileId: number) {
   return count || 0;
 }
 
-async function countRatings(profileId: number) {
-  const { count } = await supabaseAdmin
-    .from('ratings')
-    .select('*', { count: 'exact', head: true })
-    .eq('profile_id', profileId);
-  return count || 0;
-}
-
 async function countWatchlist(profileId: number) {
   const { count } = await supabaseAdmin
     .from('watchlist')
@@ -106,7 +70,7 @@ async function countWatchlist(profileId: number) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { userId, action }: { userId: number; action: 'watched' | 'rated' | 'watchlist' } = body;
+  const { userId, action }: { userId: number; action: 'watched' | 'watchlist' } = body;
 
   if (!userId) {
     return NextResponse.json({ error: 'userId é obrigatório' }, { status: 400 });
@@ -132,33 +96,6 @@ export async function POST(request: NextRequest) {
       if (row?.unlocked_at) continue;
 
       const newProgress = Math.min(relevantCount, def.max_progress);
-      const nowUnlocked = newProgress >= def.max_progress;
-
-      await supabaseAdmin
-        .from('user_achievements')
-        .update({
-          progress_current: newProgress,
-          unlocked_at: nowUnlocked ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('profile_id', profileId)
-        .eq('achievement_key', key);
-
-      if (nowUnlocked) unlocked.push(key);
-    }
-  }
-
-  if (action === 'rated') {
-    const totalRatings = await countRatings(profileId);
-
-    for (const key of RATINGS_ACHIEVEMENTS) {
-      const def = DEFINITIONS_MAP.get(key);
-      if (!def) continue;
-
-      const row = await ensureRow(profileId, key, def.max_progress);
-      if (row?.unlocked_at) continue;
-
-      const newProgress = Math.min(totalRatings, def.max_progress);
       const nowUnlocked = newProgress >= def.max_progress;
 
       await supabaseAdmin

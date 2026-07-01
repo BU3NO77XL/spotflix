@@ -2,7 +2,7 @@ export interface Achievement {
   key: string;
   name: string;
   description: string;
-  icon: 'star' | 'film' | 'tv' | 'heart' | 'flame' | 'trophy' | 'compass' | 'message-circle';
+  icon: 'star' | 'film' | 'tv' | 'heart' | 'trophy' | 'compass' | 'message-circle';
   color: string;
   category: 'watched' | 'ratings' | 'watchlist' | 'special';
   max_progress: number;
@@ -69,24 +69,6 @@ export const ACHIEVEMENT_DEFINITIONS: Achievement[] = [
     max_progress: 50,
   },
   {
-    key: 'critic',
-    name: 'Crítico',
-    description: 'Avaliou 5 filmes ou séries',
-    icon: 'heart',
-    color: 'text-pink-400',
-    category: 'ratings',
-    max_progress: 5,
-  },
-  {
-    key: 'tastemaker',
-    name: 'Formador de Opinião',
-    description: 'Avaliou 15 filmes ou séries',
-    icon: 'heart',
-    color: 'text-red-400',
-    category: 'ratings',
-    max_progress: 15,
-  },
-  {
     key: 'collector',
     name: 'Colecionador',
     description: 'Adicionou 10 itens à watchlist',
@@ -99,8 +81,8 @@ export const ACHIEVEMENT_DEFINITIONS: Achievement[] = [
     key: 'series_lover',
     name: 'Apaixonado por Séries',
     description: 'Assistiu 30 episódios de séries',
-    icon: 'flame',
-    color: 'text-orange-400',
+    icon: 'heart',
+    color: 'text-pink-400',
     category: 'watched',
     max_progress: 30,
   },
@@ -121,7 +103,6 @@ export function getAchievementIcon(icon: Achievement['icon']): string {
     film: '🎬',
     tv: '📺',
     heart: '❤️',
-    flame: '🔥',
     trophy: '🏆',
     compass: '🧭',
     'message-circle': '💬',

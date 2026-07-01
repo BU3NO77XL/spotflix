@@ -1253,15 +1253,11 @@ function WatchContent() {
 
                         {/* Action Buttons - Netflix Style */}
                         <div
-                            className="flex flex-wrap items-center gap-2 mb-6"
+                            className="flex flex-wrap items-center justify-between gap-2 mb-6"
                             role="group"
                             aria-label="Ações do filme"
                         >
-                            {/* Texto indicativo para RAVE - DESATIVADO
-                            <p className="w-full text-white/80 text-xs sm:text-sm font-medium italic mb-2">
-                                AGUARDE NESSA PÁGINA, PARA ASSISTIR NO APLICATIVO RAVE
-                            </p>
-                            */}
+                            <div className="flex items-center gap-2">
                             <button
                                 onClick={async () => {
                                     if (userId && movie?.tmdb_id) {
@@ -1361,18 +1357,17 @@ function WatchContent() {
                                         </div>
                                     )}
                                 </div>
-                                <button
-                                    onClick={() => setShowShareModal(true)}
-                                    className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
-                                        rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
-                                        focus:outline-none focus:ring-0 text-white"
-                                    aria-label="Compartilhar"
-                                >
-                                    <Share2 className="w-5 h-5" />
-                                </button>
                             </div>
-
-
+                            </div>
+                            <button
+                                onClick={() => setShowShareModal(true)}
+                                className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
+                                    rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
+                                    focus:outline-none focus:ring-0 text-white"
+                                aria-label="Compartilhar"
+                            >
+                                <Share2 className="w-5 h-5" />
+                            </button>
                         </div>
 
 
