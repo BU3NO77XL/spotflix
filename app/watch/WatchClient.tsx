@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, memo, useRef } from 'react';
+import { useState, useEffect, Suspense, memo, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,6 +16,7 @@ import MovieModal from '@/components/streaming/MovieModal';
 import ProgressiveImage from '@/components/streaming/ProgressiveImage';
 import VideoPlayer from '@/components/streaming/VideoPlayer';
 import MovieTitle from '@/components/streaming/MovieTitle';
+import { useRatingAction } from '@/hooks/useRatingAction';
 import { cn } from '@/lib/utils';
 import { calcMatch } from '@/lib/match';
 import { useWatchNavigation } from '@/hooks/useWatchNavigation';
@@ -26,11 +27,14 @@ import RatingTooltip from '@/components/ui/RatingTooltip';
 // Hook para preload de imagens
 const useImagePreload = (urls: string[]) => {
     const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+    
+    // Estabiliza o array para evitar re-execução desnecessária
+    const stableUrls = useMemo(() => urls, [JSON.stringify(urls)]);
 
     useEffect(() => {
-        if (urls.length === 0) return;
+        if (stableUrls.length === 0) return;
 
-        const preloadPromises = urls.map(url => {
+        const preloadPromises = stableUrls.map(url => {
             return new Promise<string>((resolve, reject) => {
                 const img = new window.Image();
                 img.onload = () => {
@@ -43,7 +47,7 @@ const useImagePreload = (urls: string[]) => {
         });
 
         Promise.allSettled(preloadPromises);
-    }, [urls]);
+    }, [stableUrls]);
 
     return loadedImages;
 };
@@ -200,17 +204,13 @@ function WatchContent() {
         }
     }, [urlTmdbId, localOverride]);
 
-    // ── DEBUG: marca o momento em que o componente renderiza com novo tmdbId
-    console.log('[WATCH_LOAD] URL params:', { id: movieId, ref: urlTmdbId, type: urlMediaType, season: urlSeason, episode: urlEpisode });
-    console.log('[WATCH_LOAD] tmdbId resolvido:', tmdbId, 'mediaType:', mediaType, 'localOverride:', localOverride?.tmdbId);
     const navStartRef = useRef<number>(0);
     const lastLoggedTmdbId = useRef<string | null>(null);
     if (tmdbId !== lastLoggedTmdbId.current) {
         navStartRef.current = performance.now();
         lastLoggedTmdbId.current = tmdbId;
-        // console.log(`%c[WATCH PERF] ▶ Novo tmdbId=${tmdbId} — componente começou a renderizar (t=0ms)`, 'color:#0af;font-weight:bold');
         const cached = queryClient.getQueryData(['movie', 'tmdb', tmdbId, mediaType]);
-        // console.log(`%c[WATCH PERF] Cache React Query para este tmdbId:`, 'color:#0af', cached ? '✅ HIT — dados já disponíveis' : '❌ MISS — vai buscar da API');
+        void cached; // suprime unused warning
     }
     
     // Estado para controlar se o componente foi montado no cliente (evita erro de hidratação)
@@ -219,7 +219,6 @@ function WatchContent() {
     // Marcar como montado após o primeiro render no cliente
     useEffect(() => {
         setIsMounted(true);
-        // console.log(`%c[WATCH PERF] ✅ isMounted=true (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
     }, []);
 
     // Quando o id da mídia mudar (navegação para outro filme/série),
@@ -284,7 +283,6 @@ function WatchContent() {
     // Estado para controle de áudio do backdrop animado
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
     const [localFavorited, setLocalFavorited] = useState(false);
-    const [currentRating, setCurrentRating] = useState<'love' | 'like' | 'dislike' | null>(null);
     const [showRatingTooltip, setShowRatingTooltip] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
     useEffect(() => {
@@ -602,85 +600,56 @@ function WatchContent() {
     const movieRaw = movieById || movieByTmdb;
     // URL type tem prioridade sobre o type armazenado (corrige cache corrompido)
     const movie = movieRaw ? { ...movieRaw, type: (mediaType as 'movie' | 'series') || movieRaw.type } : null;
-    if (movie) {
-        console.log('[WATCH_LOAD] movie carregado:', { id: (movie as any).id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type, year: movie.year, poster: movie.poster_url?.slice(0, 60) });
-    } else {
-        console.log('[WATCH_LOAD] movie AINDA nil — tmdbId:', tmdbId, 'mediaType:', mediaType, 'movieById:', !!movieById, 'movieByTmdb:', !!movieByTmdb);
-    }
     const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdb_id));
     const isInWatchlist = movie && movie.tmdb_id ? watchlistTmdbIds.has(Number(movie.tmdb_id)) : false;
 
-    useEffect(() => {
-        if (!userId || !movie?.tmdb_id || !movie.type) return;
-        const params = new URLSearchParams({
-            userId: String(userId),
-            tmdbId: String(movie.tmdb_id),
-            mediaType: movie.type,
-        });
-        if (movie.score != null) params.set('tmdbScore', String(movie.score));
-        if (movie.genre?.length) params.set('genres', movie.genre.join(','));
-        fetch(`/api/match?${params}`)
-            .then(r => r.json())
-            .then(data => setWatchMatch(data.match))
-            .catch(() => {});
-    }, [userId, movie?.tmdb_id, movie?.type]);
-
-    useEffect(() => {
-        if (!userId || !movie?.tmdb_id) return;
-        fetch(`/api/ratings?userId=${userId}`)
-            .then(r => r.json())
-            .then(data => {
-                const ratings = data.ratings || {};
-                const tmdbId = Number(movie.tmdb_id);
-                if (ratings[String(tmdbId)]) {
-                    setCurrentRating(ratings[String(tmdbId)]);
-                }
-            })
-            .catch(() => {});
-    }, [userId, movie?.tmdb_id]);
+    const { currentRating, setCurrentRating, handleRatingAction } = useRatingAction(
+        userId,
+        () => setShowLoginModal(true),
+    );
 
     const [savedHistory, setSavedHistory] = useState<{ seasonNumber: number; episodeNumber: number } | null>(null);
 
+    // Consolida os 3 fetches de mount (match + ratings + watch-history) em uma única wave
     useEffect(() => {
-        if (!userId || !movie?.tmdb_id) return;
-        fetch(`/api/watch-history?userId=${userId}`)
-            .then(r => r.json())
-            .then(data => {
-                const items = data.items || [];
-                const match = items.find((i: any) => Number(i.tmdb_id) === Number(movie.tmdb_id) && i.media_type === movie.type);
+        if (!userId || !movie?.tmdb_id || !movie.type) return;
+
+        const tmdbIdNum = Number(movie.tmdb_id);
+
+        // Match — usa dados locais que já temos para cálculo imediato
+        const matchParams = new URLSearchParams({
+            userId: String(userId),
+            tmdbId: String(tmdbIdNum),
+            mediaType: movie.type,
+        });
+        if (movie.score != null) matchParams.set('tmdbScore', String(movie.score));
+        if (movie.genre?.length) matchParams.set('genres', movie.genre.join(','));
+
+        Promise.all([
+            fetch(`/api/match?${matchParams}`).then(r => r.json()).catch(() => null),
+            // Usa chave composta tmdbId_mediaType para evitar colisão
+            fetch(`/api/ratings?userId=${userId}`).then(r => r.json()).catch(() => null),
+            // Filtra no servidor: só o registro deste conteúdo
+            fetch(`/api/watch-history?userId=${userId}&tmdbId=${tmdbIdNum}&mediaType=${movie.type}`).then(r => r.json()).catch(() => null),
+        ]).then(([matchData, ratingsData, historyData]) => {
+            if (matchData?.match != null) setWatchMatch(matchData.match);
+
+            if (ratingsData?.ratings) {
+                const key = `${tmdbIdNum}_${movie.type}`;
+                const rating = ratingsData.ratings[key] ?? ratingsData.ratings[String(tmdbIdNum)];
+                if (rating) setCurrentRating(rating);
+            }
+
+            if (historyData?.items?.length) {
+                const match = historyData.items.find(
+                    (i: any) => Number(i.tmdb_id) === tmdbIdNum && i.media_type === movie.type
+                );
                 if (match && match.season_number > 0 && match.episode_number > 0) {
                     setSavedHistory({ seasonNumber: match.season_number, episodeNumber: match.episode_number });
                 }
-            })
-            .catch(() => {});
-    }, [userId, movie?.tmdb_id, movie?.type]);
-
-    const handleRatingAction = async (tmdbId: number, mediaType: string, value: 'love' | 'like' | 'dislike' | null) => {
-        const uid = userId ?? (() => {
-            try { return JSON.parse(localStorage.getItem('userBasicInfo') || '{}').id; } catch { return null; }
-        })();
-        if (!uid) {
-            if (value) setShowLoginModal(true);
-            return;
-        }
-        try {
-            if (value) {
-                await fetch('/api/ratings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: uid, tmdbId, mediaType, value }),
-                });
-                setCurrentRating(value);
-            } else {
-                await fetch('/api/ratings', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: uid, tmdbId, mediaType }),
-                });
-                setCurrentRating(null);
             }
-        } catch { /* ignore */ }
-    };
+        });
+    }, [userId, movie?.tmdb_id, movie?.type]);
 
     // Se temos um override local (clique na Coleção), usar os dados básicos dele
     // enquanto o React Query busca os dados completos em background
@@ -756,7 +725,6 @@ function WatchContent() {
 
     // Resetar logos e coleção quando mudar de filme/série
     useEffect(() => {
-        // console.log(`%c[WATCH PERF] 🔄 Reset de estados (tmdbId=${tmdbId}) (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#fa0');
         setLogos([]);
         setIsLogoReady(false);
         setIsLoadingDetails(true);
@@ -1107,7 +1075,6 @@ function WatchContent() {
     // Verificar se temos um filme válido antes de renderizar
     // Removida a verificação de isLogoReady para evitar que a página fique travada no loading
     if (!isMounted || isLoading || !movie || Object.keys(movie).length === 0) {
-        // console.log(`%c[WATCH PERF] ⏳ Mostrando WatchLoading — isMounted=${isMounted} isLoading=${isLoading} movie=${!!movie} (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#f80;font-weight:bold');
         return <WatchLoading />;
     }
 
@@ -1815,7 +1782,6 @@ function WatchContent() {
                                                         onClick={() => {
                                                             if (!isCurrentMovie) {
                                                                 const clickTime = performance.now();
-                                                                // console.log(`%c[WATCH PERF] 🖱️ CLIQUE no poster da coleção: "${part.title}" (tmdb_id=${part.id})`, 'color:#f0f;font-weight:bold;font-size:13px');
 
                                                                 // Troca o filme LOCALMENTE — zero round-trip ao servidor
                                                                 setLocalOverride({
@@ -1851,8 +1817,6 @@ function WatchContent() {
 
                                                                 // Atualizar URL sem navegar (apenas para bookmarking/compartilhamento)
                                                                 window.history.replaceState(null, '', `/watch?ref=${part.id}`);
-
-                                                                // console.log(`%c[WATCH PERF] ✅ override local setado (t=+${(performance.now() - clickTime).toFixed(1)}ms desde clique)`, 'color:#f0f');
                                                             }
                                                         }}
                                                         onMouseEnter={() => {

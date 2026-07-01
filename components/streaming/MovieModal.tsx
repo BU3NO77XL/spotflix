@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, Component, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, useRef, Component, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Plus, Volume2, VolumeX, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
@@ -10,8 +10,9 @@ import { overlayFade, imageReveal, easeOutQuint, movieModalContent, fadeIn, slid
 import { TMDBService } from './TMDBIntegration';
 import RatingTooltip from '@/components/ui/RatingTooltip';
 import NetflixBadge from '@/components/streaming/NetflixBadge';
+import { useRatingAction, type RatingValue } from '@/hooks/useRatingAction';
 
-type Rating = 'love' | 'like' | 'dislike';
+type Rating = RatingValue;
 
 class ModalErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean}> {
     constructor(props: {children: ReactNode}) {
@@ -55,48 +56,23 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [logoLoading, setLogoLoading] = useState(true);
     const [isOnNetflix, setIsOnNetflix] = useState(false);
     const [detailGenres, setDetailGenres] = useState<string[]>([]);
-    const [currentRating, setCurrentRating] = useState<Rating | null>(null);
     const [showRatingTooltip, setShowRatingTooltip] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
 
+    // Ref para cancelar fetches ao fechar o modal antes de completar
+    const abortRef = useRef<AbortController | null>(null);
+
     useEffect(() => {
-        const stored = localStorage.getItem('userBasicInfo');
-        if (stored) {
-            try {
-                const data = JSON.parse(stored);
-                setUserId(data.id);
-            } catch { /* ignore */ }
-        }
+        try {
+            const stored = localStorage.getItem('userBasicInfo');
+            if (stored) setUserId(JSON.parse(stored).id ?? null);
+        } catch { /* ignore */ }
     }, []);
 
-    const handleRatingAction = async (tmdbId: number, mediaType: string, value: Rating | null) => {
-        const uid = userId ?? (() => {
-            try { return JSON.parse(localStorage.getItem('userBasicInfo') || '{}').id; } catch { return null; }
-        })();
-        if (!uid) {
-            onClose();
-            window.dispatchEvent(new Event('requireLogin'));
-            return;
-        }
-        setCurrentRating(value);
-        try {
-            if (value) {
-                await fetch('/api/ratings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: uid, tmdbId, mediaType, value }),
-                });
-            } else {
-                await fetch('/api/ratings', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: uid, tmdbId, mediaType }),
-                });
-            }
-        } catch (e) {
-            console.error('[RATING-ERROR]', e);
-        }
-    };
+    const { currentRating, setCurrentRating, handleRatingAction } = useRatingAction(
+        userId,
+        () => { onClose(); window.dispatchEvent(new Event('requireLogin')); },
+    );
 
     const [details, setDetails] = useState<{
         overview?: string;
@@ -113,23 +89,23 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     } | null>(null);
 
     const [favoriteGenres, setFavoriteGenres] = useState<string[]>([]);
-    const [totalRatingsCount, setTotalRatingsCount] = useState(0);
     const [userDataLoaded, setUserDataLoaded] = useState(false);
 
-    const matchReady = !!details?.score && userDataLoaded;
-
+    // match calcula com os dados que já temos — sem aguardar nada extra
     const matchPercentage = useMemo(() => {
-        if (!matchReady) return null;
+        const score = details?.score ?? movie?.score;
+        if (!score) return null;
         return calcMatch(
-            details?.score as number,
+            score,
             detailGenres.length > 0 ? detailGenres : (movie?.genre || []),
             currentRating,
             favoriteGenres,
         );
-    }, [matchReady, details?.score, detailGenres, movie?.genre, currentRating, favoriteGenres]);
+    }, [details?.score, movie?.score, detailGenres, movie?.genre, currentRating, favoriteGenres]);
 
     const handleAddToListGuarded = (movie: Movie) => {
-        const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('sb-session');
+        // Usa userBasicInfo (fonte de verdade do app) em vez de sb-session
+        const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('userBasicInfo');
         if (!isAuthenticated) {
             onClose();
             window.dispatchEvent(new Event('requireLogin'));
@@ -139,115 +115,120 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     };
 
     useEffect(() => {
-        if (isOpen && movie) {
-            try {
-                console.log('[MOVIE-MODAL] opened movie:', { id: movie.id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type });
-            } catch (e) { /**/ }
-            setCast([]);
-            setSimilar([]);
-            setDetails(null);
-            setDetailGenres([]);
-            setLogoUrl(null);
-            setLogoLoading(true);
-            setShowRatingTooltip(false);
-            setUserDataLoaded(false);
-            if (userId) {
-                Promise.all([
-                    fetch(`/api/auth/profile?userId=${userId}`).then(r => r.json()),
-                    fetch(`/api/ratings?userId=${userId}`).then(r => r.json()),
-                ]).then(([profileData, ratingsData]) => {
-                    if (profileData.user?.preferences?.genres) {
-                        setFavoriteGenres(profileData.user.preferences.genres);
-                    }
-                    const allRatings = ratingsData.ratings || {};
-                    setTotalRatingsCount(Object.keys(allRatings).length);
-                    if (movie?.tmdb_id) {
-                        const rating = allRatings[String(movie.tmdb_id)] as Rating | undefined;
-                        if (rating) setCurrentRating(rating);
-                    }
-                    setUserDataLoaded(true);
-                }).catch(() => setUserDataLoaded(true));
-            } else {
-                setUserDataLoaded(true);
-            }
-            const detailsPromise = movie.type === 'series'
-                ? TMDBService.fetchSeriesDetails(Number(movie.tmdb_id || movie.id))
-                : TMDBService.fetchMovieDetails(Number(movie.tmdb_id || movie.id));
-
-            detailsPromise.then(details => {
-                if (!details) {
-                    setDetails({
-                        overview: movie.synopsis,
-                        ageRating: movie.rating,
-                    });
-                    if (movie.genre) setDetailGenres(movie.genre);
-                    return;
-                }
-                if (details.cast) setCast(details.cast.slice(0, 5));
-                if (details.genres) setDetailGenres(details.genres);
-                setDetails({
-                    overview: details.overview,
-                    runtime: 'runtime' in details ? (details as any).runtime : undefined,
-                    number_of_seasons: 'number_of_seasons' in details ? (details as any).number_of_seasons : undefined,
-                    number_of_episodes: 'number_of_episodes' in details ? (details as any).number_of_episodes : undefined,
-                    ageRating: details.ageRating,
-                    tagline: details.tagline,
-                    first_air_date: 'first_air_date' in details ? (details as any).first_air_date : undefined,
-                    last_air_date: 'last_air_date' in details ? (details as any).last_air_date : undefined,
-                    director: 'director' in details ? (details as any).director : undefined,
-                    created_by: 'created_by' in details ? (Array.isArray((details as any).created_by) ? (details as any).created_by.map((c: any) => c.name).join(', ') : (details as any).created_by) : undefined,
-                    score: (details as any).vote_average ?? undefined,
-                });
-            }).catch(() => {
-                setDetails({
-                    overview: movie.synopsis,
-                    ageRating: movie.rating,
-                });
-                if (movie.genre) setDetailGenres(movie.genre);
-            });
-
-            TMDBService.fetchSimilar(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(async (similarMovies) => {
-                const sliced = similarMovies.slice(0, 6) as Movie[];
-                const enriched = await Promise.all(sliced.map(async (m) => {
-                    const images = await TMDBService.fetchMovieImages(Number(m.tmdb_id || m.id), m.type === 'series', 'pt-BR,pt,en');
-                    if (images.length > 0) {
-                        return { ...m, backdrop_url: images[0] };
-                    }
-                    return m;
-                }));
-                setSimilar(enriched);
-                setSimilarLoading(false);
-            }).catch(() => setSimilarLoading(false));
-
-            TMDBService.fetchMovieVideos(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(setTrailers).catch(() => {});
-            TMDBService.fetchMovieKeywords(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(kw => setKeywords(kw.map(k => k.name))).catch(() => {});
-
-            TMDBService.fetchMovieLogos(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(logos => {
-                if (logos && logos.length > 0) {
-                    setLogoUrl(logos[0].file_path);
-                } else {
-                    setLogoUrl(null);
-                }
-                setLogoLoading(false);
-            }).catch(() => {
-                setLogoUrl(null);
-                setLogoLoading(false);
-            });
-
-            TMDBService.fetchWatchProviders(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(providers => {
-                if (providers?.flatrate) {
-                    const hasNetflix = providers.flatrate.some(p => 
-                        p.provider_name.toLowerCase().includes('netflix')
-                    );
-                    setIsOnNetflix(hasNetflix);
-                }
-            });
-
-            document.body.style.overflow = 'hidden';
-        } else {
+        if (!isOpen || !movie) {
             document.body.style.overflow = 'unset';
+            return;
         }
-    }, [isOpen, movie]);
+
+        document.body.style.overflow = 'hidden';
+
+        // Cancela qualquer fetch anterior pendente
+        if (abortRef.current) abortRef.current.abort();
+        abortRef.current = new AbortController();
+
+        // ── Reset imediato com dados disponíveis do card ────────────────────
+        setCast([]);
+        setSimilar([]);
+        setSimilarLoading(true);
+        setSimilarImagesLoaded(new Set());
+        setTrailers([]);
+        setKeywords([]);
+        setLogoUrl(null);
+        setLogoLoading(true);
+        setIsOnNetflix(false);
+        setShowRatingTooltip(false);
+        setUserDataLoaded(false);
+        // Popula body imediatamente com o que temos — sem skeleton
+        setDetailGenres(movie.genre || []);
+        setDetails({
+            overview: movie.synopsis,
+            ageRating: movie.rating,
+            runtime: undefined,
+            number_of_seasons: undefined,
+            number_of_episodes: undefined,
+        });
+
+        const tmdbId = Number(movie.tmdb_id || movie.id);
+        const isSeries = movie.type === 'series';
+
+        // ── ONDA 1: crítico — detalhes + logo em paralelo (aparece rápido) ──
+        Promise.all([
+            isSeries
+                ? TMDBService.fetchSeriesDetails(tmdbId)
+                : TMDBService.fetchMovieDetails(tmdbId),
+            TMDBService.fetchMovieLogos(tmdbId, isSeries),
+            TMDBService.fetchWatchProviders(tmdbId, isSeries),
+        ]).then(([detailsData, logos, providers]) => {
+            if (!detailsData) return;
+            if (detailsData.cast) setCast(detailsData.cast.slice(0, 5));
+            if (detailsData.genres) setDetailGenres(detailsData.genres);
+            setDetails({
+                overview: detailsData.overview || movie.synopsis,
+                runtime: 'runtime' in detailsData ? (detailsData as any).runtime : undefined,
+                number_of_seasons: 'number_of_seasons' in detailsData ? (detailsData as any).number_of_seasons : undefined,
+                number_of_episodes: 'number_of_episodes' in detailsData ? (detailsData as any).number_of_episodes : undefined,
+                ageRating: detailsData.ageRating || movie.rating,
+                tagline: detailsData.tagline,
+                first_air_date: 'first_air_date' in detailsData ? (detailsData as any).first_air_date : undefined,
+                last_air_date: 'last_air_date' in detailsData ? (detailsData as any).last_air_date : undefined,
+                director: 'director' in detailsData ? (detailsData as any).director : undefined,
+                created_by: 'created_by' in detailsData
+                    ? (Array.isArray((detailsData as any).created_by)
+                        ? (detailsData as any).created_by.map((c: any) => c.name).join(', ')
+                        : (detailsData as any).created_by)
+                    : undefined,
+                score: (detailsData as any).vote_average ?? undefined,
+            });
+
+            // Logo
+            if (logos && logos.length > 0) setLogoUrl(logos[0].file_path);
+            setLogoLoading(false);
+
+            // Netflix badge
+            if (providers?.flatrate) {
+                setIsOnNetflix(providers.flatrate.some(p =>
+                    p.provider_name.toLowerCase().includes('netflix')
+                ));
+            }
+        }).catch(() => setLogoLoading(false));
+
+        // ── ONDA 2: dados do usuário em paralelo com onda 1 ─────────────────
+        if (userId) {
+            Promise.all([
+                fetch(`/api/auth/profile?userId=${userId}`).then(r => r.json()).catch(() => null),
+                fetch(`/api/ratings?userId=${userId}`).then(r => r.json()).catch(() => null),
+            ]).then(([profileData, ratingsData]) => {
+                if (profileData?.user?.preferences?.genres) {
+                    setFavoriteGenres(profileData.user.preferences.genres);
+                }
+                if (ratingsData?.ratings && movie.tmdb_id) {
+                    // Tenta chave composta primeiro (nova), depois chave simples (retrocompat)
+                    const key = `${movie.tmdb_id}_${movie.type}`;
+                    const rating = (ratingsData.ratings[key] ?? ratingsData.ratings[String(movie.tmdb_id)]) as RatingValue | undefined;
+                    if (rating) setCurrentRating(rating);
+                }
+                setUserDataLoaded(true);
+            }).catch(() => setUserDataLoaded(true));
+        } else {
+            setUserDataLoaded(true);
+        }
+
+        // ── ONDA 2: similares (secundário, não bloqueia body) ──────────────
+        TMDBService.fetchSimilar(tmdbId, isSeries).then((similarMovies) => {
+            setSimilar(similarMovies.slice(0, 6) as Movie[]);
+            setSimilarLoading(false);
+        }).catch(() => setSimilarLoading(false));
+
+        // ── ONDA 2: trailers + keywords (baixa prioridade) ───────────────────
+        TMDBService.fetchMovieVideos(tmdbId, isSeries).then(setTrailers).catch(() => {});
+        TMDBService.fetchMovieKeywords(tmdbId, isSeries)
+            .then(kw => setKeywords(kw.map(k => k.name)))
+            .catch(() => {});
+
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen, movie?.tmdb_id, movie?.id, movie?.type]);
 
     if (!movie) return null;
 
@@ -477,50 +458,22 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                         {/* Body Section */}
                         <div className="px-6 md:px-12 pb-12 pt-0 bg-[#181818]">
                             <AnimatePresence mode="wait">
-                                {!details ? (
-                                    <motion.div
-                                        key="body-skeleton"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.3, ease: easeOutQuint }}
-                                        className="animate-pulse space-y-6 py-6"
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="h-4 w-20 bg-[#303030] rounded" />
-                                            <div className="h-4 w-12 bg-[#303030] rounded" />
-                                            <div className="h-4 w-24 bg-[#303030] rounded" />
-                                        </div>
-                                        <div className="h-4 w-full bg-[#303030] rounded" />
-                                        <div className="h-4 w-3/4 bg-[#303030] rounded" />
-                                        <div className="flex gap-6">
-                                            <div className="space-y-2 flex-1">
-                                                <div className="h-4 w-16 bg-[#303030] rounded" />
-                                                <div className="h-4 w-32 bg-[#303030] rounded" />
-                                                <div className="h-4 w-24 bg-[#303030] rounded" />
-                                            </div>
-                                            <div className="space-y-2 w-[200px] hidden md:block">
-                                                <div className="h-4 w-12 bg-[#303030] rounded" />
-                                                <div className="h-4 w-40 bg-[#303030] rounded" />
-                                                <div className="h-4 w-12 bg-[#303030] rounded" />
-                                                <div className="h-4 w-40 bg-[#303030] rounded" />
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ) : (
+                                {(
                                     <motion.div
                                         key="body-content"
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.4, ease: easeOutQuint }}
+                                        transition={{ duration: 0.3, ease: easeOutQuint }}
                                     >
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
                                 {/* Left Column: Summary */}
                                 <div className="space-y-5">
                                     {/* Meta row */}
                                     <div className="flex flex-wrap items-center gap-2 text-base">
-                                        {matchReady ? <span className="text-[#46d369] font-bold">{matchPercentage}% Match</span> : <span className="text-[#46d369] font-bold">--% Match</span>}
+                                        {matchPercentage != null
+                                            ? <span className="text-[#46d369] font-bold">{matchPercentage}% Match</span>
+                                            : <span className="text-[#46d369] font-bold">{movie.score ? `${Math.round(movie.score * 10)}% Match` : '--% Match'}</span>
+                                        }
                                         <span className="text-[#bcbcbc]">{movie.year}</span>
                                         <span className="text-[#bcbcbc]">
                                             {movie.type === 'series'
@@ -749,16 +702,16 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </div>
                                 </div>
                             </div>
-                                </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    </div>
-                </motion.div>
+                        </motion.div>
+                    )}
+                    </AnimatePresence>
+                </div>
             </div>
-        )}
-        </AnimatePresence>
-        </>
-        </ModalErrorBoundary>
-    );
+        </motion.div>
+    </div>
+)}
+</AnimatePresence>
+</>
+</ModalErrorBoundary>
+);
 }
