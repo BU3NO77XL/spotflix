@@ -291,11 +291,18 @@ export default function AdminPage() {
                   className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 cursor-pointer hover:bg-[#222] transition-colors"
                 >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <NetflixAvatar
-                      name={user.name || ''}
-                      selectedIndex={user.preferences?.avatarIndex ?? null}
-                      size={44}
-                    />
+                    <div className="relative shrink-0">
+                      <NetflixAvatar
+                        name={user.name || ''}
+                        selectedIndex={user.preferences?.avatarIndex ?? null}
+                        size={44}
+                      />
+                      {user.role === 'admin' && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center ring-2 ring-[#1a1a1a]">
+                          <Star className="w-2.5 h-2.5 text-black fill-current" />
+                        </div>
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="text-white font-bold truncate text-base">{user.name || 'Sem nome'}</h3>
