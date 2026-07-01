@@ -226,7 +226,7 @@ export default function MyList() {
                 {/* Tabs + Search */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-12 sm:-mt-16 lg:-mt-20 relative z-30">
                     {baseList.length > 0 && (
-                        <div className="relative sm:hidden">
+                        <div className="relative sm:hidden -translate-y-20 z-[60]">
                             <input
                                 type="text"
                                 value={searchQuery}
