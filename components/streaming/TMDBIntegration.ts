@@ -598,34 +598,53 @@ export const TMDBService = {
     // Fetch movie details with credits and age rating
     async fetchMovieDetails(tmdbId: number): Promise<{ overview?: string; budget?: number; revenue?: number; director?: string; cast: CastMember[]; genres?: string[]; runtime?: number; release_date?: string; tagline?: string; ageRating?: string; belongs_to_collection?: { id: number; name: string; poster_path: string; backdrop_path: string } | null } | null> {
         try {
-            const [movieResponse, creditsResponse, releaseDatesResponse] = await Promise.all([
-                fetch(tmdbUrl(`/movie/${tmdbId}`, { language: 'pt-BR' })),
-                fetch(tmdbUrl(`/movie/${tmdbId}/credits`, { language: 'pt-BR' })),
-                fetch(tmdbUrl(`/movie/${tmdbId}/release_dates`))
-            ]);
-
-            // Verificar se as respostas são válidas
-            if (!movieResponse.ok || !creditsResponse.ok || !releaseDatesResponse.ok) {
-                if (movieResponse.status === 404 || creditsResponse.status === 404 || releaseDatesResponse.status === 404) {
-                    console.warn(`Movie with ID ${tmdbId} not found for details`);
-                    return null;
+            // Filme principal é obrigatório
+            const movieResponse = await fetch(tmdbUrl(`/movie/${tmdbId}`, { language: 'pt-BR' }));
+            if (!movieResponse.ok) {
+                if (movieResponse.status === 404) {
+                    console.warn(`Movie with ID ${tmdbId} not found`);
+                } else {
+                    console.error(`TMDB API Error (movie details): ${movieResponse.status}`);
                 }
-                throw new Error(`HTTP error! status: ${movieResponse.status || creditsResponse.status || releaseDatesResponse.status}`);
+                return null;
             }
 
             const movie = await movieResponse.json();
-            const credits = await creditsResponse.json();
-            const releaseDates = await releaseDatesResponse.json();
 
-            // Buscar classificação indicativa (prioridade: BR > US)
+            // Credits são opcionais
+            let cast: CastMember[] = [];
+            let director: string = 'Unknown';
+            try {
+                const creditsResponse = await fetch(tmdbUrl(`/movie/${tmdbId}/credits`, { language: 'pt-BR' }));
+                if (creditsResponse.ok) {
+                    const credits = await creditsResponse.json();
+                    cast = credits.cast?.slice(0, 10).map((c: { id: number; name: string; character: string; profile_path: string }) => ({
+                        id: c.id,
+                        name: c.name,
+                        character: c.character,
+                        profile_path: c.profile_path
+                    })) || [];
+                    director = credits.crew?.find((c: { job: string; name: string }) => c.job === 'Director')?.name || 'Unknown';
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch credits for movie ${tmdbId}:`, e);
+            }
+
+            // Release dates são opcionais
             let ageRating: string | undefined;
-            const brRelease = releaseDates.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'BR');
-            const usRelease = releaseDates.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'US');
-
-            const brCertification = brRelease?.release_dates?.find((rd: { certification: string }) => rd.certification)?.certification;
-            const usCertification = usRelease?.release_dates?.find((rd: { certification: string }) => rd.certification)?.certification;
-
-            ageRating = this.normalizeAgeRating(brCertification || usCertification || '');
+            try {
+                const releaseDatesResponse = await fetch(tmdbUrl(`/movie/${tmdbId}/release_dates`));
+                if (releaseDatesResponse.ok) {
+                    const releaseDates = await releaseDatesResponse.json();
+                    const brRelease = releaseDates.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'BR');
+                    const usRelease = releaseDates.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'US');
+                    const brCertification = brRelease?.release_dates?.find((rd: { certification: string }) => rd.certification)?.certification;
+                    const usCertification = usRelease?.release_dates?.find((rd: { certification: string }) => rd.certification)?.certification;
+                    ageRating = this.normalizeAgeRating(brCertification || usCertification || '');
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch release dates for movie ${tmdbId}:`, e);
+            }
 
             return {
                 ...movie,
@@ -635,13 +654,8 @@ export const TMDBService = {
                 revenue: movie.revenue,
                 ageRating,
                 belongs_to_collection: movie.belongs_to_collection || null,
-                cast: credits.cast?.slice(0, 10).map((c: { id: number; name: string; character: string; profile_path: string }) => ({
-                    id: c.id,
-                    name: c.name,
-                    character: c.character,
-                    profile_path: c.profile_path
-                })) || [],
-                director: credits.crew?.find((c: { job: string; name: string }) => c.job === 'Director')?.name || 'Unknown'
+                cast,
+                director
             };
         } catch (error) {
             console.error('Error fetching movie details:', error);
@@ -652,32 +666,53 @@ export const TMDBService = {
     // Fetch TV series details with credits and age rating
     async fetchSeriesDetails(tmdbId: number): Promise<{ overview?: string; director?: string; cast: CastMember[]; genres?: string[]; tagline?: string; ageRating?: string; seasons?: { id: number; season_number: number; episode_count: number; name: string; air_date: string; poster_path: string }[]; number_of_seasons?: number; number_of_episodes?: number; first_air_date?: string; last_air_date?: string } | null> {
         try {
-            const [seriesResponse, creditsResponse, contentRatingsResponse] = await Promise.all([
-                fetch(tmdbUrl(`/tv/${tmdbId}`, { language: 'pt-BR' })),
-                fetch(tmdbUrl(`/tv/${tmdbId}/credits`, { language: 'pt-BR' })),
-                fetch(tmdbUrl(`/tv/${tmdbId}/content_ratings`))
-            ]);
-
-            // Verificar se as respostas são válidas
-            if (!seriesResponse.ok || !creditsResponse.ok || !contentRatingsResponse.ok) {
-                if (seriesResponse.status === 404 || creditsResponse.status === 404 || contentRatingsResponse.status === 404) {
-                    console.warn(`TV Series with ID ${tmdbId} not found for details`);
-                    return null;
+            // Série principal é obrigatória
+            const seriesResponse = await fetch(tmdbUrl(`/tv/${tmdbId}`, { language: 'pt-BR' }));
+            if (!seriesResponse.ok) {
+                if (seriesResponse.status === 404) {
+                    console.warn(`TV Series with ID ${tmdbId} not found`);
+                } else {
+                    console.error(`TMDB API Error (series details): ${seriesResponse.status}`);
                 }
-                console.error(`TMDB API Error: ${seriesResponse.status || creditsResponse.status || contentRatingsResponse.status}`);
-                return null; // Retorna null em vez de lançar erro
+                return null;
             }
 
             const series = await seriesResponse.json();
-            const credits = await creditsResponse.json();
-            const contentRatings = await contentRatingsResponse.json();
 
-            // Buscar classificação indicativa (prioridade: BR > US)
+            // Credits são opcionais
+            let cast: CastMember[] = [];
+            try {
+                const creditsResponse = await fetch(tmdbUrl(`/tv/${tmdbId}/credits`, { language: 'pt-BR' }));
+                if (creditsResponse.ok) {
+                    const credits = await creditsResponse.json();
+                    cast = credits.cast?.slice(0, 10).map((c: { id: number; name: string; character: string; profile_path: string }) => ({
+                        id: c.id,
+                        name: c.name,
+                        character: c.character,
+                        profile_path: c.profile_path
+                    })) || [];
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch credits for TV series ${tmdbId}:`, e);
+            }
+
+            // Content ratings são opcionais
             let ageRating: string | undefined;
-            const brRating = contentRatings.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'BR');
-            const usRating = contentRatings.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'US');
+            try {
+                const contentRatingsResponse = await fetch(tmdbUrl(`/tv/${tmdbId}/content_ratings`));
+                if (contentRatingsResponse.ok) {
+                    const contentRatings = await contentRatingsResponse.json();
+                    const brRating = contentRatings.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'BR');
+                    const usRating = contentRatings.results?.find((r: { iso_3166_1: string }) => r.iso_3166_1 === 'US');
+                    ageRating = this.normalizeAgeRating(brRating?.rating || usRating?.rating || '');
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch content ratings for TV series ${tmdbId}:`, e);
+            }
 
-            ageRating = this.normalizeAgeRating(brRating?.rating || usRating?.rating || '');
+            const createdBy = series.created_by?.length > 0
+                ? series.created_by.map((c: { name: string }) => c.name).join(', ')
+                : undefined;
 
             return {
                 ...series,
@@ -696,19 +731,9 @@ export const TMDBService = {
                     air_date: s.air_date,
                     poster_path: s.poster_path
                 })) || [],
-                cast: credits.cast?.slice(0, 10).map((c: { id: number; name: string; character: string; profile_path: string }) => ({
-                    id: c.id,
-                    name: c.name,
-                    character: c.character,
-                    profile_path: c.profile_path
-                })) || [],
-                // Para séries, usar "created_by" em vez de "Director"
-                director: series.created_by?.length > 0
-                    ? series.created_by.map((c: { name: string }) => c.name).join(', ')
-                    : undefined,
-                created_by: series.created_by?.length > 0
-                    ? series.created_by.map((c: { name: string }) => c.name).join(', ')
-                    : undefined
+                cast,
+                director: createdBy,
+                created_by: createdBy
             };
         } catch (error) {
             console.error('Error fetching series details:', error);

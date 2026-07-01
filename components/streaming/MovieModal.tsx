@@ -175,7 +175,14 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                 : TMDBService.fetchMovieDetails(Number(movie.tmdb_id || movie.id));
 
             detailsPromise.then(details => {
-                if (!details) return;
+                if (!details) {
+                    setDetails({
+                        overview: movie.synopsis,
+                        ageRating: movie.rating,
+                    });
+                    if (movie.genre) setDetailGenres(movie.genre);
+                    return;
+                }
                 if (details.cast) setCast(details.cast.slice(0, 5));
                 if (details.genres) setDetailGenres(details.genres);
                 setDetails({
@@ -191,7 +198,13 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                     created_by: 'created_by' in details ? (Array.isArray((details as any).created_by) ? (details as any).created_by.map((c: any) => c.name).join(', ') : (details as any).created_by) : undefined,
                     score: (details as any).vote_average ?? undefined,
                 });
-            }).catch(() => {});
+            }).catch(() => {
+                setDetails({
+                    overview: movie.synopsis,
+                    ageRating: movie.rating,
+                });
+                if (movie.genre) setDetailGenres(movie.genre);
+            });
 
             TMDBService.fetchSimilar(Number(movie.tmdb_id || movie.id), movie.type === 'series').then(async (similarMovies) => {
                 const sliced = similarMovies.slice(0, 6) as Movie[];

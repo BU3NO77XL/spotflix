@@ -168,16 +168,9 @@ export default function Header() {
                 <div className="w-full px-4 md:px-[38px] relative z-10">
                     <div className="flex items-center justify-between h-[72px]">
                         <div className="flex items-center gap-[45px]">
-                            {/* Logo matching rdesign dimensions
-                            <Link href="/" className="shrink-0 flex items-center gap-1">
-                                <h1 className="text-2xl md:text-[28px] font-black tracking-tighter uppercase text-white flex items-center gap-1 leading-none">
-                                    <div className="w-[36px] h-[36px] rounded-sm bg-[#1DB954] flex items-center justify-center">
-                                        <Play className="w-[20px] h-[20px] text-white fill-white" />
-                                    </div>
-                                    <span className="tracking-tight font-bold leading-none">WEBFLIX</span>
-                                </h1>
+                            <Link href="/" className="shrink-0 flex items-center">
+                                <h1 className="text-2xl md:text-[28px] font-black tracking-tighter uppercase leading-none" style={{ color: '#FFFFFF' }}>WEBFLIX</h1>
                             </Link>
-                            */}
 
                             {/* Desktop Navigation */}
                             <nav className="hidden md:flex items-center gap-[28px] pt-[4px]">
