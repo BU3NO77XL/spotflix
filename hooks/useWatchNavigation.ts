@@ -20,9 +20,6 @@ export function useWatchNavigation(setLocalOverride?: (override: any) => void) {
     const queryClient = useQueryClient();
 
     const navigateToWatch = useCallback((movie: Movie) => {
-        try {
-            console.log('[useWatchNavigation] navigateToWatch called with', { id: movie?.id, tmdb_id: movie?.tmdb_id, title: movie?.title, type: movie?.type });
-        } catch (e) { /**/ }
         if (!movie?.tmdb_id) return;
 
         const type = movie.type || 'movie';
@@ -51,7 +48,6 @@ export function useWatchNavigation(setLocalOverride?: (override: any) => void) {
 
             // Atualizar URL sem recarregar (para histórico do browser funcionar)
             const url = `/watch?ref=${movie.tmdb_id}&type=${type}`;
-            try { console.log('[useWatchNavigation] FAST_PATH replaceState ->', url); } catch (e) { /**/ }
             window.history.replaceState(null, '', url);
         } else {
             // SLOW PATH: vindo de outra página, usar router.push (com cache já populado)
@@ -61,7 +57,6 @@ export function useWatchNavigation(setLocalOverride?: (override: any) => void) {
                 ? `/watch?id=${movie.id}&ref=${movie.tmdb_id}&type=${type}`
                 : `/watch?ref=${movie.tmdb_id}&type=${type}`;
 
-            try { console.log('[useWatchNavigation] SLOW_PATH router.push ->', url); } catch (e) { /**/ }
             router.push(url);
         }
     }, [router, pathname, queryClient, setLocalOverride]);
