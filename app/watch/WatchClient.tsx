@@ -56,12 +56,14 @@ const Skeleton = memo(({ className }: { className?: string }) => (
 Skeleton.displayName = 'Skeleton';
 
 const SectionSkeleton = memo(() => (
-    <div className="py-8 border-b border-white/10">
-        <Skeleton className="h-6 w-48 mb-4" />
-        <div className="flex gap-3 overflow-hidden">
-            {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg shrink-0" />
-            ))}
+    <div className="py-8">
+        <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8">
+            <Skeleton className="h-6 w-48 mb-4" />
+            <div className="flex gap-3 overflow-hidden">
+                {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="w-28 sm:w-32 lg:w-36 aspect-2/3 rounded-lg shrink-0" />
+                ))}
+            </div>
         </div>
     </div>
 ));
@@ -1417,6 +1419,7 @@ function WatchContent() {
 
                     {/* Synopsis */}
                     <section className="py-8">
+                        <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8">
                         <h2 className="text-white text-xl md:text-2xl font-semibold mb-3">Descrição</h2>
                         <p className="text-gray-200 text-base sm:text-base md:text-lg leading-relaxed max-w-4xl">
                             {!isSynopsisExpanded && synopsis.length > SYNOPSIS_LIMIT
@@ -1458,7 +1461,7 @@ function WatchContent() {
                                                         >
                                                             <defs>
                                                                 <linearGradient id={`starGradient-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="#facc15" />
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#ffffff" />
                                                                     <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
                                                                 </linearGradient>
                                                             </defs>
@@ -1494,12 +1497,14 @@ function WatchContent() {
                             </div>
                         )}
                         */}
+                            </div>{/* fecha bg-[#1a1a1a] */}
                     </section>
 
 
                     {/* Seletor de temporadas e carrossel de episódios para séries */}
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
-                        <section className="py-8 border-t border-white/10">
+                        <section className="py-8">
+                            <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8">
 
                             {/* Cabeçalho da seção - Desktop: lado a lado, Mobile: empilhado */}
                             <div className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -1656,13 +1661,15 @@ function WatchContent() {
                                     )}
                                 </div>
                             </div>
+                            </div>{/* fecha bg-[#1a1a1a] */}
                         </section>
 
                     )}
 
                     {/* Quick Info para SÉRIES - aparece DEPOIS dos episódios */}
                     {isSeries && (
-                        <section className="py-8 border-b border-white/10">
+                        <section className="py-8">
+                            <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8">
                             <h2 className="text-white text-xl md:text-2xl font-semibold mb-4">Detalhes</h2>
                             <div className="flex flex-col lg:flex-col gap-3 text-sm text-gray-500">
 
@@ -1687,7 +1694,7 @@ function WatchContent() {
                                                         <svg className="w-full h-full" viewBox="0 0 24 24">
                                                             <defs>
                                                                 <linearGradient id={`starGradient-series-${star}-${movie.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                    <stop offset={`${fillPercentage}%`} stopColor="#facc15" />
+                                                                    <stop offset={`${fillPercentage}%`} stopColor="#ffffff" />
                                                                     <stop offset={`${fillPercentage}%`} stopColor="#4b5563" />
                                                                 </linearGradient>
                                                             </defs>
@@ -1718,6 +1725,7 @@ function WatchContent() {
                                     </>
                                 )}
                             </div>
+                            </div>{/* fecha bg-[#1a1a1a] */}
                         </section>
                     )}
 
@@ -2050,10 +2058,12 @@ function WatchContent() {
                         <CastSkeleton />
                     ) : cast.length > 0 && (
                         <section
-                            className="py-8 border-t border-b border-white/10"
+                            className="py-8"
                             aria-label="Elenco principal do filme"
                         >
-                            <CastSlider cast={cast} />
+                            <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8 overflow-hidden">
+                                <CastSlider cast={cast} />
+                            </div>
                         </section>
                     )}
 
@@ -2229,15 +2239,15 @@ function WatchContent() {
                         <SectionSkeleton />
                     ) : similarMovies.length > 0 && (
                         <section className="py-8" aria-label="Títulos semelhantes a este filme">
-                            <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight px-2 mb-3">Títulos Semelhantes</h2>
-                            <div className="relative -mx-4 sm:-mx-8 lg:-mx-12">
-                                <Carousel
-                                    title="Títulos Semelhantes"
-                                    showTitle={false}
-                                    movies={similarMovies}
-                                    onMovieClick={handleSimilarMovieClick}
-                                />
-                            </div>
+                                <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight px-2 mb-3">Títulos Semelhantes</h2>
+                                <div className="relative -mx-4 sm:-mx-8 lg:-mx-12">
+                                    <Carousel
+                                        title="Títulos Semelhantes"
+                                        showTitle={false}
+                                        movies={similarMovies}
+                                        onMovieClick={handleSimilarMovieClick}
+                                    />
+                                </div>
                         </section>
                     )}
 
