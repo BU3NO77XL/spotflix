@@ -531,7 +531,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </div>
 
                                     {/* Top 10 Badge */}
-                                    {movie.rank && (
+                                    {movie.rank && movie.rank <= 10 && (
                                         <div className="flex items-center animate-in fade-in slide-in-from-left-4 duration-500">
                                             <svg width="245" height="30" viewBox="0 0 245 30" fill="none" aria-label={`#${movie.rank} em ${movie.type === 'series' ? 'Séries' : 'Filmes'} hoje`}>
                                                 <rect y="1.0957" width="27.8086" height="27.8086" rx="3.47608" fill="#F50723"/>
