@@ -7,11 +7,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'userId é obrigatório.' }, { status: 400 });
   }
 
-  const { data: items, error } = await supabaseAdmin
+  // Suporte a filtro por tmdbId + mediaType (evita baixar o histórico inteiro no WatchClient)
+  const tmdbId = request.nextUrl.searchParams.get('tmdbId');
+  const mediaType = request.nextUrl.searchParams.get('mediaType');
+
+  let query = supabaseAdmin
     .from('watch_history')
     .select('*')
     .eq('profile_id', Number(userId))
     .order('watched_at', { ascending: false });
+
+  if (tmdbId) query = query.eq('tmdb_id', Number(tmdbId));
+  if (mediaType) query = query.eq('media_type', mediaType);
+
+  const { data: items, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: 'Erro ao buscar histórico.' }, { status: 500 });

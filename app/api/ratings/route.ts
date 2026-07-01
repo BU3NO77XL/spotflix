@@ -9,12 +9,13 @@ export async function GET(request: NextRequest) {
 
   const { data: items } = await supabaseAdmin
     .from('ratings')
-    .select('tmdb_id, value')
+    .select('tmdb_id, media_type, value')
     .eq('profile_id', Number(userId));
 
+  // Chave composta tmdbId_mediaType para evitar colisão entre filme e série com mesmo ID
   const ratings: Record<string, string> = {};
   for (const item of items || []) {
-    ratings[String(item.tmdb_id)] = item.value;
+    ratings[`${item.tmdb_id}_${item.media_type}`] = item.value;
   }
 
   return NextResponse.json({ ratings });
