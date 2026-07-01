@@ -347,7 +347,9 @@ export const TMDBService = {
     async fetchSimilar(movieId: number, isSeries: boolean = false): Promise<Omit<Movie, 'id'>[]> {
         try {
             const path = isSeries ? `/tv/${movieId}/recommendations` : `/movie/${movieId}/recommendations`;
-            const items = await fetchPages(path, { language: 'pt-BR' }, 4, 80, (d) => d.results || []);
+            // 1 página = 20 itens, suficiente (modal usa apenas 6)
+            const items = await fetchPages(path, { language: 'pt-BR' }, 1, 20, (d) => d.results || []);
+            // forceType=null: deixa a heurística (title/name + release_date/first_air_date) decidir o tipo
             return this.transformTMDBData(items, 'recommended', null, 'en');
         } catch (error) { console.error('Error fetching similar:', error); return []; }
     },
@@ -490,7 +492,17 @@ export const TMDBService = {
             // Verificar se a resposta é válida
             if (!response.ok) {
                 if (response.status === 404) {
-                    console.warn(`${isSeries ? 'Series' : 'Movie'} with ID ${tmdbId} not found for watch providers`);
+                    // Tenta silenciosamente com o tipo oposto antes de desistir
+                    const fallbackPath = isSeries ? `/movie/${tmdbId}/watch/providers` : `/tv/${tmdbId}/watch/providers`;
+                    try {
+                        const fallbackResponse = await fetch(tmdbUrl(fallbackPath, { language: 'pt-BR' }));
+                        if (fallbackResponse.ok) {
+                            const fallbackData = await fallbackResponse.json();
+                            return fallbackData.results?.[region] || null;
+                        }
+                    } catch { /* ignora erro do fallback */ }
+                    // Só avisa se ambos falharam
+                    console.warn(`Content with ID ${tmdbId} not found for watch providers (tried both movie and tv)`);
                     return null;
                 }
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -926,7 +938,14 @@ export const TMDBService = {
         });
 
         return filteredItems.map((item, index) => {
-            const isMovie = forceType === 'movie' || item.media_type === 'movie' || !item.media_type;
+            // Determina o tipo com base em: forceType > media_type > heurística por campos
+            // Itens sem media_type (ex: /recommendations) têm `name`+`first_air_date` se forem séries
+            const isSeries = forceType === 'series'
+                || item.media_type === 'tv'
+                || (!item.media_type && !item.title && !!item.name && !!item.first_air_date);
+            const isMovie = forceType === 'movie'
+                || item.media_type === 'movie'
+                || (!isSeries && (!!item.title || !item.first_air_date));
             const title = item.title || item.name || 'Untitled';
             const releaseDate = item.release_date || item.first_air_date || '';
             const year = releaseDate ? new Date(releaseDate).getFullYear() : new Date().getFullYear();
@@ -960,8 +979,8 @@ export const TMDBService = {
                 cast: [],
                 director: 'Unknown',
                 poster_url: item.poster_path
-                    ? `${TMDB_IMAGE_BASE}/w500${item.poster_path}`
-                    : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&h=750&fit=crop',
+                    ? `${TMDB_IMAGE_BASE}/w342${item.poster_path}`
+                    : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=342&h=513&fit=crop',
                 backdrop_url: item.backdrop_path
                     ? `${TMDB_IMAGE_BASE}/w1280${item.backdrop_path}`
                     : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop',
@@ -975,20 +994,19 @@ export const TMDBService = {
     },
 
     getContentRating(isAdult?: boolean): string {
-        if (isAdult) return 'R';
-        const ratings = ['PG', 'PG-13', 'R', 'TV-MA', 'TV-14'];
-        return ratings[Math.floor(Math.random() * ratings.length)];
+        // Padrão conservador BR — rating real vem de fetchMovieDetails/fetchSeriesDetails
+        if (isAdult) return '18';
+        return '14';
     },
 
     getRandomDuration(): string {
-        const hours = Math.floor(Math.random() * 2) + 1;
-        const minutes = Math.floor(Math.random() * 60);
-        return `${hours}h ${minutes}m`;
+        // Placeholder vazio — duração real vem de fetchMovieDetails
+        return '';
     },
 
     getRandomSeasons(): string {
-        const seasons = Math.floor(Math.random() * 5) + 1;
-        return `${seasons} Temporada${seasons > 1 ? 's' : ''}`;
+        // Placeholder vazio — temporadas reais vêm de fetchSeriesDetails
+        return '';
     },
 
     // Fetch series by creator - busca séries onde a pessoa é realmente criador
@@ -1039,7 +1057,7 @@ export const TMDBService = {
                 cast: [],
                 director: 'Unknown',
                 poster_url: show.poster_path
-                    ? `https://image.tmdb.org/t/p/w500${show.poster_path}`
+                    ? `https://image.tmdb.org/t/p/w342${show.poster_path}`
                     : '',
                 backdrop_url: show.backdrop_path
                     ? `https://image.tmdb.org/t/p/original${show.backdrop_path}`
