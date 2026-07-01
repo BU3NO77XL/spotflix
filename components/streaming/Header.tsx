@@ -37,7 +37,7 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    const [userData, setUserData] = useState<{ name: string; email: string; avatarUrl?: string | null; preferences?: { avatarIndex?: number; genres?: string } | null } | null>(() => {
+    const [userData, setUserData] = useState<{ name: string; email: string; role?: string; avatarUrl?: string | null; preferences?: { avatarIndex?: number; genres?: string } | null } | null>(() => {
       try {
         if (typeof window === 'undefined') return null;
         const stored = localStorage.getItem('userBasicInfo');
@@ -251,9 +251,16 @@ export default function Header() {
                                                 onClick={() => setUserDropdownOpen(false)}
                                             />
                                             <div className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md">
-                                                <div className="p-4 border-b border-white/10">
+                                            <div className="p-4 border-b border-white/10">
                                                     <p className="text-white font-semibold">{userData?.name || 'Minha Conta'}</p>
-                                                    <p className="text-gray-400 text-sm">{userData?.email || 'usuario@email.com'}</p>
+                                                    <p className="text-gray-400 text-sm">
+                                                        {userData?.email
+                                                            ? userData.email.slice(0, 2) + '***' + userData.email.slice(userData.email.indexOf('@'))
+                                                            : 'usuario@email.com'}
+                                                    </p>
+                                                    {userData?.role === 'admin' && (
+                                                        <p className="text-white font-bold text-xs mt-1">Administrador</p>
+                                                    )}
                                                 </div>
                                                 <div className="py-2">
                                                     <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => { setUserDropdownOpen(false); router.push('/profile'); }}>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Film, Tv, Star, Clock, Heart, Settings } from 'lucide-react';
+import { ChevronLeft, Film, Tv, Star, Clock, Heart, Settings, Shield } from 'lucide-react';
 import NetflixAvatar from '@/components/NetflixAvatar';
 
 interface WatchHistoryItem {
@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const [genres, setGenres] = useState<string[]>([]);
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
   const [ratingsCount, setRatingsCount] = useState(0);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function ProfilePage() {
       setUserEmail(info.email || '');
       setAvatarIndex(info.preferences?.avatarIndex ?? null);
       setGenres(info.preferences?.genres || []);
+      setUserRole(info.role || null);
     }
 
     const fetchData = async () => {
@@ -131,6 +133,15 @@ export default function ProfilePage() {
             <Settings className="w-4 h-4" />
             Editar Perfil
           </button>
+          {userRole === 'admin' && (
+            <button
+              onClick={() => router.push('/admin')}
+              className="shrink-0 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm"
+            >
+              <Shield className="w-4 h-4" />
+              Acessos Administrativos
+            </button>
+          )}
         </div>
 
         {/* Stats */}
