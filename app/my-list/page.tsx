@@ -250,7 +250,7 @@ export default function MyList() {
                         </div>
                     )}
 
-                    <div className="bg-white/5 border border-white/10 rounded-lg p-1 inline-flex">
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-1 inline-flex -translate-y-20 sm:translate-y-0">
                         {seriesList.length > 0 && (
                             <button
                                 onClick={() => setActiveTab('series')}
