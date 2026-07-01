@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Movie, CastMember } from '@/types/movie';
 import { Play, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import { toast } from 'sonner';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
@@ -1126,6 +1127,11 @@ function WatchContent() {
     const animatedBackdropUrl = animatedBackdrop?.url || null;
     const hasBackdropAudio = animatedBackdrop?.hasAudio || false;
 
+    const fadeSlideUp = {
+        initial: { opacity: 0, y: 24 },
+        animate: { opacity: 1, y: 0 },
+    };
+
     return (
         <div className="min-h-screen bg-[#121212]">
             {/* Hero Section - Similar to MovieModal */}
@@ -1217,17 +1223,27 @@ function WatchContent() {
 
 
                 {/* Hero Content - Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 z-20 px-4 sm:px-8 lg:px-12 pb-0 sm:pb-2 lg:pb-4">
+                <motion.div
+                    className="absolute bottom-0 left-0 right-0 z-20 px-4 sm:px-8 lg:px-12 pb-0 sm:pb-2 lg:pb-4"
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                >
                     <div className="max-w-4xl">
 
                         {/* Title - Otimizado */}
-                        <div className="mb-2">
+                        <motion.div
+                            className="mb-2"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.45, delay: 0.1, ease: 'easeOut' }}
+                        >
                             <MovieTitle
                                 title={movie.title}
                                 logos={logos}
                                 isLoading={isLoadingDetails && logos.length === 0}
                             />
-                        </div>
+                        </motion.div>
 
                         {/* BADGE TOP 10 DESATIVADO TEMPORARIAMENTE
                         {urlRank && (
@@ -1246,17 +1262,25 @@ function WatchContent() {
 
                         {/* Tagline */}
                         {(isSeries ? seriesDetails?.tagline : movieDetails?.tagline) && (
-                            <p className="text-gray-400 text-sm sm:text-base italic mt-2 mb-4">
+                            <motion.p
+                                className="text-gray-400 text-sm sm:text-base italic mt-2 mb-4"
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: 0.2, ease: 'easeOut' }}
+                            >
                                 "{(isSeries ? seriesDetails?.tagline : movieDetails?.tagline)}"
-                            </p>
+                            </motion.p>
                         )}
 
                         {!seriesDetails?.tagline && !movieDetails?.tagline && <div className="mb-4" />}
 
                         {/* Action Buttons - Netflix Style */}
-                        <div
+                        <motion.div
                             className="flex flex-wrap items-center justify-between gap-2 mb-6"
                             role="group"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.3, ease: 'easeOut' }}
                             aria-label="Ações do filme"
                         >
                             <div className="flex items-center gap-2">
@@ -1370,7 +1394,7 @@ function WatchContent() {
                             >
                                 <Share2 className="w-5 h-5" />
                             </button>
-                        </div>
+                        </motion.div>
 
 
                         {/* Movie/Series Info */}
@@ -1427,16 +1451,26 @@ function WatchContent() {
                         </div>
 
                     </div>
-                </div>
+                </motion.div>
 
             </section>
 
             {/* Content */}
-            <div className="relative z-20 bg-[#121212] overflow-clip">
+            <motion.div
+                className="relative z-20 bg-[#121212] overflow-clip"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
+            >
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
 
                     {/* Synopsis */}
-                    <section className="py-8">
+                    <motion.section
+                        className="py-8"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+                    >
                         <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8">
                         <h2 className="text-white text-xl md:text-2xl font-semibold mb-3">Descrição</h2>
                         <p className="text-gray-200 text-base sm:text-base md:text-lg leading-relaxed max-w-4xl">
@@ -1516,12 +1550,17 @@ function WatchContent() {
                         )}
                         */}
                             </div>{/* fecha bg-[#1a1a1a] */}
-                    </section>
+                    </motion.section>
 
 
                     {/* Seletor de temporadas e carrossel de episódios para séries */}
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
-                        <section className="py-8">
+                        <motion.section
+                            className="py-8"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.2, ease: 'easeOut' }}
+                        >
 
                             {/* Cabeçalho da seção - Desktop: lado a lado, Mobile: empilhado */}
                             <div className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -1678,7 +1717,7 @@ function WatchContent() {
                                     )}
                                 </div>
                             </div>
-                        </section>
+                        </motion.section>
 
                     )}
 
@@ -2091,14 +2130,17 @@ function WatchContent() {
                     {isLoadingDetails ? (
                         <CastSkeleton />
                     ) : cast.length > 0 && (
-                        <section
+                        <motion.section
                             className="py-8"
                             aria-label="Elenco principal do filme"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.3, ease: 'easeOut' }}
                         >
                             <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8 overflow-hidden">
                                 <CastSlider cast={cast} />
                             </div>
-                        </section>
+                        </motion.section>
                     )}
 
 
@@ -2272,7 +2314,13 @@ function WatchContent() {
                     {isLoadingDetails ? (
                         <SectionSkeleton />
                     ) : similarMovies.length > 0 && (
-                        <section className="py-8" aria-label="Títulos semelhantes a este filme">
+                        <motion.section
+                            className="py-8"
+                            aria-label="Títulos semelhantes a este filme"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
+                        >
                                 <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight px-2 mb-3">Títulos Semelhantes</h2>
                                 <div className="relative -mx-4 sm:-mx-8 lg:-mx-12">
                                     <Carousel
@@ -2282,11 +2330,11 @@ function WatchContent() {
                                         onMovieClick={handleSimilarMovieClick}
                                     />
                                 </div>
-                        </section>
+                        </motion.section>
                     )}
 
                 </div>
-            </div >
+            </motion.div>
             {/* Movie Modal */}
             < MovieModal
                 movie={selectedModalMovie}
