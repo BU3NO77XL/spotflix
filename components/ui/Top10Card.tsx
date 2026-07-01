@@ -36,7 +36,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       {/* Número — Netflix style: absolute left:0, z-index:-1, stroke #666, fill transparent */}
       <div
         className={cn(
-          "absolute left-0 top-0 overflow-hidden select-none pointer-events-none h-[175px] md:h-[175px] lg:h-[220px] xl:h-[265px]",
+          "absolute left-0 top-0 overflow-hidden select-none pointer-events-none flex items-center justify-end h-[175px] md:h-[175px] lg:h-[220px] xl:h-[265px]",
           isFirst
             ? "w-[136px] lg:w-[171px] xl:w-[205px]"
             : "w-[144px] lg:w-[182px] xl:w-[219px]"
@@ -45,9 +45,8 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       >
         <span
           className={cn(
-            "font-bold block text-transparent text-right w-full",
-            "text-[228px] lg:text-[286px] xl:text-[345px]",
-            "leading-[175px] lg:leading-[220px] xl:leading-[265px]"
+            "font-bold text-transparent text-right leading-none",
+            "text-[228px] lg:text-[286px] xl:text-[345px]"
           )}
           style={{
             WebkitTextStroke: '6px #666',
