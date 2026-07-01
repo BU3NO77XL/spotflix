@@ -6,6 +6,10 @@ const TMDB_API_KEY = isServer ? (process.env.TMDB_API_KEY || '') : '';
 const TMDB_BASE_URL = isServer ? 'https://api.themoviedb.org/3' : '/api/content';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
+// Provedores streaming Brasil (Netflix, Prime Video, HBO Max, Paramount+)
+const STREAMING_PROVIDERS_BR = '8|9|384|119';
+const WATCH_REGION = 'BR';
+
 // Warn if API key is missing (apenas no servidor)
 if (isServer) {
     if (!TMDB_API_KEY) {
@@ -82,27 +86,48 @@ export const TMDBService = {
         }
     },
 
-    // Fetch trending content (daily)
+    // Fetch trending content (popularidade geral nos streamings BR)
     async fetchTrending(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 6, 120, (d) => d.results || []);
-            return this.transformTMDBData(items, 'trending', null, 'en');
+            const items = await fetchPages('/discover/movie', {
+                sort_by: 'popularity.desc',
+                'vote_count.gte': '30',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 6, 120, (d) => d.results || []);
+            return this.transformTMDBData(items, 'trending', 'movie', 'en');
         } catch (error) { console.error('Error fetching trending:', error); return []; }
     },
 
     // Fetch trending content for today (daily) - para o hero
     async fetchTrendingToday(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 6, 120, (d) => d.results || []);
-            return this.transformTMDBData(items, 'trending_today', null, 'en');
+            const items = await fetchPages('/discover/movie', {
+                sort_by: 'popularity.desc',
+                'vote_count.gte': '30',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 6, 120, (d) => d.results || []);
+            return this.transformTMDBData(items, 'trending_today', 'movie', 'en');
         } catch (error) { console.error('Error fetching daily trending:', error); return []; }
     },
 
-    // Fetch top rated movies
+    // Fetch top rated movies nos streamings BR
     async fetchTopRatedMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/movie/top_rated', { language: 'pt-BR' }, 8, 160, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/discover/movie', {
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 8, 160, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'top_rated', 'movie', 'en');
         } catch (error) { console.error('Error fetching top rated movies:', error); return []; }
     },
@@ -111,36 +136,58 @@ export const TMDBService = {
     async fetchUpcoming(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/movie/upcoming', { language: 'pt-BR' }, 6, 120, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/discover/movie', {
+                sort_by: 'popularity.desc',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                'primary_release_date.gte': new Date().toISOString().split('T')[0],
+                language: 'pt-BR'
+            }, 6, 120, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'coming_soon', 'movie', 'en');
         } catch (error) { console.error('Error fetching upcoming:', error); return []; }
     },
 
-    // Fetch top 10 from trending/all/day (conteudo mais variado)
+    // Fetch top 10 by popularity nos streamings BR
     async fetchTop10(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 6, 120, (d) => d.results || []);
-            return this.transformTMDBData(items, 'top_10', null, 'en');
+            const items = await fetchPages('/discover/movie', {
+                sort_by: 'popularity.desc',
+                'vote_count.gte': '30',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 4, 80, (d) => d.results || []);
+            return this.transformTMDBData(items, 'top_10', 'movie', 'en');
         } catch (error) { console.error('Error fetching top 10:', error); return []; }
     },
 
-    // Fetch recommended content
+    // Fetch recommended content (popular nos streamings)
     async fetchRecommended(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/movie/popular', { language: 'pt-BR' }, 6, 120, (d) => d.results || [], pageNum);
-            return this.transformTMDBData(items, 'recommended', null, 'en');
+            const items = await fetchPages('/discover/movie', {
+                sort_by: 'popularity.desc',
+                'vote_count.gte': '30',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 6, 120, (d) => d.results || [], pageNum);
+            return this.transformTMDBData(items, 'recommended', 'movie', 'en');
         } catch (error) { console.error('Error fetching recommended:', error); return []; }
     },
 
-    // Discover movies helper
+    // Discover movies helper (filtrado por provedores BR)
     async discoverMovies(genreId: string, category: Movie['category']): Promise<Omit<Movie, 'id'>[]> {
         try {
             const items = await fetchPages('/discover/movie', {
                 with_genres: genreId,
                 sort_by: 'vote_average.desc',
                 'vote_count.gte': '30',
-                'vote_average.gte': '4',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
                 with_original_language: 'en',
                 language: 'pt-BR'
             }, 6, 120, (d) => d.results || []);
@@ -183,28 +230,49 @@ export const TMDBService = {
         return this.discoverMovies('16', 'animation');
     },
 
-    // Fetch popular series
+    // Fetch popular series nos streamings BR
     async fetchPopularSeries(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/tv/popular', { language: 'pt-BR' }, 6, 120, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/discover/tv', {
+                sort_by: 'popularity.desc',
+                'vote_count.gte': '30',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 6, 120, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'series_popular', 'series', 'en');
         } catch (error) { console.error('Error fetching popular series:', error); return []; }
     },
 
-    // Fetch top rated series
+    // Fetch top rated series nos streamings BR
     async fetchTopRatedSeries(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/tv/top_rated', { language: 'pt-BR' }, 6, 120, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/discover/tv', {
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '200',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 6, 120, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'series_top_rated', 'series', 'en');
         } catch (error) { console.error('Error fetching top rated series:', error); return []; }
     },
 
-    // Fetch trending series
+    // Fetch trending series nos streamings BR
     async fetchTrendingSeries(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/tv/week', { language: 'pt-BR' }, 6, 120, (d) => d.results || []);
+            const items = await fetchPages('/discover/tv', {
+                sort_by: 'popularity.desc',
+                'vote_count.gte': '30',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 6, 120, (d) => d.results || []);
             return this.transformTMDBData(items, 'series_trending', 'series', 'en');
         } catch (error) { console.error('Error fetching trending series:', error); return []; }
     },
@@ -219,7 +287,8 @@ export const TMDBService = {
                         with_genres: String(id),
                         sort_by: 'vote_average.desc',
                         'vote_count.gte': '30',
-                        'vote_average.gte': '4',
+                        with_watch_providers: STREAMING_PROVIDERS_BR,
+                        watch_region: WATCH_REGION,
                         with_original_language: 'en',
                         language: 'pt-BR'
                     }, 4, 80, (d) => d.results || []).then(items =>
@@ -229,7 +298,8 @@ export const TMDBService = {
                         with_genres: String(id),
                         sort_by: 'vote_average.desc',
                         'vote_count.gte': '30',
-                        'vote_average.gte': '4',
+                        with_watch_providers: STREAMING_PROVIDERS_BR,
+                        watch_region: WATCH_REGION,
                         with_original_language: 'en',
                         language: 'pt-BR'
                     }, 4, 80, (d) => d.results || []).then(items =>
@@ -252,10 +322,18 @@ export const TMDBService = {
         } catch (error) { console.error('Error fetching by genre:', error); return []; }
     },
 
-    // Fetch critically acclaimed
+    // Fetch critically acclaimed nos streamings BR
     async fetchCriticsMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/movie/top_rated', { language: 'pt-BR' }, 8, 160, (d) => d.results || [], 2);
+            const pageNum = this.getCarouselPage();
+            const items = await fetchPages('/discover/movie', {
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': '300',
+                with_watch_providers: STREAMING_PROVIDERS_BR,
+                watch_region: WATCH_REGION,
+                with_original_language: 'en',
+                language: 'pt-BR'
+            }, 8, 160, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'critics', 'movie', 'en');
         } catch (error) { console.error('Error fetching critics picks:', error); return []; }
     },
