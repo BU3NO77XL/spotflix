@@ -45,7 +45,7 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.05 }}
             onClick={() => onClick(movie)}
-            className="group relative shrink-0 w-[160px] sm:w-[180px] lg:w-[200px] cursor-pointer"
+            className="group relative shrink-0 w-[140px] sm:w-[155px] lg:w-[170px] cursor-pointer"
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {

@@ -65,7 +65,7 @@ function CarouselSkeleton({ title, count = 7 }: { title: string; count?: number 
                 {Array.from({ length: count }).map((_, i) => (
                     <div
                         key={i}
-                        className={`shrink-0 w-[160px] sm:w-[180px] lg:w-[200px] aspect-[2/3] rounded-sm sm:rounded-md ${S}`}
+                        className={`shrink-0 w-[140px] sm:w-[155px] lg:w-[170px] aspect-[2/3] rounded-sm sm:rounded-md ${S}`}
                     />
                 ))}
             </div>
