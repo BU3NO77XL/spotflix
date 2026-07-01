@@ -85,7 +85,7 @@ export const TMDBService = {
     // Fetch trending content (daily)
     async fetchTrending(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 2, 60, (d) => d.results || []);
+            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 4, 80, (d) => d.results || []);
             return this.transformTMDBData(items, 'trending');
         } catch (error) { console.error('Error fetching trending:', error); return []; }
     },
@@ -93,7 +93,7 @@ export const TMDBService = {
     // Fetch trending content for today (daily) - para o hero
     async fetchTrendingToday(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 2, 40, (d) => d.results || []);
+            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 4, 80, (d) => d.results || []);
             return this.transformTMDBData(items, 'trending_today');
         } catch (error) { console.error('Error fetching daily trending:', error); return []; }
     },
@@ -102,7 +102,7 @@ export const TMDBService = {
     async fetchTopRatedMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/movie/top_rated', { language: 'pt-BR' }, 2, 60, (d) => d.results || []);
+            const items = await fetchPages('/movie/top_rated', { language: 'pt-BR' }, 5, 100, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'top_rated', 'movie');
         } catch (error) { console.error('Error fetching top rated movies:', error); return []; }
     },
@@ -111,7 +111,7 @@ export const TMDBService = {
     async fetchUpcoming(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/movie/upcoming', { language: 'pt-BR' }, 2, 60, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/movie/upcoming', { language: 'pt-BR' }, 4, 80, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'coming_soon', 'movie');
         } catch (error) { console.error('Error fetching upcoming:', error); return []; }
     },
@@ -119,7 +119,7 @@ export const TMDBService = {
     // Fetch top 10 from trending/all/day (conteudo mais variado)
     async fetchTop10(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 2, 60, (d) => d.results || []);
+            const items = await fetchPages('/trending/all/day', { language: 'pt-BR' }, 4, 80, (d) => d.results || []);
             return this.transformTMDBData(items, 'top_10');
         } catch (error) { console.error('Error fetching top 10:', error); return []; }
     },
@@ -128,12 +128,12 @@ export const TMDBService = {
     async fetchRecommended(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/movie/popular', { language: 'pt-BR' }, 2, 60, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/movie/popular', { language: 'pt-BR' }, 4, 80, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'recommended');
         } catch (error) { console.error('Error fetching recommended:', error); return []; }
     },
 
-    // Discover movies helper - reduce thresholds for more results
+    // Discover movies helper
     async discoverMovies(genreId: string, category: Movie['category']): Promise<Omit<Movie, 'id'>[]> {
         try {
             const items = await fetchPages('/discover/movie', {
@@ -142,7 +142,7 @@ export const TMDBService = {
                 'vote_count.gte': '50',
                 'vote_average.gte': '5',
                 language: 'pt-BR'
-            }, 2, 60, (d) => d.results || []);
+            }, 4, 80, (d) => d.results || []);
             return this.transformTMDBData(items, category, 'movie');
         } catch (error) { console.error(`Error fetching ${category}:`, error); return []; }
     },
@@ -186,7 +186,7 @@ export const TMDBService = {
     async fetchPopularSeries(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/tv/popular', { language: 'pt-BR' }, 2, 60, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/tv/popular', { language: 'pt-BR' }, 4, 80, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'series_popular', 'series');
         } catch (error) { console.error('Error fetching popular series:', error); return []; }
     },
@@ -195,7 +195,7 @@ export const TMDBService = {
     async fetchTopRatedSeries(): Promise<Omit<Movie, 'id'>[]> {
         try {
             const pageNum = this.getCarouselPage();
-            const items = await fetchPages('/tv/top_rated', { language: 'pt-BR' }, 2, 60, (d) => d.results || [], pageNum);
+            const items = await fetchPages('/tv/top_rated', { language: 'pt-BR' }, 4, 80, (d) => d.results || [], pageNum);
             return this.transformTMDBData(items, 'series_top_rated', 'series');
         } catch (error) { console.error('Error fetching top rated series:', error); return []; }
     },
@@ -203,7 +203,7 @@ export const TMDBService = {
     // Fetch trending series
     async fetchTrendingSeries(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/trending/tv/week', { language: 'pt-BR' }, 2, 60, (d) => d.results || []);
+            const items = await fetchPages('/trending/tv/week', { language: 'pt-BR' }, 4, 80, (d) => d.results || []);
             return this.transformTMDBData(items, 'series_trending', 'series');
         } catch (error) { console.error('Error fetching trending series:', error); return []; }
     },
@@ -220,7 +220,7 @@ export const TMDBService = {
                         'vote_count.gte': '50',
                         'vote_average.gte': '5',
                         language: 'pt-BR'
-                    }, 2, 30, (d) => d.results || []).then(items =>
+                    }, 3, 50, (d) => d.results || []).then(items =>
                         this.transformTMDBData(items, 'personalized', 'movie')
                     ).catch(() => [] as Omit<Movie, 'id'>[]),
                     fetchPages('/discover/tv', {
@@ -229,7 +229,7 @@ export const TMDBService = {
                         'vote_count.gte': '50',
                         'vote_average.gte': '5',
                         language: 'pt-BR'
-                    }, 2, 30, (d) => d.results || []).then(items =>
+                    }, 3, 50, (d) => d.results || []).then(items =>
                         this.transformTMDBData(items, 'personalized', 'series')
                     ).catch(() => [] as Omit<Movie, 'id'>[])
                 ])
@@ -252,7 +252,7 @@ export const TMDBService = {
     // Fetch critically acclaimed
     async fetchCriticsMovies(): Promise<Omit<Movie, 'id'>[]> {
         try {
-            const items = await fetchPages('/movie/top_rated', { language: 'pt-BR' }, 2, 40, (d) => d.results || [], 2);
+            const items = await fetchPages('/movie/top_rated', { language: 'pt-BR' }, 5, 100, (d) => d.results || [], 2);
             return this.transformTMDBData(items, 'critics', 'movie');
         } catch (error) { console.error('Error fetching critics picks:', error); return []; }
     },
@@ -261,7 +261,7 @@ export const TMDBService = {
     async fetchSimilar(movieId: number, isSeries: boolean = false): Promise<Omit<Movie, 'id'>[]> {
         try {
             const path = isSeries ? `/tv/${movieId}/recommendations` : `/movie/${movieId}/recommendations`;
-            const items = await fetchPages(path, { language: 'pt-BR' }, 2, 40, (d) => d.results || []);
+            const items = await fetchPages(path, { language: 'pt-BR' }, 3, 60, (d) => d.results || []);
             return this.transformTMDBData(items, 'recommended');
         } catch (error) { console.error('Error fetching similar:', error); return []; }
     },
@@ -807,7 +807,10 @@ export const TMDBService = {
     transformTMDBData(items: TMDBItem[], category: Movie['category'], forceType: 'movie' | 'series' | null = null): Omit<Movie, 'id'>[] {
         const filteredItems = items.filter(item => {
             if (!item.poster_path || item.poster_path === '') return false;
-            return true;
+            const releaseDate = item.release_date || item.first_air_date || '';
+            if (!releaseDate) return true;
+            const year = new Date(releaseDate).getFullYear();
+            return year >= 2009;
         });
 
         return filteredItems.map((item, index) => {
