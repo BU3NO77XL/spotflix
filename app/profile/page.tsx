@@ -100,8 +100,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <button onClick={() => window.location.href = '/'} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pt-24 sm:pt-28">
+        <button onClick={() => router.push('/')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
           <ChevronLeft className="w-5 h-5" />
           <span>Voltar</span>
         </button>
@@ -113,12 +113,12 @@ export default function ProfilePage() {
           </div>
           <div className="flex-1 text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl font-bold mb-1">{userName || 'Usuário'}</h1>
-            <p className="text-gray-500 mb-1">
+            <p className="text-white mb-1">
               {userEmail
                 ? userEmail.slice(0, 2) + '***' + userEmail.slice(userEmail.indexOf('@'))
                 : '---'}
             </p>
-            <p className="text-sm text-gray-600 flex items-center justify-center sm:justify-start gap-1.5">
+            <p className="text-sm text-gray-400 flex items-center justify-center sm:justify-start gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               Membro desde {formatDate(createdAt)}
             </p>
