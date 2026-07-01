@@ -24,6 +24,7 @@ import { useWatchNavigation } from '@/hooks/useWatchNavigation';
 import { useLogoStore } from '@/stores/logoStore';
 import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 import RatingTooltip from '@/components/ui/RatingTooltip';
+import RatingParticles from '@/components/ui/RatingParticles';
 import ShareModal from '@/components/ui/ShareModal';
 
 // Hook para preload de imagens
@@ -276,6 +277,8 @@ function WatchContent() {
     const [showLeftTrailersArrow, setShowLeftTrailersArrow] = useState(false);
     const [showRightTrailersArrow, setShowRightTrailersArrow] = useState(false);
     const [selectedModalMovie, setSelectedModalMovie] = useState<Movie | null>(null);
+    const [ratingParticlesPos, setRatingParticlesPos] = useState<{ x: number; y: number } | null>(null);
+    const ratingBtnRef = useRef<HTMLButtonElement>(null);
     // Estado para backdrops rotativos
     const [backdrops, setBackdrops] = useState<string[]>([]);
     const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
@@ -1346,6 +1349,7 @@ function WatchContent() {
                                 </button>
                                 <div className="relative">
                                     <button
+                                        ref={ratingBtnRef}
                                         onClick={handleLikeAction}
                                         className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
                                             rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
@@ -1385,6 +1389,11 @@ function WatchContent() {
                                                         body: JSON.stringify({ userId, action: 'rated' }),
                                                     }).catch(() => {});
                                                     setShowRatingTooltip(false);
+                                                    const el = ratingBtnRef.current;
+                                                    if (el) {
+                                                        const r = el.getBoundingClientRect();
+                                                        setRatingParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+                                                    }
                                                 }}
                                             />
                                         </motion.div>
@@ -1393,6 +1402,13 @@ function WatchContent() {
                                 </div>
                             </div>
                             </div>
+                            {ratingParticlesPos && (
+                                <RatingParticles
+                                    x={ratingParticlesPos.x}
+                                    y={ratingParticlesPos.y}
+                                    onComplete={() => setRatingParticlesPos(null)}
+                                />
+                            )}
                             <button
                                 onClick={() => setShowShareModal(true)}
                                 className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70

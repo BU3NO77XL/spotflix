@@ -9,6 +9,7 @@ import { calcMatch } from '@/lib/match';
 import { overlayFade, imageReveal, easeOutQuint, movieModalContent, fadeIn, slideUpFade, staggerContainer } from '@/lib/motion';
 import { TMDBService } from './TMDBIntegration';
 import RatingTooltip from '@/components/ui/RatingTooltip';
+import RatingParticles from '@/components/ui/RatingParticles';
 import NetflixBadge from '@/components/streaming/NetflixBadge';
 import { useRatingAction, type RatingValue } from '@/hooks/useRatingAction';
 
@@ -57,6 +58,8 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const [isOnNetflix, setIsOnNetflix] = useState(false);
     const [detailGenres, setDetailGenres] = useState<string[]>([]);
     const [showRatingTooltip, setShowRatingTooltip] = useState(false);
+    const [ratingParticlesPos, setRatingParticlesPos] = useState<{ x: number; y: number } | null>(null);
+    const ratingBtnRef = useRef<HTMLButtonElement>(null);
     const [userId, setUserId] = useState<number | null>(null);
 
     // Ref para cancelar fetches ao fechar o modal antes de completar
@@ -395,6 +398,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     
                                     <div className="relative">
                                         <button
+                                            ref={ratingBtnRef}
                                             onClick={() => {
                                                 const uid = userId ?? (localStorage.getItem('userBasicInfo') ? true : false);
                                                 if (!uid) {
@@ -434,6 +438,11 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                         const id = Number(movie?.tmdb_id);
                                                         if (id) handleRatingAction(id, movie!.type, value);
                                                         setShowRatingTooltip(false);
+                                                        const el = ratingBtnRef.current;
+                                                        if (el) {
+                                                            const r = el.getBoundingClientRect();
+                                                            setRatingParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+                                                        }
                                                     }}
                                                 />
                                             </motion.div>
@@ -442,6 +451,13 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </div>
                                 </div>
                             </div>
+                            {ratingParticlesPos && (
+                                <RatingParticles
+                                    x={ratingParticlesPos.x}
+                                    y={ratingParticlesPos.y}
+                                    onComplete={() => setRatingParticlesPos(null)}
+                                />
+                            )}
 
                             {/* Volume Button */}
                             <div className="absolute right-4 md:right-8 bottom-10 z-30">
