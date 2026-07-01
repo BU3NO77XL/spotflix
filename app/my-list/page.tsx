@@ -129,9 +129,6 @@ export default function MyList() {
     const movieList = useMemo(() => allItems.filter(m => m.type === 'movie'), [allItems]);
 
     useEffect(() => {
-            try {
-                console.log('[MY-LIST] seriesList (count:', seriesList.length + ')', seriesList.map(m => ({ id: m.id, tmdb_id: m.tmdb_id, title: m.title, listItemId: m.listItemId })));
-            } catch (e) { /* ignore logging errors */ }
         }, [seriesList, activeTab]);
 
     useEffect(() => {
@@ -185,7 +182,6 @@ export default function MyList() {
         }
         try {
             const url = `/watch?id=${movie.tmdb_id}&type=${movie.type}&ref=${movie.tmdb_id}`;
-            console.log('[MY-LIST] handleWatch navigating to', url, 'movie:', { id: movie.id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type });
             router.push(url);
         } catch (e) {
             console.error('[MY-LIST] handleWatch error', e);
@@ -228,7 +224,32 @@ export default function MyList() {
 
             <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8 lg:pt-12 pb-8">
                 {/* Tabs + Search */}
-                <div className="flex items-center justify-between mb-6 -mt-12 sm:-mt-16 lg:-mt-20 relative z-30">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-12 sm:-mt-16 lg:-mt-20 relative z-30">
+                    {baseList.length > 0 && (
+                        <div className="relative sm:hidden">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder={`Buscar ${activeTab === 'series' ? 'série' : 'filme'}...`}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg py-[9px] pl-10 pr-8 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-all"
+                            />
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                            </svg>
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     <div className="bg-white/5 border border-white/10 rounded-lg p-1 inline-flex">
                         {seriesList.length > 0 && (
                             <button
@@ -255,7 +276,7 @@ export default function MyList() {
                     </div>
 
                     {baseList.length > 0 && (
-                        <div className="relative ml-auto max-w-xs">
+                        <div className="relative hidden sm:block ml-auto max-w-xs">
                             <input
                                 type="text"
                                 value={searchQuery}

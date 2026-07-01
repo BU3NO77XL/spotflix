@@ -209,7 +209,6 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                     <div
                                                         key={movie.id || index}
                                                         onClick={() => {
-                                                            console.log('[SEARCH_NAV] Clicou no resultado:', { id: movie.id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type, year: movie.year, poster: movie.poster_url });
                                                             handleClose();
                                                             if (!userId) {
                                                                 setLoginModalOpen(true);
@@ -242,14 +241,14 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                                 </h3>
                                                                 <ChevronRight className="w-5 h-5 text-gray-700 group-hover:text-white group-hover:translate-x-1 transition-all stroke-1 shrink-0" />
                                                             </div>
-                                                            <div className="flex items-center gap-3 mt-1.5 text-xs lg:text-sm text-gray-500 font-light">
+                                                            <div className="flex items-center gap-3 mt-1.5 text-xs lg:text-sm text-gray-400 font-light">
                                                                 <span className="text-[#46d369] font-medium">
                                                                     {(movie.score ?? 0) > 0 ? `${((movie.score || 0) * 10).toFixed(0)}% Relevância` : 'Novo'}
                                                                 </span>
-                                                                <span className="w-1 h-1 rounded-full bg-gray-700" />
+                                                                <span className="w-1 h-1 rounded-full bg-gray-400" />
                                                                 <span>{movie.year}</span>
-                                                                <span className="w-1 h-1 rounded-full bg-gray-700" />
-                                                                <span className="uppercase text-[10px] tracking-wider border border-gray-700 px-1 rounded-sm">HD</span>
+                                                                <span className="w-1 h-1 rounded-full bg-gray-400" />
+                                                                <span className="uppercase text-[10px] tracking-wider border border-gray-400 px-1 rounded-sm">HD</span>
                                                             </div>
                                                         </div>
                                                     </div>
