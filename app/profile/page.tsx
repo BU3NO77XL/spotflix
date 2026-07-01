@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { ChevronLeft, Film, Tv, Star, Clock, Heart, Settings, Shield, Trophy } from 'lucide-react';
 import NetflixAvatar from '@/components/NetflixAvatar';
 import AchievementBadge from '@/components/ui/AchievementBadge';
@@ -112,7 +113,12 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white">
+    <motion.div
+      className="min-h-screen bg-[#121212] text-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pt-24 sm:pt-28">
         <button onClick={() => window.location.href = '/'} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
           <ChevronLeft className="w-5 h-5" />
@@ -272,6 +278,6 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

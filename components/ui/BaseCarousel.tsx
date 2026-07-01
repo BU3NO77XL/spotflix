@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -66,7 +67,12 @@ export default function BaseCarousel({
   };
 
   return (
-    <section className={cn("relative py-3 lg:py-4 group/section", className)}>
+    <motion.section
+      className={cn("relative py-3 lg:py-4 group/section", className)}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+    >
       {/* Section Title */}
       {showTitle && title && (
         <div className={cn("w-full mb-2 lg:mb-3", paddingClasses[padding])}>
@@ -132,6 +138,6 @@ export default function BaseCarousel({
           {children}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

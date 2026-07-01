@@ -206,8 +206,11 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                             className="flex flex-col space-y-2 lg:space-y-4"
                                         >
                                             {filteredResults.map((movie, index) => (
-                                                    <div
+                                                    <motion.div
                                                         key={movie.id || index}
+                                                        initial={{ opacity: 0, x: -12 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ duration: 0.25, delay: index * 0.03, ease: 'easeOut' }}
                                                         onClick={() => {
                                                             handleClose();
                                                             if (!userId) {
@@ -251,7 +254,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                                 <span className="uppercase text-[10px] tracking-wider border border-gray-400 px-1 rounded-sm">HD</span>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </motion.div>
                                             ))}
                                         </motion.div>
                                     ) : (

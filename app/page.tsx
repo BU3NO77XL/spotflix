@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Movie } from '@/types/movie';
 import HeroSection from '@/components/streaming/HeroSection';
@@ -438,7 +439,12 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212]">
+    <motion.div
+      className="min-h-screen bg-[#121212]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       {/* Hero - Prioriza filmes em alta do dia */}
       <HeroSection
         featuredMovies={top10Movies.slice(0, 10)}
@@ -645,6 +651,6 @@ export default function Home() {
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
       />
-    </div>
+    </motion.div>
   );
 }

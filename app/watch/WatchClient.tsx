@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Movie, CastMember } from '@/types/movie';
 import { Play, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { toast } from 'sonner';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
@@ -1366,8 +1366,15 @@ function WatchContent() {
                                             </svg>
                                         )}
                                     </button>
+                                    <AnimatePresence>
                                     {showRatingTooltip && (
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50">
+                                        <motion.div
+                                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50"
+                                            initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            transition={{ duration: 0.15, ease: 'easeOut' }}
+                                        >
                                             <RatingTooltip
                                                 currentRating={currentRating}
                                                 onRate={(value) => {
@@ -1380,8 +1387,9 @@ function WatchContent() {
                                                     setShowRatingTooltip(false);
                                                 }}
                                             />
-                                        </div>
+                                        </motion.div>
                                     )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
                             </div>

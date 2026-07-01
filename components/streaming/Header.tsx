@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, User, Menu, X, Play, Star, Film, Tv, Settings, CreditCard, LogOut, Home, Flame, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
 import NetflixAvatar from '../NetflixAvatar';
 import { TMDBService } from './TMDBIntegration';
 import { Movie } from '@/types/movie';
@@ -247,13 +247,20 @@ const Header = memo(function Header() {
                                         <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white mt-1" />
                                     </button>
 
+                                    <AnimatePresence>
                                     {userDropdownOpen && (
                                         <>
                                             <div
                                                 className="fixed inset-0 z-30"
                                                 onClick={() => setUserDropdownOpen(false)}
                                             />
-                                            <div className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md">
+                                            <motion.div
+                                                className="absolute right-0 top-[40px] w-56 bg-black/90 border border-white/10 rounded shadow-2xl z-40 overflow-hidden backdrop-blur-md"
+                                                initial={{ opacity: 0, scale: 0.92, y: -8 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.92, y: -8 }}
+                                                transition={{ duration: 0.15, ease: 'easeOut' }}
+                                            >
                                             <div className="p-4 border-b border-white/10">
                                                     <p className="text-white font-semibold">{userData?.name || 'Minha Conta'}</p>
                                                     <p className="text-gray-400 text-sm">
@@ -302,9 +309,10 @@ const Header = memo(function Header() {
                                                         <span>Sair</span>
                                                     </button>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         </>
                                     )}
+                                    </AnimatePresence>
                                     </>
                                 ) : (
                                     <Link

@@ -194,8 +194,11 @@ export default function CastSlider({ cast }: CastSliderProps) {
                             : null;
 
                         return (
-                            <button
+                            <motion.button
                                 key={index}
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.04, ease: 'easeOut' }}
                                 onClick={() => handleUserInteraction(index)}
                                 className="shrink-0 snap-start flex flex-col items-center group transition-all duration-300 w-24 sm:w-24 md:w-28 focus:outline-none"
                             >
@@ -216,7 +219,7 @@ export default function CastSlider({ cast }: CastSliderProps) {
                                         {actor.character}
                                     </span>
                                 )}
-                            </button>
+                                </motion.button>
                         );
                     })}
                 </div>

@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Mail, Lock, Loader2, Play, Eye, EyeOff, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateEmail, validatePassword, validateName, validatePasswordMatch } from '@/lib/validation';
@@ -181,7 +182,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#121212]">
+    <motion.div
+      className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#121212]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
@@ -452,6 +458,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

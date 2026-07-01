@@ -304,7 +304,12 @@ export default function MyList() {
                 {/* Content */}
                 <AnimatePresence mode="popLayout">
                     {currentList.length > 0 ? (
-                        <div className="relative rounded-lg overflow-hidden">
+                        <motion.div
+                            className="relative rounded-lg overflow-hidden"
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35, ease: 'easeOut' }}
+                        >
                             {/* Backdrop blur background */}
                             {(() => {
                                 const backdrops = currentList.map(m => m.backdrop_url).filter(Boolean) as string[];
@@ -446,7 +451,7 @@ export default function MyList() {
                                 ))}
                             </div>
                         </div>
-                        </div>
+                        </motion.div>
                     ) : (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}

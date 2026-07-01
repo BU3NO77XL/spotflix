@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { ChevronLeft, Film, Tv, Star, Clock, Heart, Shield, Trash2, UserCog, Search, Activity, ThumbsUp, ThumbsDown, Laugh, TrendingUp, Users } from 'lucide-react';
 import NetflixAvatar from '@/components/NetflixAvatar';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
@@ -203,7 +204,12 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white">
+    <motion.div
+      className="min-h-screen bg-[#121212] text-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12 pt-20 sm:pt-28">
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -541,6 +547,6 @@ export default function AdminPage() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

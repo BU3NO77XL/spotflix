@@ -419,8 +419,15 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                             )}
                                         </button>
 
+                                        <AnimatePresence>
                                         {showRatingTooltip && (
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50">
+                                            <motion.div
+                                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50"
+                                                initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                                transition={{ duration: 0.15, ease: 'easeOut' }}
+                                            >
                                                 <RatingTooltip
                                                     currentRating={currentRating}
                                                     onRate={(value) => {
@@ -429,8 +436,9 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                         setShowRatingTooltip(false);
                                                     }}
                                                 />
-                                            </div>
+                                            </motion.div>
                                         )}
+                                        </AnimatePresence>
                                     </div>
                                 </div>
                             </div>
@@ -530,8 +538,16 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                 animate={similar.length > 0 || similarLoading ? "animate" : "initial"}
                             >
                                 <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Títulos semelhantes</h3>
+                                <AnimatePresence mode="popLayout">
                                 {similarLoading ? (
-                                    <div className="flex flex-wrap gap-x-5 gap-y-4">
+                                    <motion.div
+                                        key="skeleton"
+                                        className="flex flex-wrap gap-x-5 gap-y-4"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
                                         {Array.from({ length: 6 }).map((_, i) => (
                                             <div
                                                 key={i}
@@ -554,10 +570,10 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                     <div className="h-3 bg-[#3a3a3a] rounded w-5/6" />
                                                     <div className="h-3 bg-[#3a3a3a] rounded w-4/6" />
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : similar.length > 0 && (
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    ) : similar.length > 0 && (
                                     <motion.div
                                         className="flex flex-wrap gap-x-5 gap-y-4"
                                         variants={staggerContainer}
@@ -619,6 +635,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         })}
                                     </motion.div>
                                 )}
+                            </AnimatePresence>
                             </motion.div>
 
                             {/* Trailers & More */}

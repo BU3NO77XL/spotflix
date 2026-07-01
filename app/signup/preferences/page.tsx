@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import NetflixAvatar from '@/components/NetflixAvatar';
@@ -109,7 +110,12 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#121212]">
+    <motion.div
+      className="relative min-h-screen w-full overflow-hidden bg-[#121212]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       <div className="absolute inset-0 z-0 bg-[#121212]" />
 
       <div className="relative z-10 min-h-screen flex flex-col">
@@ -271,6 +277,6 @@ export default function PreferencesPage() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
