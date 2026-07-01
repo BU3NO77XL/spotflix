@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { Movie } from '@/types/movie';
 import NetflixBadge from './NetflixBadge';
 import NewSeasonBadge from '@/components/ui/NewSeasonBadge';
-import ProgressiveImage from './ProgressiveImage';
 import { checkIsOnNetflix } from '@/lib/netflixCache';
 import { checkHasNewSeason } from '@/lib/newSeasonCache';
 
@@ -59,16 +58,14 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
         >
             {/* Poster Container */}
             <div className="relative aspect-2/3 rounded-sm sm:rounded-md overflow-hidden 
-                    bg-[#1f1f1f] transition-all duration-500 ease-out
-                    group-hover:z-10 group-hover:scale-[1.03] sm:group-hover:scale-105 
-                    group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.8)]
-                    group-hover:ring-1 group-hover:ring-white/10
+                    bg-[#1f1f1f] transition-all duration-300 
+                    group-hover:z-10 
                     shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
                 {/* Image */}
-                <ProgressiveImage
-                    src={movie.poster_url || null}
+                <img
+                    src={movie.poster_url || undefined}
                     alt={`${movie.title} poster`}
-                    className="w-full h-full"
+                    className="w-full h-full object-cover transition-transform duration-700"
                 />
 
                 {/* Gradient Overlay */}
@@ -108,7 +105,7 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                                     if (movie.episode_number) params.set('episode', String(movie.episode_number));
                                     router.push(`/watch?${params}`);
                                 }}
-                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-gray-200 text-black flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg"
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-gray-200 text-black flex items-center justify-center transition-all hover:scale-110 shadow-lg"
                                 title="Assistir"
                             >
                                 <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black fill-current ml-0.5" />
@@ -119,7 +116,7 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                                 e.stopPropagation();
                                 onClick(movie);
                             }}
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#2a2a2a]/90 hover:bg-[#444] border border-white/40 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-90"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#2a2a2a]/90 hover:bg-[#444] border border-white/40 text-white flex items-center justify-center transition-all hover:scale-110"
                             title="Mais informações"
                         >
                             <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />

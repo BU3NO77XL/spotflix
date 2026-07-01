@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Movie } from '@/types/movie';
 import Top10Badge from './Top10Badge';
-import ProgressiveImage from '@/components/streaming/ProgressiveImage';
 
 interface Top10CardProps {
   movie: Movie;
@@ -58,7 +57,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
 
         {/* Poster Container */}
         <div className={cn(
-          "absolute top-0 z-10 rounded-sm sm:rounded-md overflow-hidden bg-[#222] transition-all duration-500 ease-out group-hover:z-30 group-hover:scale-[1.03] sm:group-hover:scale-105 group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.8)] group-hover:ring-1 group-hover:ring-white/10",
+          "absolute top-0 z-10 rounded-sm sm:rounded-md overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-30",
           // Poster Dimensions: responsive
           "w-[109px] h-[154px] md:w-[106px] md:h-[150px] lg:w-[134px] lg:h-[190px] xl:w-[162px] xl:h-[230px]",
           // Poster Position: precise 80% overlap for 1-9, exact 50% of '0' for 10 on all screens
@@ -67,10 +66,10 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
             : "left-[35px] md:left-[30px] lg:left-[40px] xl:left-[50px]"
         )}>
           {/* Image */}
-          <ProgressiveImage
-            src={movie.poster_url || null}
+          <img
+            src={movie.poster_url || undefined}
             alt={movie.title}
-            className="w-full h-full"
+            className="w-full h-full object-cover transition-transform duration-700"
           />
 
           {/* Gradient Overlay */}
@@ -98,7 +97,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
                     }
                     router.push(`/watch?id=${movie.tmdb_id}&type=${movie.type}&ref=${movie.tmdb_id}&rank=${rank}`);
                   }}
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-gray-200 text-black flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-gray-200 text-black flex items-center justify-center transition-all hover:scale-110 shadow-lg"
                   title="Assistir"
                 >
                   <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-black fill-current ml-0.5" />
@@ -109,7 +108,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
                   e.stopPropagation();
                   onClick(movie);
                 }}
-                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#2a2a2a]/90 hover:bg-[#444] border border-white/40 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-90"
+                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#2a2a2a]/90 hover:bg-[#444] border border-white/40 text-white flex items-center justify-center transition-all hover:scale-110"
                 title="Mais informações"
               >
                 <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
