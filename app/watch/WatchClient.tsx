@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Movie, CastMember } from '@/types/movie';
-import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
@@ -23,6 +23,7 @@ import { useWatchNavigation } from '@/hooks/useWatchNavigation';
 import { useLogoStore } from '@/stores/logoStore';
 import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
 import RatingTooltip from '@/components/ui/RatingTooltip';
+import ShareModal from '@/components/ui/ShareModal';
 
 // Hook para preload de imagens
 const useImagePreload = (urls: string[]) => {
@@ -283,6 +284,7 @@ function WatchContent() {
     const [isBackdropMuted, setIsBackdropMuted] = useState(true);
     const [localFavorited, setLocalFavorited] = useState(false);
     const [showRatingTooltip, setShowRatingTooltip] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
     useEffect(() => {
         try {
@@ -1282,6 +1284,11 @@ function WatchContent() {
                                                     progressPercent: 0,
                                                 }),
                                             });
+                                            fetch('/api/achievements/check', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ userId, action: 'watched' }),
+                                            }).catch(() => {});
                                         } catch (e) { /* silent */ }
                                     }
                                     const embedUrl = isSeries
@@ -1343,12 +1350,26 @@ function WatchContent() {
                                                 currentRating={currentRating}
                                                 onRate={(value) => {
                                                     handleRatingAction(Number(movie?.tmdb_id), movie?.type || 'movie', value);
+                                                    fetch('/api/achievements/check', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ userId, action: 'rated' }),
+                                                    }).catch(() => {});
                                                     setShowRatingTooltip(false);
                                                 }}
                                             />
                                         </div>
                                     )}
                                 </div>
+                                <button
+                                    onClick={() => setShowShareModal(true)}
+                                    className="bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
+                                        rounded-full transition-all duration-200 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12
+                                        focus:outline-none focus:ring-0 text-white"
+                                    aria-label="Compartilhar"
+                                >
+                                    <Share2 className="w-5 h-5" />
+                                </button>
                             </div>
 
 
@@ -2267,6 +2288,12 @@ function WatchContent() {
                 isOpen={showLoginModal}
                 onClose={() => setShowLoginModal(false)}
             />
+            {showShareModal && movie && (
+                <ShareModal
+                    movie={movie}
+                    onClose={() => setShowShareModal(false)}
+                />
+            )}
         </div >
     );
 }

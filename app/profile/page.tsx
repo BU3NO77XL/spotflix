@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Film, Tv, Star, Clock, Heart, Settings, Shield } from 'lucide-react';
+import { ChevronLeft, Film, Tv, Star, Clock, Heart, Settings, Shield, Trophy } from 'lucide-react';
 import NetflixAvatar from '@/components/NetflixAvatar';
+import AchievementBadge from '@/components/ui/AchievementBadge';
+import { AchievementWithProgress } from '@/lib/achievements';
 
 interface WatchHistoryItem {
   tmdb_id: number;
@@ -29,6 +31,8 @@ export default function ProfilePage() {
   const [ratingsCount, setRatingsCount] = useState(0);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [achievements, setAchievements] = useState<AchievementWithProgress[]>([]);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) { router.replace('/login'); return; }
@@ -73,6 +77,15 @@ export default function ProfilePage() {
         }
       } catch { /* silent */ }
       setLoading(false);
+
+      try {
+        const achRes = await fetch(`/api/achievements?userId=${userId}`);
+        if (achRes.ok) {
+          const a = await achRes.json();
+          setAchievements(a.achievements || []);
+        }
+      } catch { /* silent */ }
+      setAchievementsLoading(false);
     };
 
     fetchData();
@@ -179,6 +192,39 @@ export default function ProfilePage() {
             <Heart className="w-6 h-6 text-red-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{history.length}</p>
             <p className="text-xs text-gray-500">Total no histórico</p>
+          </div>
+        </div>
+
+        {/* Achievements */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-5 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-yellow-400" />
+            Conquistas
+            {!achievementsLoading && (
+              <span className="text-sm text-gray-400 font-normal ml-1">
+                ({achievements.filter(a => a.unlocked).length}/{achievements.length})
+              </span>
+            )}
+          </h2>
+          <div className="bg-[#1a1a1a] rounded-xl p-6">
+            {achievementsLoading ? (
+              <div className="flex gap-4 overflow-hidden">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex flex-col items-center gap-2 shrink-0">
+                    <div className="w-14 h-14 rounded-full bg-white/5 animate-pulse" />
+                    <div className="w-16 h-3 bg-white/5 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : achievements.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-4">Nenhuma conquista disponível.</p>
+            ) : (
+              <div className="flex flex-wrap gap-5 justify-center sm:justify-start">
+                {achievements.map(ach => (
+                  <AchievementBadge key={ach.key} achievement={ach} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
