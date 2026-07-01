@@ -35,15 +35,15 @@ export default function AchievementBadge({ achievement }: { achievement: Achieve
             />
           </svg>
         )}
+        {achievement.unlocked && achievement.percent >= 100 && (
+          <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-[#1a1a1a]">
+            <Check className="w-2.5 h-2.5 text-white" />
+          </div>
+        )}
       </div>
       <p className={`text-[10px] font-semibold text-center leading-tight max-w-[80px] ${achievement.unlocked ? 'text-white' : 'text-gray-500'}`}>
         {achievement.name}
       </p>
-      {achievement.unlocked && achievement.percent >= 100 && (
-        <div className="absolute -top-2 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-          <Check className="w-2.5 h-2.5 text-white" />
-        </div>
-      )}
     </div>
   );
 }
