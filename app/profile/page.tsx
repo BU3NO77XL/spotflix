@@ -113,35 +113,41 @@ export default function ProfilePage() {
           </div>
           <div className="flex-1 text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl font-bold mb-1">{userName || 'Usuário'}</h1>
-            <p className="text-gray-400 mb-1">{userEmail}</p>
-            <p className="text-sm text-gray-500 flex items-center justify-center sm:justify-start gap-1.5">
+            <p className="text-gray-500 mb-1">
+              {userEmail
+                ? userEmail.slice(0, 2) + '***' + userEmail.slice(userEmail.indexOf('@'))
+                : '---'}
+            </p>
+            <p className="text-sm text-gray-600 flex items-center justify-center sm:justify-start gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               Membro desde {formatDate(createdAt)}
             </p>
             {genres.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">
                 {genres.map(g => (
-                  <span key={g} className="px-3 py-1 bg-[#1DB954]/20 text-[#1DB954] text-xs rounded-full font-medium">{g}</span>
+                  <span key={g} className="px-3 py-1 bg-white text-black text-xs rounded-full font-medium">{g}</span>
                 ))}
               </div>
             )}
           </div>
-          <button
-            onClick={() => router.push('/settings')}
-            className="shrink-0 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm"
-          >
-            <Settings className="w-4 h-4" />
-            Editar Perfil
-          </button>
-          {userRole === 'admin' && (
+          <div className="flex flex-col gap-2">
             <button
-              onClick={() => router.push('/admin')}
-              className="shrink-0 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm"
+              onClick={() => router.push('/settings')}
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm"
             >
-              <Shield className="w-4 h-4" />
-              Acessos Administrativos
+              <Settings className="w-4 h-4" />
+              Editar Perfil
             </button>
-          )}
+            {userRole === 'admin' && (
+              <button
+                onClick={() => router.push('/admin')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm"
+              >
+                <Shield className="w-4 h-4" />
+                Acessos Administrativos
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Stats */}
@@ -149,22 +155,22 @@ export default function ProfilePage() {
           <div className="bg-[#1a1a1a] rounded-xl p-5 text-center">
             <Film className="w-6 h-6 text-blue-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{movieCount}</p>
-            <p className="text-xs text-gray-400">Filmes vistos</p>
+            <p className="text-xs text-gray-500">Filmes vistos</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-5 text-center">
             <Tv className="w-6 h-6 text-purple-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{seriesCount}</p>
-            <p className="text-xs text-gray-400">Séries vistas</p>
+            <p className="text-xs text-gray-500">Séries vistas</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-5 text-center">
             <Star className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{ratingsCount}</p>
-            <p className="text-xs text-gray-400">Avaliações</p>
+            <p className="text-xs text-gray-500">Avaliações</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-5 text-center">
             <Heart className="w-6 h-6 text-red-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{history.length}</p>
-            <p className="text-xs text-gray-400">Total no histórico</p>
+            <p className="text-xs text-gray-500">Total no histórico</p>
           </div>
         </div>
 
@@ -192,7 +198,7 @@ export default function ProfilePage() {
             <div className="space-y-2">
               {history.map((item, i) => (
                 <div key={i} className="bg-[#1a1a1a] rounded-xl p-4 flex items-center gap-4 hover:bg-[#222] transition-colors cursor-pointer" onClick={() => router.push(`/watch?id=${item.tmdb_id}&type=${item.media_type}&ref=${item.tmdb_id}`)}>
-                  <div className="w-12 h-16 shrink-0 rounded-lg overflow-hidden bg-white/5">
+                  <div className="w-14 h-20 shrink-0 rounded-lg overflow-hidden bg-white/5">
                     {item.poster_url ? (
                       <img src={item.poster_url} alt={item.title} className="w-full h-full object-cover" />
                     ) : (
@@ -201,11 +207,11 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium truncate">{item.title}</p>
-                    <p className="text-xs text-gray-400">
-                      {item.media_type === 'series' ? `Temporada ${item.season_number} Ep. ${item.episode_number}` : 'Filme'}
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {item.media_type === 'series' ? `Temporada ${item.season_number} · Ep. ${item.episode_number}` : 'Filme'}
                     </p>
                   </div>
-                  <span className="text-xs text-gray-500 shrink-0">{formatWatchedDate(item.watched_at)}</span>
+                  <span className="text-xs text-gray-600 shrink-0">{formatWatchedDate(item.watched_at)}</span>
                 </div>
               ))}
             </div>

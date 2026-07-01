@@ -181,7 +181,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="text-sm text-gray-400 mb-1 block">Email</label>
-              <p className="text-white text-lg">{userEmail || '---'}</p>
+              <p className="text-gray-400 text-lg">{userEmail || '---'}</p>
             </div>
           </div>
         </section>
