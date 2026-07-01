@@ -42,6 +42,7 @@ export default function MyList() {
     const [searchQuery, setSearchQuery] = useState('');
     const [netflixIds, setNetflixIds] = useState<Set<number>>(new Set());
     const [newSeasonIds, setNewSeasonIds] = useState<Set<number>>(new Set());
+    const [heroBackdrop, setHeroBackdrop] = useState<string | undefined>();
 
     useEffect(() => {
         setDescIndex(Math.floor(Math.random() * 5));
@@ -220,6 +221,7 @@ export default function MyList() {
                     if (b.length) return b;
                     return movies.map((m) => m.backdrop_url).filter(Boolean).slice(0, 8) as string[];
                 })()}
+                onBackdropChange={setHeroBackdrop}
             />
 
             <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8 lg:pt-12 pb-8">
@@ -311,29 +313,21 @@ export default function MyList() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.35, ease: 'easeOut' }}
                         >
-                            {/* Backdrop blur background */}
-                            {(() => {
-                                const backdrops = currentList.map(m => m.backdrop_url).filter(Boolean) as string[];
-                                const bg = backdrops.slice(0, 3);
-                                return bg.length > 0 ? (
-                                    <div className="absolute inset-0 -z-10">
-                                        <div className="absolute inset-0 flex">
-                                            {bg.map((url, i) => (
-                                                <div key={i} className="flex-1 relative overflow-hidden">
-                                                    <img
-                                                        src={url}
-                                                        alt=""
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                    <div className="absolute inset-0 bg-[#121212]/60" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="absolute inset-0 backdrop-blur-xl" />
-                                        <div className="absolute inset-0 bg-[#121212]/40" />
+                            {/* Backdrop blur background — sincronizado com o hero */}
+                            {heroBackdrop && (
+                                <div className="absolute inset-0 -z-10">
+                                    <div className="absolute inset-0">
+                                        <img
+                                            src={heroBackdrop}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-[#121212]/60" />
                                     </div>
-                                ) : null;
-                            })()}
+                                    <div className="absolute inset-0 backdrop-blur-xl" />
+                                    <div className="absolute inset-0 bg-[#121212]/40" />
+                                </div>
+                            )}
                             <div className="relative p-4 sm:p-6">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
                                 {currentList.map((movie) => (

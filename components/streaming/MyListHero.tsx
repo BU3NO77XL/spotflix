@@ -9,6 +9,7 @@ interface Props {
     title?: string;
     description?: string;
     backdrops?: (string | undefined)[];
+    onBackdropChange?: (url: string | undefined) => void;
 }
 
 const imageVariants = {
@@ -23,7 +24,7 @@ const contentVariants = {
     exit: { opacity: 0, y: -10, transition: { duration: 0.4 } },
 } as Variants;
 
-export default function MyListHero({ title = 'Minha Lista', description = '', backdrops = [] }: Props) {
+export default function MyListHero({ title = 'Minha Lista', description = '', backdrops = [], onBackdropChange }: Props) {
     const available = backdrops.filter(Boolean) as string[];
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(1);
@@ -39,6 +40,10 @@ export default function MyListHero({ title = 'Minha Lista', description = '', ba
     }, [available.length]);
 
     const src = available.length ? available[currentIndex] : undefined;
+
+    useEffect(() => {
+        onBackdropChange?.(src);
+    }, [src, onBackdropChange]);
 
     useEffect(() => {
         if (!src) return;
