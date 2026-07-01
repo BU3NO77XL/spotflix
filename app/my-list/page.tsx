@@ -302,10 +302,11 @@ export default function MyList() {
                 </div>
 
                 {/* Content */}
+                <div className="-translate-y-20 sm:translate-y-0">
                 <AnimatePresence mode="popLayout">
                     {currentList.length > 0 ? (
                         <motion.div
-                            className="relative rounded-lg overflow-hidden"
+                            className="relative rounded-xl overflow-hidden"
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -333,8 +334,8 @@ export default function MyList() {
                                     </div>
                                 ) : null;
                             })()}
-                            <div className="relative p-6">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-6">
+                            <div className="relative p-4 sm:p-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
                                 {currentList.map((movie) => (
                                     <motion.div
                                         key={movie.listItemId}
@@ -349,8 +350,15 @@ export default function MyList() {
                                         }}
                                     >
                                         <div className="relative aspect-2/3 rounded-xl overflow-hidden bg-[#1f1f1f] 
-                                shadow-lg transition-all duration-500 
-                                group-hover:shadow-2xl group-hover:scale-105">
+                                shadow-lg transition-all duration-500 ring-1 ring-white/[0.06]
+                                group-hover:shadow-2xl group-hover:scale-[1.03] group-hover:ring-white/[0.15]">
+                                            <img
+                                                src={movie.poster_url}
+                                                alt={movie.title}
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+                                            {/* Overlay escuro no hover */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500" />
                                             <img
                                                 src={movie.poster_url}
                                                 alt={movie.title}
@@ -439,13 +447,21 @@ export default function MyList() {
                                         </div>
 
                                         {/* Title */}
-                                        <div className="mt-3">
-                                            <h3 className="text-white font-medium truncate group-hover:text-[#1DB954] transition-colors">
+                                        <div className="mt-2.5 px-0.5">
+                                            <h3 className="text-[15px] font-medium text-white truncate group-hover:text-[#1DB954] transition-colors leading-snug">
                                                 {movie.title}
                                             </h3>
-                                            <p className="text-gray-500 text-sm truncate">
-                                                {movie.genre?.slice(0, 2).join(' • ')}
-                                            </p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                {movie.year && (
+                                                    <span className="text-xs text-gray-500 font-medium">{movie.year}</span>
+                                                )}
+                                                {movie.genre && movie.genre.length > 0 && (
+                                                    <span className="text-xs text-gray-600">•</span>
+                                                )}
+                                                <p className="text-xs text-gray-500 truncate">
+                                                    {movie.genre?.length ? movie.genre.slice(0, 2).join(' • ') : (movie.type === 'series' ? 'Série' : 'Filme')}
+                                                </p>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 ))}
@@ -503,7 +519,8 @@ export default function MyList() {
                             )}
                         </motion.div>
                     )}
-                </AnimatePresence>
+                    </AnimatePresence>
+                </div>
             </div>
 
             {/* Movie Modal */}
