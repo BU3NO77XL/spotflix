@@ -612,7 +612,9 @@ function WatchContent() {
         initialDataUpdatedAt: 0,
     });
 
-    const movie = movieById || movieByTmdb;
+    const movieRaw = movieById || movieByTmdb;
+    // URL type tem prioridade sobre o type armazenado (corrige cache corrompido)
+    const movie = movieRaw ? { ...movieRaw, type: (mediaType as 'movie' | 'series') || movieRaw.type } : null;
     if (movie) {
         console.log('[WATCH_LOAD] movie carregado:', { id: (movie as any).id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type, year: movie.year, poster: movie.poster_url?.slice(0, 60) });
     } else {
