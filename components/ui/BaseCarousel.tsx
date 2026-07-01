@@ -122,7 +122,7 @@ export default function BaseCarousel({
           ref={scrollRef}
           onScroll={handleScroll}
           className={cn(
-            "flex overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth",
+            "flex overflow-x-auto overflow-y-hidden scrollbar-hide",
             scrollContainerClassName || "pb-4",
             gapClasses[gap],
             paddingClasses[padding]
