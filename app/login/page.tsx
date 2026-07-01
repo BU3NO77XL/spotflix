@@ -196,14 +196,8 @@ export default function LoginPage() {
       {/* Login/Signup Card */}
       <div className="relative z-10 w-full max-w-md px-6 mt-12 mb-12">
         <div
-          className="rounded-[20px] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
-          style={{
-            backdropFilter: 'blur(10px)',
-            background: 'rgba(18, 18, 18, 0.7)',
-            border: '1px solid rgba(255, 255, 255, 0.05)'
-          }}
+          className="bg-black/90 backdrop-blur-md border border-white/10 rounded-[20px] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
         >
-          {/* Brand Logo
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1DB954] flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
@@ -215,7 +209,6 @@ export default function LoginPage() {
               </h1>
             </div>
           </div>
-          */}
 
           {/* Toggle entre Login e Cadastro */}
           <div className="flex gap-2 mb-6 p-1 bg-white/5 rounded-xl">
@@ -420,7 +413,7 @@ export default function LoginPage() {
                     <div className="w-full border-t border-gray-700" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-[#1f1f1f] text-gray-500">Ou entre com</span>
+                    <span className="px-2 bg-black text-gray-500">Ou entre com</span>
                   </div>
                 </div>
 
