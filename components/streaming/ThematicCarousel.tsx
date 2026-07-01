@@ -17,7 +17,7 @@ export default function ThematicCarousel({ title, movies, onMovieClick }: Themat
         <BaseCarousel title={title}>
             {movies.map((movie, index) => (
                 <MovieCard
-                    key={movie.id}
+                    key={`${movie.tmdb_id ?? movie.id}-${index}`}
                     movie={movie}
                     onClick={onMovieClick}
                     index={index}

@@ -29,7 +29,7 @@ export default function MiniCarousel({
         >
             {movies.map((movie, index) => (
                 <MiniCard
-                    key={movie.id}
+                    key={`${movie.tmdb_id ?? movie.id}-${index}`}
                     movie={movie}
                     onClick={onMovieClick}
                     index={index}

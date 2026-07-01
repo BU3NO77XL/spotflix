@@ -20,12 +20,12 @@ export default function StreamingBackdropCarousel({ title, movies, onMovieClick,
             backdropUrl={backdropUrl}
             showBackdrop={!!backdropUrl}
         >
-            {movies.map((movie) => (
-                <div key={movie.id} className="shrink-0">
+            {movies.map((movie, index) => (
+                <div key={`${movie.tmdb_id ?? movie.id}-${index}`} className="shrink-0">
                     <MovieCard
                         movie={movie}
                         onClick={onMovieClick}
-                        index={0}
+                        index={index}
                     />
                 </div>
             ))}

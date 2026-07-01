@@ -18,7 +18,7 @@ export default function Carousel({ title, movies, onMovieClick, showTitle = true
         <BaseCarousel title={title} showTitle={showTitle}>
             {movies.map((movie, index) => (
                 <MovieCard
-                    key={movie.id}
+                    key={`${movie.tmdb_id ?? movie.id}-${index}`}
                     movie={movie}
                     onClick={onMovieClick}
                     index={index}

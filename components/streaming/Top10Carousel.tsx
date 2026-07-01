@@ -22,7 +22,7 @@ export default function Top10Carousel({ movies, onMovieClick }: Top10CarouselPro
         >
             {top10Movies.map((movie, index) => (
                 <Top10Card
-                    key={movie.id}
+                    key={`${movie.tmdb_id ?? movie.id}-${index}`}
                     movie={movie}
                     rank={index + 1}
                     onClick={(m) => onMovieClick({ ...m, rank: index + 1 })}
