@@ -1207,8 +1207,8 @@ function WatchContent() {
                             <span className="text-white/20 text-2xl font-bold">{movie.title}</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-[#121212]/20 to-transparent z-[1]" />
-                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/60 via-transparent to-transparent z-[2]" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#121212]/40 via-[#121212]/10 to-transparent z-[1]" />
+                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/30 via-transparent to-transparent z-[2]" />
                 </div>
 
                 {/* Botão de Volume - Canto direito (apenas desktop) */}
