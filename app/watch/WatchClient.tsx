@@ -1504,7 +1504,6 @@ function WatchContent() {
                     {/* Seletor de temporadas e carrossel de episódios para séries */}
                     {isSeries && seriesDetails?.seasons && seriesDetails.seasons.length > 0 && (
                         <section className="py-8">
-                            <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8">
 
                             {/* Cabeçalho da seção - Desktop: lado a lado, Mobile: empilhado */}
                             <div className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -1661,7 +1660,6 @@ function WatchContent() {
                                     )}
                                 </div>
                             </div>
-                            </div>{/* fecha bg-[#1a1a1a] */}
                         </section>
 
                     )}
