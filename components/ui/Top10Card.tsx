@@ -18,6 +18,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
   const router = useRouter();
 
   const isFirst = rank === 1;
+  const isTenth = rank === 10;
 
   return (
     <motion.div
@@ -28,15 +29,20 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       className={cn(
         "group relative shrink-0 cursor-pointer",
         "h-[165px] md:h-[165px] lg:h-[210px] xl:h-[255px]",
-        isFirst
+        isTenth
+          ? "w-[265px] lg:w-[330px] xl:w-[400px]"
+          : isFirst
           ? "w-[212px] lg:w-[265px] xl:w-[324px]"
           : "w-[232px] lg:w-[292px] xl:w-[356px]"
       )}
     >
       <div
         className={cn(
-          "absolute left-0 top-0 overflow-hidden select-none pointer-events-none flex items-center justify-end h-[165px] md:h-[165px] lg:h-[210px] xl:h-[255px]",
-          isFirst
+          "absolute left-0 top-0 overflow-hidden select-none pointer-events-none flex items-center justify-end",
+          "h-[165px] md:h-[165px] lg:h-[210px] xl:h-[255px]",
+          isTenth
+            ? "w-[180px] lg:w-[225px] xl:w-[270px]"
+            : isFirst
             ? "w-[128px] lg:w-[163px] xl:w-[198px]"
             : "w-[136px] lg:w-[173px] xl:w-[210px]"
         )}
@@ -45,7 +51,9 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
         <span
           className={cn(
             "font-bold text-transparent text-right leading-none",
-            "text-[215px] lg:text-[273px] xl:text-[331px]"
+            isTenth
+              ? "text-[195px] lg:text-[248px] xl:text-[301px]"
+              : "text-[215px] lg:text-[273px] xl:text-[331px]"
           )}
           style={{
             WebkitTextStroke: '6px #666',
@@ -58,7 +66,9 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
 
       <div className={cn(
         "relative z-10 rounded-sm sm:rounded-md overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-30",
-        isFirst
+        isTenth
+          ? "ml-[140px] lg:ml-[175px] xl:ml-[210px]"
+          : isFirst
           ? "ml-[87px] lg:ml-[110px] xl:ml-[134px]"
           : "ml-[107px] lg:ml-[137px] xl:ml-[166px]",
         "w-[125px] h-[165px] md:w-[125px] md:h-[165px] lg:w-[155px] lg:h-[210px] xl:w-[190px] xl:h-[255px]"
@@ -79,7 +89,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
 
         <div className="absolute inset-0 p-2 opacity-0 group-hover:opacity-100 
             transition-all duration-300 flex flex-col justify-end z-20">
-          
+
           <div className="flex items-center justify-between mb-1.5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
             <div className="flex items-center gap-1">
               <button
