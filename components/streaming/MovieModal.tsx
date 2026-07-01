@@ -391,12 +391,12 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                             if (isInWatchlist && onRemoveFromList) {
                                                 onRemoveFromList(movie);
                                             } else {
-                                                handleAddToListGuarded(movie);
                                                 const el = listBtnRef.current;
                                                 if (el) {
                                                     const r = el.getBoundingClientRect();
                                                     setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
                                                 }
+                                                requestAnimationFrame(() => { handleAddToListGuarded(movie); });
                                             }
                                         }}
                                         className="w-12 h-12 flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] border-2 border-white/50 rounded-full text-white transition-all backdrop-blur-md"

@@ -1330,12 +1330,12 @@ function WatchContent() {
                                         if (isInWatchlist) {
                                             removeFromListMutation.mutate();
                                         } else {
-                                            addToListMutation.mutate();
                                             const el = listBtnRef.current;
                                             if (el) {
                                                 const r = el.getBoundingClientRect();
                                                 setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
                                             }
+                                            requestAnimationFrame(() => { addToListMutation.mutate(); });
                                         }
                                     }}
                                     className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
