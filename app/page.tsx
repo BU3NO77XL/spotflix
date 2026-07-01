@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/dataClient';
@@ -389,23 +389,7 @@ export default function Home() {
     },
   });
 
-  const featuredMovies = movies.filter((m: Movie) => m.is_featured);
-  const trendingTodayMovies = movies.filter((m: Movie) => m.category === 'trending_today');
   const personalizedMovies = movies.filter((m: Movie) => m.category === 'personalized');
-
-  // Embaralha uma vez quando os filmes carregam, varia o backdrop inicial a cada visita
-  const shuffledHeroMovies = useMemo(() => {
-    const trendingPool = trendingTodayMovies.length > 0
-      ? trendingTodayMovies
-      : featuredMovies.length > 0
-        ? featuredMovies
-        : [];
-    const pool = [...trendingPool, ...personalizedMovies];
-    if (pool.length === 0) return movies.slice(0, 10);
-    return [...new Map(pool.map(m => [m.tmdb_id, m])).values()]
-      .filter(m => !m.synopsis || m.synopsis.length <= 250)
-      .sort(() => Math.random() - 0.5);
-  }, [movies]);
   const trendingMovies = movies.filter((m: Movie) => m.category === 'trending');
   const topRatedMovies = movies.filter((m: Movie) => m.category === 'top_rated');
   const comingSoonMovies = movies.filter((m: Movie) => m.category === 'coming_soon');
@@ -460,7 +444,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#121212]">
       {/* Hero - Prioriza filmes em alta do dia */}
       <HeroSection
-        featuredMovies={shuffledHeroMovies.length > 0 ? shuffledHeroMovies : movies.filter((m: Movie) => !m.synopsis || m.synopsis.length <= 250).slice(0, 3)}
+        featuredMovies={top10Movies.slice(0, 10)}
         onWatch={handleWatch}
         onMoreInfo={handleMoreInfo}
         top10Ranks={Object.fromEntries(top10Movies.slice(0, 10).map((m, i) => [m.tmdb_id, i + 1]).filter(([id]) => id != null) as [number, number][])}
