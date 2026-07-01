@@ -69,6 +69,7 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
           <img
             src={movie.poster_url || undefined}
             alt={movie.title}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-700"
           />
 

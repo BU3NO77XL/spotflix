@@ -15,7 +15,6 @@ import MiniCarousel from '@/components/streaming/MiniCarousels';
 import AutoPlaySlider from '@/components/streaming/AutoPlaySlider';
 import MovieModal from '@/components/streaming/MovieModal';
 import LoginRequiredModal from '@/components/streaming/LoginRequiredModal';
-import SectionReveal from '@/components/ui/SectionReveal';
 import { TMDBService } from '@/components/streaming/TMDBIntegration';
 import { GENRE_NAME_TO_TMDB_ID } from '@/lib/genre-map';
 import { toast } from 'sonner';
@@ -155,30 +154,41 @@ export default function Home() {
 
           setTimeout(async () => {
             try {
-              const [upcoming, top10, recommended, action, family, scifi, comedy, romance, horror, animation, popularSeries, topRatedSeries] = await Promise.all([
+              // Lote 1: conteúdo principal (4 endpoints)
+              const [upcoming, top10, recommended, popularSeries] = await Promise.all([
                 TMDBService.fetchUpcoming(),
                 TMDBService.fetchTop10(),
                 TMDBService.fetchRecommended(),
+                TMDBService.fetchPopularSeries()
+              ]);
+              if ([...upcoming, ...top10, ...recommended, ...popularSeries].length > 0) {
+                await base44.entities.Movie.bulkCreate([...upcoming, ...top10, ...recommended, ...popularSeries]);
+                queryClient.invalidateQueries({ queryKey: ['movies'] });
+              }
+
+              // Lote 2: gêneros (4 endpoints)
+              await new Promise(r => setTimeout(r, 500));
+              const [action, family, scifi, comedy] = await Promise.all([
                 TMDBService.fetchActionMovies(),
                 TMDBService.fetchFamilyMovies(),
                 TMDBService.fetchSciFiMovies(),
-                TMDBService.fetchComedyMovies(),
+                TMDBService.fetchComedyMovies()
+              ]);
+              if ([...action, ...family, ...scifi, ...comedy].length > 0) {
+                await base44.entities.Movie.bulkCreate([...action, ...family, ...scifi, ...comedy]);
+                queryClient.invalidateQueries({ queryKey: ['movies'] });
+              }
+
+              // Lote 3: mais gêneros + séries (4 endpoints)
+              await new Promise(r => setTimeout(r, 500));
+              const [romance, horror, animation, topRatedSeries] = await Promise.all([
                 TMDBService.fetchRomanceMovies(),
                 TMDBService.fetchHorrorMovies(),
                 TMDBService.fetchAnimationMovies(),
-                TMDBService.fetchPopularSeries(),
                 TMDBService.fetchTopRatedSeries()
               ]);
-
-              const additionalMovies = [
-                ...upcoming, ...top10, ...recommended,
-                ...action, ...family, ...scifi,
-                ...comedy, ...romance, ...horror, ...animation,
-                ...popularSeries, ...topRatedSeries
-              ];
-
-              if (additionalMovies.length > 0) {
-                await base44.entities.Movie.bulkCreate(additionalMovies);
+              if ([...romance, ...horror, ...animation, ...topRatedSeries].length > 0) {
+                await base44.entities.Movie.bulkCreate([...romance, ...horror, ...animation, ...topRatedSeries]);
                 queryClient.invalidateQueries({ queryKey: ['movies'] });
               }
 
@@ -459,163 +469,163 @@ export default function Home() {
       {/* Carousels */}
       <div className="-mt-[211px] relative z-20 pb-12 space-y-5">
         {continueWatching.length > 0 && (
-          <SectionReveal delay={0}>
+          
           <Carousel
             title="Recém assistidos"
             movies={continueWatching}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {userId && personalizedMovies.length > 0 && (
-          <SectionReveal delay={0.1}>
+          
           <Carousel
             title="Para Você"
             movies={personalizedMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {trendingMovies.length > 0 && (
-          <SectionReveal delay={0.2}>
+          
           <Carousel
             title="Em Alta"
             movies={trendingMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {top10Movies.length > 0 && (
-          <SectionReveal delay={0.25}>
+          
           <Top10Carousel
             movies={top10Movies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {comingSoonMovies.length > 0 && (
-          <SectionReveal delay={0.3}>
+          
           <BackdropCarousel
             title="Em Breve"
             movies={comingSoonMovies}
             onMovieClick={handleMoreInfo}
             backdropUrl={carouselBackdrops.coming_soon}
           />
-          </SectionReveal>
+          
         )}
 
         {seriesPopularMovies.length > 0 && (
-          <SectionReveal delay={0.35}>
+          
           <Carousel
             title="Séries Populares"
             movies={seriesPopularMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {seriesTopRatedMovies.length > 0 && (
-          <SectionReveal delay={0.4}>
+          
           <Carousel
             title="Melhores Séries"
             movies={seriesTopRatedMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {comedyMovies.length > 0 && (
-          <SectionReveal delay={0.45}>
+          
           <Carousel
             title="Comédia"
             movies={comedyMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {romanceMovies.length > 0 && (
-          <SectionReveal delay={0.5}>
+          
           <Carousel
             title="Romance"
             movies={romanceMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {topRatedMovies.length > 0 && (
-          <SectionReveal delay={0.55}>
+          
           <Carousel
             title="Mais Bem Avaliados"
             movies={topRatedMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {familyMovies.length > 0 && (
-          <SectionReveal delay={0.6}>
+          
           <Carousel
             title="Família"
             movies={familyMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {horrorMovies.length > 0 && (
-          <SectionReveal delay={0.65}>
+          
           <Carousel
             title="Terror"
             movies={horrorMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {animationMovies.length > 0 && (
-          <SectionReveal delay={0.7}>
+          
           <Carousel
             title="Animação"
             movies={animationMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {sciFiMovies.length > 0 && (
-          <SectionReveal delay={0.75}>
+          
           <Carousel
             title="Ficção Científica"
             movies={sciFiMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {actionMovies.length > 0 && (
-          <SectionReveal delay={0.8}>
+          
           <Carousel
             title="Ação"
             movies={actionMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {recommendedMovies.length > 0 && (
-          <SectionReveal delay={0.85}>
+          
           <Carousel
             title="Recomendados"
             movies={recommendedMovies}
             onMovieClick={handleMoreInfo}
           />
-          </SectionReveal>
+          
         )}
 
         {/* Show all movies if no categories */}

@@ -65,6 +65,7 @@ export default function MovieCard({ movie, onClick, index = 0 }: MovieCardProps)
                 <img
                     src={movie.poster_url || undefined}
                     alt={`${movie.title} poster`}
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-700"
                 />
 

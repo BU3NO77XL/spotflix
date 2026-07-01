@@ -63,6 +63,7 @@ export default function MiniCard({
               <img
                 src={movie.poster_url || undefined}
                 alt={movie.title}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
               {/* Animated overlay */}
@@ -96,6 +97,7 @@ export default function MiniCard({
             <img
               src={movie.poster_url || undefined}
               alt={movie.title}
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-500"
             />
 
