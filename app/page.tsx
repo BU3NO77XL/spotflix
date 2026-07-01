@@ -444,10 +444,6 @@ export default function Home() {
     removeFromListMutation.mutate(movie);
   };
 
-  if (isLoading || tmdbLoading) {
-    return <PageSkeleton />;
-  }
-
   return (
     <div className="min-h-screen bg-[#121212]">
       {/* Hero - Prioriza filmes em alta do dia */}
