@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DevErrorHandler from "@/components/DevErrorHandler";
 import ConditionalLayout from "@/components/ConditionalLayout";
+import ConsoleFilter from "@/components/ConsoleFilter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -109,6 +110,7 @@ export default function RootLayout({
             }}
           />
           <DevErrorHandler />
+          <ConsoleFilter />
         </Providers>
       </body>
     </html>

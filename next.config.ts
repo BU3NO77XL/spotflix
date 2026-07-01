@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   devIndicators: false,
+  logging: {
+    browserToTerminal: false,
+  },
   // Configuração para servir vídeos corretamente em produção
   async headers() {
     return [
