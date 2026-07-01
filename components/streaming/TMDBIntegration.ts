@@ -895,8 +895,14 @@ export const TMDBService = {
 
     // Transform TMDB data to our format
     transformTMDBData(items: TMDBItem[], category: Movie['category'], forceType: 'movie' | 'series' | null = null): Omit<Movie, 'id'>[] {
-        // Filtrar itens sem poster
-        const filteredItems = items.filter(item => item.poster_path && item.poster_path !== '');
+        // Filtrar itens sem poster e anteriores a 2009
+        const filteredItems = items.filter(item => {
+            if (!item.poster_path || item.poster_path === '') return false;
+            const releaseDate = item.release_date || item.first_air_date || '';
+            if (!releaseDate) return true;
+            const year = new Date(releaseDate).getFullYear();
+            return year >= 2009;
+        });
 
         return filteredItems.map((item, index) => {
             const isMovie = forceType === 'movie' || item.media_type === 'movie' || !item.media_type;
