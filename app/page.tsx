@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/lib/dataClient';
 import { Movie } from '@/types/movie';
 import HeroSection from '@/components/streaming/HeroSection';
 import Carousel from '@/components/streaming/Carousel';
@@ -108,7 +107,7 @@ export default function Home() {
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ['movies'],
-    queryFn: () => base44.entities.Movie.list(),
+    queryFn: () => Promise.resolve<Movie[]>([]),
   });
 
   // Fetch TMDB data progressively on component mount
@@ -124,16 +123,12 @@ export default function Home() {
       if ((movies.length === 0 || needsGenreRefresh || needsRefresh) && !isLoading) {
         setTmdbLoading(true);
 
-        // Se for refresh (3 dias), limpa tudo exceto personalized e atualiza timestamp
+        // Se for refresh (3 dias), limpa personalized e atualiza timestamp
         if (needsRefresh) {
-          const allMovies = await base44.entities.Movie.list();
-          const kept = allMovies.filter((m: Movie) => m.category === 'personalized');
-          localStorage.setItem('webflix_movies', JSON.stringify(kept));
+          queryClient.setQueryData(['movies'], (old: Movie[] = []) => old.filter((m: Movie) => m.category === 'personalized'));
           localStorage.setItem('lastCarouselRefresh', String(Date.now()));
         } else if (needsGenreRefresh) {
-          const allMovies = await base44.entities.Movie.list();
-          const kept = allMovies.filter((m: Movie) => m.category === 'personalized');
-          localStorage.setItem('webflix_movies', JSON.stringify(kept));
+          queryClient.setQueryData(['movies'], (old: Movie[] = []) => old.filter((m: Movie) => m.category === 'personalized'));
         }
 
         try {
@@ -146,8 +141,7 @@ export default function Home() {
           const essentialMovies = [...trendingToday, ...trending, ...topRated];
 
           if (essentialMovies.length > 0) {
-            await base44.entities.Movie.bulkCreate(essentialMovies);
-            queryClient.invalidateQueries({ queryKey: ['movies'] });
+            queryClient.setQueryData(['movies'], (old: Movie[] = []) => [...old, ...essentialMovies as Movie[]]);
           }
 
           setTmdbLoading(false);
@@ -162,8 +156,7 @@ export default function Home() {
                 TMDBService.fetchPopularSeries()
               ]);
               if ([...upcoming, ...top10, ...recommended, ...popularSeries].length > 0) {
-                await base44.entities.Movie.bulkCreate([...upcoming, ...top10, ...recommended, ...popularSeries]);
-                queryClient.invalidateQueries({ queryKey: ['movies'] });
+                queryClient.setQueryData(['movies'], (old: Movie[] = []) => [...old, ...upcoming as Movie[], ...top10 as Movie[], ...recommended as Movie[], ...popularSeries as Movie[]]);
               }
 
               // Lote 2: gêneros (4 endpoints)
@@ -175,8 +168,7 @@ export default function Home() {
                 TMDBService.fetchComedyMovies()
               ]);
               if ([...action, ...family, ...scifi, ...comedy].length > 0) {
-                await base44.entities.Movie.bulkCreate([...action, ...family, ...scifi, ...comedy]);
-                queryClient.invalidateQueries({ queryKey: ['movies'] });
+                queryClient.setQueryData(['movies'], (old: Movie[] = []) => [...old, ...action as Movie[], ...family as Movie[], ...scifi as Movie[], ...comedy as Movie[]]);
               }
 
               // Lote 3: mais gêneros + séries (4 endpoints)
@@ -189,8 +181,7 @@ export default function Home() {
                 TMDBService.fetchTopRatedSeries()
               ]);
               if ([...romance, ...romanticComedy, ...horror, ...animation, ...topRatedSeries].length > 0) {
-                await base44.entities.Movie.bulkCreate([...romance, ...romanticComedy, ...horror, ...animation, ...topRatedSeries]);
-                queryClient.invalidateQueries({ queryKey: ['movies'] });
+                queryClient.setQueryData(['movies'], (old: Movie[] = []) => [...old, ...romance as Movie[], ...romanticComedy as Movie[], ...horror as Movie[], ...animation as Movie[], ...topRatedSeries as Movie[]]);
               }
 
               const [topRatedBackdrop, upcomingBackdrop] = await Promise.all([
@@ -232,7 +223,7 @@ export default function Home() {
       const lastUpdate = recommendationsTimestamp ? new Date(recommendationsTimestamp).getTime() : 0;
       const cacheValid = recommendationsTimestamp && (Date.now() - lastUpdate) < FORTY_EIGHT_HOURS;
 
-      const existingMovies = await base44.entities.Movie.list();
+      const existingMovies = queryClient.getQueryData<Movie[]>(['movies']) || [];
       const hasPersonalized = existingMovies.some((m) => m.category === 'personalized');
 
       if (cacheValid && hasPersonalized) {
@@ -240,20 +231,18 @@ export default function Home() {
         return;
       }
 
-      // Cache expirado ou sem filmes → remove os antigos e busca novos
-      const filteredMovies = existingMovies.filter((m) => m.category !== 'personalized');
-      localStorage.setItem('webflix_movies', JSON.stringify(filteredMovies));
+      // Remove personalized antigos, busca novos
+      queryClient.setQueryData(['movies'], (old: Movie[] = []) => old.filter((m) => m.category !== 'personalized'));
 
       const personalized = await TMDBService.fetchByGenreIds(genreIds);
       if (personalized.length > 0) {
-        await base44.entities.Movie.bulkCreate(personalized);
+        queryClient.setQueryData(['movies'], (old: Movie[] = []) => [...old, ...personalized as Movie[]]);
         // Atualiza timestamp no banco
         await fetch('/api/auth/recommendations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId }),
         }).catch(() => {});
-        queryClient.invalidateQueries({ queryKey: ['movies'] });
       }
       setPreferencesLoaded(true);
     };

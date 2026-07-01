@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo } from 'react';
 const emptyItems = { items: [] as { id: number; tmdb_id: number; title: string; media_type: string; poster_url?: string | null; backdrop_url?: string | null }[] };
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/lib/dataClient';
 import { Movie } from '@/types/movie';
 import { Tv, Film, Play, Star, Check, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -70,14 +69,9 @@ export default function MyList() {
             .catch(() => {});
     }, [userId]);
 
-    const { data: userList = [] } = useQuery({
-        queryKey: ['userList'],
-        queryFn: () => base44.entities.UserList.list(),
-    });
-
     const { data: movies = [] } = useQuery({
         queryKey: ['movies'],
-        queryFn: () => base44.entities.Movie.list(),
+        queryFn: () => Promise.resolve<Movie[]>([]),
     });
 
     const { data: watchlistData = emptyItems } = useQuery({
@@ -86,20 +80,16 @@ export default function MyList() {
         enabled: !!userId,
     });
 
-    const deleteFromListMutation = useMutation({
-        mutationFn: (id: string) => base44.entities.UserList.delete(id),
+    const addToWatchlistMutation = useMutation({
+        mutationFn: ({ tmdbId, mediaType, title, posterUrl, backdropUrl }: { tmdbId: number; mediaType: string; title: string; posterUrl?: string; backdropUrl?: string }) =>
+            fetch('/api/watchlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, tmdbId, mediaType, title, posterUrl, backdropUrl }),
+            }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['userList'] });
-            toast.success('Removed from list');
-        },
-    });
-
-    const addToListMutation = useMutation({
-        mutationFn: (data: { movie_id: string; list_type: 'favorites' | 'watch_later' }) =>
-            base44.entities.UserList.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['userList'] });
-            toast.success('Added to list');
+            queryClient.invalidateQueries({ queryKey: ['watchlist', userId] });
+            toast.success('Adicionado à lista');
         },
     });
 
@@ -117,10 +107,6 @@ export default function MyList() {
     });
 
     const allItems: (Movie & { listItemId: string })[] = useMemo(() => [
-        ...userList.filter(item => item.list_type === 'favorites').map(item => {
-            const movie = movies.find(m => m.id === item.movie_id);
-            return movie ? { ...movie, listItemId: item.id } : null;
-        }).filter(Boolean) as (Movie & { listItemId: string })[],
         ...watchlistData.items.map((item: { id: number; tmdb_id: number; title: string; media_type: string; poster_url?: string | null; backdrop_url?: string | null }) => {
             const movie = movies.find((m: Movie) => Number(m.tmdb_id) === item.tmdb_id);
             if (movie) return { ...movie, listItemId: `api_${item.id}` };
@@ -137,7 +123,7 @@ export default function MyList() {
                 listItemId: `api_${item.id}`,
             } as Movie & { listItemId: string };
         }) as (Movie & { listItemId: string })[],
-    ], [userList, movies, watchlistData.items]);
+    ], [movies, watchlistData.items]);
 
     const seriesList = useMemo(() => allItems.filter(m => m.type === 'series'), [allItems]);
     const movieList = useMemo(() => allItems.filter(m => m.type === 'movie'), [allItems]);
@@ -209,10 +195,8 @@ export default function MyList() {
 
     const handleRemove = (listItemId: string, e: React.MouseEvent, item: Movie) => {
         e.stopPropagation();
-        if (listItemId.startsWith('api_')) {
+        if (item.tmdb_id && item.type) {
             removeFromWatchlistMutation.mutate({ tmdbId: Number(item.tmdb_id), mediaType: item.type });
-        } else {
-            deleteFromListMutation.mutate(listItemId);
         }
     };
 
@@ -503,10 +487,15 @@ export default function MyList() {
                 onClose={() => setModalOpen(false)}
                 onWatch={handleWatch}
                 onAddToList={(movie) => {
-                    addToListMutation.mutate({
-                        movie_id: movie.id,
-                        list_type: 'watch_later',
-                    });
+                    if (movie.tmdb_id && movie.type && movie.title) {
+                        addToWatchlistMutation.mutate({
+                            tmdbId: Number(movie.tmdb_id),
+                            mediaType: movie.type,
+                            title: movie.title,
+                            posterUrl: movie.poster_url || '',
+                            backdropUrl: movie.backdrop_url || '',
+                        });
+                    }
                 }}
                 isInWatchlist={selectedMovie?.tmdb_id ? watchlistTmdbIds.has(Number(selectedMovie.tmdb_id)) : false}
                 onRemoveFromList={(movie) => {

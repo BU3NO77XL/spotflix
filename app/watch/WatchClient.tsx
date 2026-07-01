@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/lib/dataClient';
 import { Movie, CastMember } from '@/types/movie';
 import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -492,32 +491,20 @@ function WatchContent() {
     const { data: movieById, isLoading: isLoadingById } = useQuery({
         queryKey: ['movies', movieId],
         queryFn: async () => {
-            // console.log(`%c[WATCH PERF] 🔍 movieById queryFn iniciou (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
-            const movies = await base44.entities.Movie.filter({ id: movieId! });
-            // console.log(`%c[WATCH PERF] ✅ movieById queryFn concluiu (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
-            return movies[0] || null;
+            const movies = queryClient.getQueryData<Movie[]>(['movies']);
+            return movies?.find(m => m.id === movieId) || null;
         },
         enabled: !!movieId,
-        // Usar dados da lista 'movies' como initialData para renderização instantânea
-        initialData: () => {
-            const movies = queryClient.getQueryData<Movie[]>(['movies']);
-            return movies?.find(m => m.id === movieId);
-        },
-        staleTime: 1000 * 60 * 30, // 30 minutos
+        staleTime: 1000 * 60 * 30,
     });
 
     // Busca por TMDB ID (para filmes similares ou da pesquisa)
     const { data: movieByTmdb, isLoading: isLoadingByTmdb } = useQuery({
         queryKey: ['movie', 'tmdb', tmdbId, mediaType],
         queryFn: async () => {
-            // console.log(`%c[WATCH PERF] 🔍 movieByTmdb queryFn iniciou (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
-            const t1 = performance.now();
-            const movies = await base44.entities.Movie.filter({ tmdb_id: Number(tmdbId) });
-            // console.log(`%c[WATCH PERF]   ↳ base44 filter concluiu em ${(performance.now() - t1).toFixed(0)}ms (t=+${(performance.now() - navStartRef.current).toFixed(0)}ms)`, 'color:#0af');
-            if (movies[0]) {
-                // console.log(`%c[WATCH PERF] ✅ movieByTmdb encontrado no banco local`, 'color:#0af');
-                return movies[0];
-            }
+            const movies = queryClient.getQueryData<Movie[]>(['movies']);
+            const cached = movies?.find(m => Number(m.tmdb_id) === Number(tmdbId));
+            if (cached) return cached;
 
             const tmdbIdNum = Number(tmdbId);
             const isSeries = mediaType === 'series';
@@ -1216,8 +1203,8 @@ function WatchContent() {
                             <span className="text-white/20 text-2xl font-bold">{movie.title}</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-linear-to-t from-[#121212]/40 via-[#121212]/10 to-transparent z-[1]" />
-                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/30 via-transparent to-transparent z-[2]" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#121212] via-[#121212]/60 to-transparent z-[1]" />
+                    <div className="absolute inset-0 bg-linear-to-r from-[#121212]/80 via-transparent to-transparent z-[2]" />
                 </div>
 
                 {/* Botão de Volume - Canto direito (apenas desktop) */}

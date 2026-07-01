@@ -6,8 +6,6 @@ import { Search, X, Film, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TMDBService } from './TMDBIntegration';
 import { Movie } from '@/types/movie';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/lib/dataClient';
 import { useWatchNavigation } from '@/hooks/useWatchNavigation';
 import LoginRequiredModal from './LoginRequiredModal';
 
@@ -33,12 +31,8 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         try { const s = localStorage.getItem('userBasicInfo'); setUserId(s ? JSON.parse(s).id : null); } catch { setUserId(null); }
     }, []);
 
-    // Buscar filmes locais para tentar fazer match com os resultados da pesquisa
-    const { data: localMovies = [] } = useQuery({
-        queryKey: ['movies'],
-        queryFn: () => base44.entities.Movie.list(),
-        staleTime: 1000 * 60 * 5, // 5 minutos
-    });
+    // Cache removido — resultados da pesquisa vêm diretamente da TMDB
+    const localMovies: Movie[] = [];
 
     // Reset state when opening
     useEffect(() => {
