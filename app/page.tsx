@@ -118,7 +118,9 @@ export default function Home() {
       const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
       const lastRefresh = parseInt(localStorage.getItem('lastCarouselRefresh') || '0');
       const needsRefresh = movies.length > 0 && (Date.now() - lastRefresh) > THREE_DAYS;
-      const needsGenreRefresh = movies.length > 0 && movies.some((m: Movie) => !m.genre || m.genre.length === 0);
+      // Só verifica filmes dos carrosséis (excluindo "Continue Assistindo" que pode ter genre:[])
+      const carouselMovies = movies.filter((m: Movie) => m.category !== undefined && m.category !== 'personalized');
+      const needsGenreRefresh = carouselMovies.length > 0 && carouselMovies.some((m: Movie) => !m.genre || m.genre.length === 0);
 
       if ((movies.length === 0 || needsGenreRefresh || needsRefresh) && !isLoading) {
         setTmdbLoading(true);
@@ -312,7 +314,7 @@ export default function Home() {
           const yearVal = (details as any).first_air_date ? new Date((details as any).first_air_date).getFullYear() : ((details as any).release_date ? new Date((details as any).release_date).getFullYear() : movie.year);
           const posterPath = (details as any).poster_path || (details as any).posterUrl;
           const backdropPath = (details as any).backdrop_path || (details as any).backdropUrl;
-          const posterUrl = posterPath ? (posterPath.startsWith('http') ? posterPath : `https://image.tmdb.org/t/p/w500${posterPath}`) : movie.poster_url;
+          const posterUrl = posterPath ? (posterPath.startsWith('http') ? posterPath : `https://image.tmdb.org/t/p/w342${posterPath}`) : movie.poster_url;
           const backdropUrl = backdropPath ? (backdropPath.startsWith('http') ? backdropPath : `https://image.tmdb.org/t/p/w1280${backdropPath}`) : movie.backdrop_url;
           return {
             ...movie,
@@ -430,6 +432,10 @@ export default function Home() {
   const handleRemoveFromList = (movie: Movie) => {
     removeFromListMutation.mutate(movie);
   };
+
+  if (movies.length === 0 || top10Movies.length === 0) {
+    return <PageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-[#121212]">

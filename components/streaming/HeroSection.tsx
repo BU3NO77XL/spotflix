@@ -52,7 +52,8 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
             if (!heroMovies?.length) return;
 
             const logoPromises = heroMovies.map(async (movie) => {
-                if (logosCache[movie.id] !== undefined) return;
+                const cacheKey = String(movie.tmdb_id || movie.id);
+                if (logosCache[cacheKey] !== undefined) return;
                 
                 try {
                     const logos = await TMDBService.fetchMovieLogos(
@@ -63,7 +64,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
                         ? `https://image.tmdb.org/t/p/original${logos[0].file_path}` 
                         : null;
                     
-                    setLogosCache(prev => ({ ...prev, [movie.id]: logoUrl }));
+                    setLogosCache(prev => ({ ...prev, [cacheKey]: logoUrl }));
                 } catch (err) {
                     console.error(`Error prefetching logo for ${movie.title}:`, err);
                 }
@@ -86,37 +87,16 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
 
     // 2. Exibe o primeiro filme assim que o snapshot estiver pronto
     useEffect(() => {
-        if (!heroMovies?.length || displayContent) return;
-        const movie = heroMovies[0];
-        if (!movie) return;
-        setDisplayContent({
-            movie,
-            logo: logosCache[movie.id] || null,
-            isReady: true
-        });
-    }, [heroMovies]);
-
-    // 3. Rotação: só atualiza quando currentIndex muda
-    useEffect(() => {
-        if (!heroMovies?.length || !displayContent) return;
+        if (!heroMovies?.length) return;
         const movie = heroMovies[currentIndex];
         if (!movie) return;
+        const cacheKey = String(movie.tmdb_id || movie.id);
         setDisplayContent({
             movie,
-            logo: logosCache[movie.id] || null,
+            logo: logosCache[cacheKey] || null,
             isReady: true
         });
-    }, [currentIndex]);
-
-    // 4. Atualiza logo quando o prefetch termina — sem resetar o AnimatePresence
-    useEffect(() => {
-        if (!displayContent) return;
-        const { movie } = displayContent;
-        if (logosCache[movie.id] === undefined) return;
-        const newLogo = logosCache[movie.id];
-        if (displayContent.logo === newLogo) return;
-        setDisplayContent(prev => prev ? { ...prev, logo: newLogo } : null);
-    }, [logosCache]);
+    }, [heroMovies, currentIndex, logosCache]);
 
     // 5. Auto-rotation a cada 2 minutos
     useEffect(() => {
@@ -261,7 +241,7 @@ export default function HeroSection({ featuredMovies, onWatch, onMoreInfo, top10
                             {/* Synopsis */}
                             <motion.p 
                                 variants={itemVariants} 
-                                className="text-white text-[17px] leading-[1.35] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] max-w-[518px] line-clamp-3 md:line-clamp-none"
+                                className="text-white text-[17px] leading-[1.35] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] max-w-[518px] line-clamp-3 md:line-clamp-5"
                             >
                                 {movie.synopsis}
                             </motion.p>
