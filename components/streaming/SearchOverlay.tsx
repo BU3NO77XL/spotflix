@@ -9,6 +9,7 @@ import { Movie } from '@/types/movie';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/lib/dataClient';
 import { useWatchNavigation } from '@/hooks/useWatchNavigation';
+import LoginRequiredModal from './LoginRequiredModal';
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -22,7 +23,15 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     const [results, setResults] = useState<Movie[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('all');
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
+    const [userId, setUserId] = useState<number | null>(() => {
+        try { if (typeof window === 'undefined') return null; const s = localStorage.getItem('userBasicInfo'); return s ? JSON.parse(s).id : null; } catch { return null; }
+    });
     const { navigateToWatch } = useWatchNavigation();
+
+    useEffect(() => {
+        try { const s = localStorage.getItem('userBasicInfo'); setUserId(s ? JSON.parse(s).id : null); } catch { setUserId(null); }
+    }, []);
 
     // Buscar filmes locais para tentar fazer match com os resultados da pesquisa
     const { data: localMovies = [] } = useQuery({
@@ -91,6 +100,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     }, [onClose]);
 
     return (
+        <>
         <AnimatePresence>
             {isOpen && (
                 <motion.div
@@ -207,6 +217,10 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                         onClick={() => {
                                                             console.log('[SEARCH_NAV] Clicou no resultado:', { id: movie.id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type, year: movie.year, poster: movie.poster_url });
                                                             handleClose();
+                                                            if (!userId) {
+                                                                setLoginModalOpen(true);
+                                                                return;
+                                                            }
                                                             navigateToWatch(movie);
                                                         }}
                                                         className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/4 transition-all duration-300 cursor-pointer"
@@ -280,5 +294,10 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 </motion.div>
             )}
         </AnimatePresence>
-    );
+
+        <LoginRequiredModal
+            isOpen={loginModalOpen}
+            onClose={() => setLoginModalOpen(false)}
+        />
+    </>);
 }
