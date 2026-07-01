@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef, Component, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Plus, Volume2, VolumeX, Check, Star } from 'lucide-react';
+import { X, Play, Plus, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { calcMatch } from '@/lib/match';
@@ -436,21 +436,15 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             </div>
 
                             {/* Volume Button */}
-                            <div className="absolute right-6 md:right-12 bottom-10 z-30">
+                            <div className="absolute right-4 md:right-8 bottom-10 z-30">
                                 <button
+                                    disabled
                                     onClick={() => setIsMuted(!isMuted)}
-                                    className="w-12 h-12 flex items-center justify-center bg-transparent hover:bg-white/10 border-2 border-white/20 rounded-full text-white transition-all"
+                                    className="w-12 h-12 flex items-center justify-center bg-transparent border-2 border-white/10 rounded-full text-white/30 transition-all cursor-not-allowed"
                                 >
-                                    {isMuted ? (
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
-                                            <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/>
-                                        </svg>
-                                    ) : (
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
-                                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                                        </svg>
-                                    )}
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50">
+                                        <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
