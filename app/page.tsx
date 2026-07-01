@@ -181,14 +181,15 @@ export default function Home() {
 
               // Lote 3: mais gêneros + séries (4 endpoints)
               await new Promise(r => setTimeout(r, 500));
-              const [romance, horror, animation, topRatedSeries] = await Promise.all([
+              const [romance, romanticComedy, horror, animation, topRatedSeries] = await Promise.all([
                 TMDBService.fetchRomanceMovies(),
+                TMDBService.fetchRomanticComedyMovies(),
                 TMDBService.fetchHorrorMovies(),
                 TMDBService.fetchAnimationMovies(),
                 TMDBService.fetchTopRatedSeries()
               ]);
-              if ([...romance, ...horror, ...animation, ...topRatedSeries].length > 0) {
-                await base44.entities.Movie.bulkCreate([...romance, ...horror, ...animation, ...topRatedSeries]);
+              if ([...romance, ...romanticComedy, ...horror, ...animation, ...topRatedSeries].length > 0) {
+                await base44.entities.Movie.bulkCreate([...romance, ...romanticComedy, ...horror, ...animation, ...topRatedSeries]);
                 queryClient.invalidateQueries({ queryKey: ['movies'] });
               }
 
@@ -400,6 +401,7 @@ export default function Home() {
   const sciFiMovies = movies.filter((m: Movie) => m.category === 'scifi');
   const comedyMovies = movies.filter((m: Movie) => m.category === 'comedy');
   const romanceMovies = movies.filter((m: Movie) => m.category === 'romance');
+  const romanticComedyMovies = movies.filter((m: Movie) => m.category === 'romantic_comedy');
   const horrorMovies = movies.filter((m: Movie) => m.category === 'horror');
   const animationMovies = movies.filter((m: Movie) => m.category === 'animation');
   const seriesPopularMovies = movies.filter((m: Movie) => m.category === 'series_popular');
@@ -537,6 +539,16 @@ export default function Home() {
           <Carousel
             title="Romance"
             movies={romanceMovies}
+            onMovieClick={handleMoreInfo}
+          />
+          
+        )}
+
+        {romanticComedyMovies.length > 0 && (
+          
+          <Carousel
+            title="Comédia Romântica"
+            movies={romanticComedyMovies}
             onMovieClick={handleMoreInfo}
           />
           

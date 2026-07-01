@@ -220,6 +220,11 @@ export const TMDBService = {
         return this.discoverMovies('10749', 'romance');
     },
 
+    // Fetch romantic comedy movies (comédia romântica)
+    async fetchRomanticComedyMovies(): Promise<Omit<Movie, 'id'>[]> {
+        return this.discoverMovies('35,10749', 'romantic_comedy');
+    },
+
     // Fetch horror movies
     async fetchHorrorMovies(): Promise<Omit<Movie, 'id'>[]> {
         return this.discoverMovies('27', 'horror');
