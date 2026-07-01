@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Check, ChevronLeft, LogOut, User, Palette, Globe, Play, Monitor } from 'lucide-react';
+import { ChevronLeft, User, Palette, Globe, Play } from 'lucide-react';
 import NetflixAvatar from '@/components/NetflixAvatar';
 import { AVATAR_COUNT } from '@/lib/avatars';
 
@@ -14,9 +14,9 @@ const POPULAR_GENRES = [
 ];
 
 const LANGUAGES = [
-  { value: 'pt-BR', label: 'Português (Brasil)' },
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español' },
+  { value: 'pt-BR', label: 'Português (Brasil)', disabled: false },
+  { value: 'en', label: 'English (Indisponível)', disabled: true },
+  { value: 'es', label: 'Español (No disponible)', disabled: true },
 ];
 
 const INITIAL_AVATARS = 6;
@@ -44,9 +44,6 @@ export default function SettingsPage() {
   const [showAllAvatars, setShowAllAvatars] = useState(false);
   const [contentLang, setContentLang] = useState(() => {
     try { if (typeof window === 'undefined') return 'pt-BR'; return localStorage.getItem('contentLang') || 'pt-BR'; } catch { return 'pt-BR'; }
-  });
-  const [autoPlay, setAutoPlay] = useState(() => {
-    try { if (typeof window === 'undefined') return true; return localStorage.getItem('autoPlay') !== 'false'; } catch { return true; }
   });
   const [savingPrefs, setSavingPrefs] = useState(false);
 
@@ -115,18 +112,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch { /* silent */ }
-    localStorage.removeItem('sb-session');
-    localStorage.removeItem('userBasicInfo');
-    localStorage.removeItem('userPreferences');
-    localStorage.removeItem('contentLang');
-    localStorage.removeItem('autoPlay');
-    window.location.href = '/login';
-  };
-
   const toggleGenre = (genre: string) => {
     if (selectedGenres.includes(genre)) {
       setSelectedGenres(selectedGenres.filter(g => g !== genre));
@@ -139,8 +124,8 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <button onClick={() => window.location.href = '/'} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pt-24 sm:pt-28">
+        <button onClick={() => router.push('/')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
           <ChevronLeft className="w-5 h-5" />
           <span>Voltar</span>
         </button>
@@ -155,27 +140,32 @@ export default function SettingsPage() {
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-6 space-y-5">
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Nome</label>
               {editingName ? (
-                <div className="flex gap-2">
+                <div className="relative">
+                  <div className="flex justify-end gap-2 mb-3">
+                    <button onClick={handleSaveName} disabled={savingName} className="bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm">
+                      {savingName ? 'Salvando...' : 'Salvar'}
+                    </button>
+                    <button onClick={() => { setEditingName(false); setNameInput(userName); }} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                      Cancelar
+                    </button>
+                  </div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nome</label>
                   <input
                     type="text"
                     value={nameInput}
                     onChange={e => setNameInput(e.target.value)}
-                    className="flex-1 bg-[#2a2a2a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-white transition-colors"
+                    className="w-full bg-[#2a2a2a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-white transition-colors"
                     autoFocus
                   />
-                    <button onClick={handleSaveName} disabled={savingName} className="bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
-                    {savingName ? 'Salvando...' : 'Salvar'}
-                  </button>
-                  <button onClick={() => { setEditingName(false); setNameInput(userName); }} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors">
-                    Cancelar
-                  </button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between">
-                  <span className="text-white text-lg">{userName || '---'}</span>
-                  <button onClick={() => setEditingName(true)} className="text-sm text-white hover:text-white/80 transition-colors">Editar</button>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nome</label>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white text-lg">{userName || '---'}</span>
+                    <button onClick={() => setEditingName(true)} className="text-sm text-white hover:text-white/80 transition-colors">Editar</button>
+                  </div>
                 </div>
               )}
             </div>
@@ -262,35 +252,9 @@ export default function SettingsPage() {
               className="w-full bg-[#2a2a2a] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
             >
               {LANGUAGES.map(lang => (
-                <option key={lang.value} value={lang.value}>{lang.label}</option>
+                <option key={lang.value} value={lang.value} disabled={lang.disabled}>{lang.label}</option>
               ))}
             </select>
-          </div>
-        </section>
-
-        {/* Playback Settings */}
-        <section className="mb-10">
-          <div className="flex items-center gap-3 mb-6">
-            <Monitor className="w-5 h-5 text-white" />
-            <h2 className="text-xl font-semibold">Reprodução</h2>
-          </div>
-          <div className="bg-[#1a1a1a] rounded-xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white font-medium">Auto-play do próximo episódio</p>
-                <p className="text-sm text-gray-400">Reproduzir automaticamente o próximo episódio de séries.</p>
-              </div>
-              <button
-                onClick={() => {
-                  const next = !autoPlay;
-                  setAutoPlay(next);
-                  localStorage.setItem('autoPlay', String(next));
-                }}
-                className={`relative w-12 h-7 rounded-full transition-colors ${autoPlay ? 'bg-white' : 'bg-white/20'}`}
-              >
-                <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${autoPlay ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
-              </button>
-            </div>
           </div>
         </section>
 
@@ -302,20 +266,6 @@ export default function SettingsPage() {
         >
           {savingPrefs ? 'Salvando...' : 'Salvar Preferências'}
         </button>
-
-        {/* Account Section */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <LogOut className="w-5 h-5 text-red-400" />
-            <h2 className="text-xl font-semibold">Conta</h2>
-          </div>
-          <div className="bg-[#1a1a1a] rounded-xl p-6">
-            <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors font-medium">
-              <LogOut className="w-5 h-5" />
-              <span>Sair da conta</span>
-            </button>
-          </div>
-        </section>
       </div>
     </div>
   );
