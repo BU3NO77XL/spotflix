@@ -108,6 +108,10 @@ input[type="button"],
   cursor: pointer;
 }
 
+/* Skeleton shimmer wave */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
 /* Hide scrollbar for carousels */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
