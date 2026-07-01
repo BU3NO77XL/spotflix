@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, User, Menu, X, Play, Star, Film, Tv, Settings, CreditCard, LogOut, Home, Flame, Globe } from 'lucide-react';
@@ -22,7 +22,7 @@ const HEADER_ITEMS = [
     { label: 'Idiomas', href: '/' },
 ];
 
-export default function Header() {
+const Header = memo(function Header() {
     const router = useRouter();
     const pathname = usePathname();
 
@@ -399,3 +399,6 @@ export default function Header() {
         </>
     );
 }
+);
+
+export default Header;
