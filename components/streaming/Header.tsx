@@ -168,7 +168,10 @@ export default function Header() {
                 <div className="w-full px-4 md:px-[38px] relative z-10">
                     <div className="flex items-center justify-between h-[72px]">
                         <div className="flex items-center gap-[45px]">
-                            <Link href="/" className="shrink-0 flex items-center">
+                            <Link href="/" className="shrink-0 flex items-center gap-2">
+                                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-[#1DB954] flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
+                                    <Play className="w-3.5 h-3.5 md:w-4 md:h-4 text-white fill-white" />
+                                </div>
                                 <h1 className="text-2xl md:text-[28px] font-black tracking-tighter uppercase leading-none" style={{ color: '#FFFFFF' }}>WEBFLIX</h1>
                             </Link>
 
