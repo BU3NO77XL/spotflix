@@ -205,6 +205,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                     <div
                                                         key={movie.id || index}
                                                         onClick={() => {
+                                                            console.log('[SEARCH_NAV] Clicou no resultado:', { id: movie.id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type, year: movie.year, poster: movie.poster_url });
                                                             handleClose();
                                                             navigateToWatch(movie);
                                                         }}

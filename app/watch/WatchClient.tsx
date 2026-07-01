@@ -202,6 +202,8 @@ function WatchContent() {
     }, [urlTmdbId, localOverride]);
 
     // ── DEBUG: marca o momento em que o componente renderiza com novo tmdbId
+    console.log('[WATCH_LOAD] URL params:', { id: movieId, ref: urlTmdbId, type: urlMediaType, season: urlSeason, episode: urlEpisode });
+    console.log('[WATCH_LOAD] tmdbId resolvido:', tmdbId, 'mediaType:', mediaType, 'localOverride:', localOverride?.tmdbId);
     const navStartRef = useRef<number>(0);
     const lastLoggedTmdbId = useRef<string | null>(null);
     if (tmdbId !== lastLoggedTmdbId.current) {
@@ -611,6 +613,11 @@ function WatchContent() {
     });
 
     const movie = movieById || movieByTmdb;
+    if (movie) {
+        console.log('[WATCH_LOAD] movie carregado:', { id: (movie as any).id, tmdb_id: movie.tmdb_id, title: movie.title, type: movie.type, year: movie.year, poster: movie.poster_url?.slice(0, 60) });
+    } else {
+        console.log('[WATCH_LOAD] movie AINDA nil — tmdbId:', tmdbId, 'mediaType:', mediaType, 'movieById:', !!movieById, 'movieByTmdb:', !!movieByTmdb);
+    }
     const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdb_id));
     const isInWatchlist = movie && movie.tmdb_id ? watchlistTmdbIds.has(Number(movie.tmdb_id)) : false;
 
