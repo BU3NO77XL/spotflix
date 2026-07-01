@@ -25,12 +25,12 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       onClick={() => onClick(movie)}
       className={cn(
         "group relative shrink-0 cursor-pointer",
-        // Height: responsive and dynamic
-        "h-[154px] md:h-[150px] lg:h-[190px] xl:h-[230px]",
-        // Width: responsive and dynamic, extremely tight and compact on all screens
+        // Height: responsive
+        "h-[175px] md:h-[175px] lg:h-[220px] xl:h-[265px]",
+        // Width: responsive
         rank === 10
-          ? "w-[210px] md:w-[165px] lg:w-[210px] xl:w-[260px]"
-          : "w-[145px] md:w-[140px] lg:w-[180px] xl:w-[220px]"
+          ? "w-[235px] md:w-[195px] lg:w-[245px] xl:w-[305px]"
+          : "w-[165px] md:w-[165px] lg:w-[210px] xl:w-[255px]"
       )}
     >
       <div className="relative w-full h-full">
@@ -41,11 +41,11 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
             // Position: responsive
             "left-[-10px] lg:left-[-15px] xl:left-[-20px] top-0",
             // Width & Height: matches the card height exactly for vertical centering
-            "w-[110px] h-[154px] md:w-[110px] md:h-[150px] lg:w-[140px] lg:h-[190px] xl:w-[170px] xl:h-[230px]"
+            "w-[125px] h-[175px] md:w-[125px] md:h-[175px] lg:w-[160px] lg:h-[220px] xl:w-[195px] xl:h-[265px]"
           )}
         >
           <span
-            className="font-bold leading-none text-transparent text-[150px] md:text-[140px] lg:text-[180px] xl:text-[220px]"
+            className="font-bold leading-none text-transparent text-[170px] md:text-[165px] lg:text-[210px] xl:text-[255px]"
             style={{
               WebkitTextStroke: '4px rgba(255, 255, 255, 0.3)',
               fontFamily: '"Netflix Sans"'
@@ -59,11 +59,11 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
         <div className={cn(
           "absolute top-0 z-10 rounded-sm sm:rounded-md overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-30",
           // Poster Dimensions: responsive
-          "w-[109px] h-[154px] md:w-[106px] md:h-[150px] lg:w-[134px] lg:h-[190px] xl:w-[162px] xl:h-[230px]",
+          "w-[125px] h-[175px] md:w-[125px] md:h-[175px] lg:w-[155px] lg:h-[220px] xl:w-[190px] xl:h-[265px]",
           // Poster Position: precise 80% overlap for 1-9, exact 50% of '0' for 10 on all screens
           rank === 10
-            ? "left-[100px] md:left-[55px] lg:left-[72px] xl:left-[90px]"
-            : "left-[35px] md:left-[30px] lg:left-[40px] xl:left-[50px]"
+            ? "left-[108px] md:left-[66px] lg:left-[84px] xl:left-[108px]"
+            : "left-[40px] md:left-[36px] lg:left-[48px] xl:left-[58px]"
         )}>
           {/* Image */}
           <img

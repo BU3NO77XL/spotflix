@@ -52,7 +52,7 @@ export default function MiniCard({
       transition={{ duration: 0.3, delay: index * 0.05 }}
       onClick={() => onClick(movie)}
       className="group relative shrink-0 cursor-pointer"
-      style={{ width: variant === 'landscape' ? '200px' : '140px' }}
+      style={{ width: variant === 'landscape' ? '220px' : '160px' }}
     >
       {variant === 'landscape' ? (
         // Landscape Layout

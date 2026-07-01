@@ -205,10 +205,10 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                             handleClose();
                                                             navigateToWatch(movie);
                                                         }}
-                                                        className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/4 transition-all duration-300 rounded-2xl cursor-pointer"
+                                                        className="group flex items-center gap-4 lg:gap-6 py-3 lg:py-4 px-3 lg:px-4 hover:bg-white/4 transition-all duration-300 cursor-pointer"
                                                     >
                                                         {/* Poster thumbnail */}
-                                                        <div className="w-14 h-20 lg:w-20 lg:h-28 shrink-0 relative rounded-xl overflow-hidden bg-white/5 ring-1 ring-white/10 group-hover:ring-white/20 transition-all">
+                                                        <div className="w-14 h-20 lg:w-20 lg:h-28 shrink-0 relative overflow-hidden bg-white/5 ring-1 ring-white/10 group-hover:ring-white/20 transition-all">
                                                             {movie.poster_url ? (
                                                                 <img
                                                                     src={movie.poster_url}

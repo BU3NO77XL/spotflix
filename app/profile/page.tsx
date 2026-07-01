@@ -177,7 +177,7 @@ export default function ProfilePage() {
         {/* Recent Activity */}
         <div>
           <h2 className="text-xl font-semibold mb-5 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-[#1DB954]" />
+            <Clock className="w-5 h-5 text-white" />
             Atividade Recente
           </h2>
           {loading ? (

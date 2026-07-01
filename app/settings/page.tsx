@@ -150,7 +150,7 @@ export default function SettingsPage() {
         {/* Profile Section */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-6">
-            <User className="w-5 h-5 text-[#1DB954]" />
+            <User className="w-5 h-5 text-white" />
             <h2 className="text-xl font-semibold">Perfil</h2>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-6 space-y-5">
@@ -162,10 +162,10 @@ export default function SettingsPage() {
                     type="text"
                     value={nameInput}
                     onChange={e => setNameInput(e.target.value)}
-                    className="flex-1 bg-[#2a2a2a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[#1DB954] transition-colors"
+                    className="flex-1 bg-[#2a2a2a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-white transition-colors"
                     autoFocus
                   />
-                  <button onClick={handleSaveName} disabled={savingName} className="bg-[#1DB954] hover:bg-[#17a34a] text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
+                    <button onClick={handleSaveName} disabled={savingName} className="bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
                     {savingName ? 'Salvando...' : 'Salvar'}
                   </button>
                   <button onClick={() => { setEditingName(false); setNameInput(userName); }} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors">
@@ -175,7 +175,7 @@ export default function SettingsPage() {
               ) : (
                 <div className="flex items-center justify-between">
                   <span className="text-white text-lg">{userName || '---'}</span>
-                  <button onClick={() => setEditingName(true)} className="text-sm text-[#1DB954] hover:text-[#17a34a] transition-colors">Editar</button>
+                  <button onClick={() => setEditingName(true)} className="text-sm text-white hover:text-white/80 transition-colors">Editar</button>
                 </div>
               )}
             </div>
@@ -189,7 +189,7 @@ export default function SettingsPage() {
         {/* Avatar Section */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-6">
-            <Palette className="w-5 h-5 text-[#1DB954]" />
+            <Palette className="w-5 h-5 text-white" />
             <h2 className="text-xl font-semibold">Avatar</h2>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-6">
@@ -204,7 +204,7 @@ export default function SettingsPage() {
                 <button
                   key={index}
                   onClick={() => setSelectedAvatar(index)}
-                  className={`aspect-square rounded-xl overflow-hidden transition-all ${selectedAvatar === index ? 'ring-4 ring-[#1DB954]' : 'ring-1 ring-white/10 hover:ring-white/30'}`}
+                  className={`aspect-square rounded-xl overflow-hidden transition-all ${selectedAvatar === index ? 'ring-4 ring-white' : 'ring-1 ring-white/10 hover:ring-white/30'}`}
                 >
                   <NetflixAvatar selectedIndex={index} className="w-full h-full" />
                 </button>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
         {/* Genre Preferences */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-6">
-            <Play className="w-5 h-5 text-[#1DB954]" />
+            <Play className="w-5 h-5 text-white" />
             <h2 className="text-xl font-semibold">Gêneros Preferidos</h2>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-6">
@@ -234,7 +234,7 @@ export default function SettingsPage() {
                   key={genre}
                   onClick={() => toggleGenre(genre)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedGenres.includes(genre)
-                    ? 'bg-[#1DB954] text-black'
+                    ? 'bg-white text-black'
                     : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}
                 >
                   {genre}
@@ -248,7 +248,7 @@ export default function SettingsPage() {
         {/* Content Language */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-6">
-            <Globe className="w-5 h-5 text-[#1DB954]" />
+            <Globe className="w-5 h-5 text-white" />
             <h2 className="text-xl font-semibold">Idioma do Conteúdo</h2>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-6">
@@ -259,7 +259,7 @@ export default function SettingsPage() {
                 localStorage.setItem('contentLang', e.target.value);
                 toast.success('Idioma salvo!');
               }}
-              className="w-full bg-[#2a2a2a] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#1DB954] transition-colors"
+              className="w-full bg-[#2a2a2a] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
             >
               {LANGUAGES.map(lang => (
                 <option key={lang.value} value={lang.value}>{lang.label}</option>
@@ -271,7 +271,7 @@ export default function SettingsPage() {
         {/* Playback Settings */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-6">
-            <Monitor className="w-5 h-5 text-[#1DB954]" />
+            <Monitor className="w-5 h-5 text-white" />
             <h2 className="text-xl font-semibold">Reprodução</h2>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-6 space-y-4">
@@ -286,7 +286,7 @@ export default function SettingsPage() {
                   setAutoPlay(next);
                   localStorage.setItem('autoPlay', String(next));
                 }}
-                className={`relative w-12 h-7 rounded-full transition-colors ${autoPlay ? 'bg-[#1DB954]' : 'bg-white/20'}`}
+                className={`relative w-12 h-7 rounded-full transition-colors ${autoPlay ? 'bg-white' : 'bg-white/20'}`}
               >
                 <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${autoPlay ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
               </button>
@@ -298,7 +298,7 @@ export default function SettingsPage() {
         <button
           onClick={handleSavePreferences}
           disabled={savingPrefs}
-          className="w-full bg-[#1DB954] hover:bg-[#17a34a] text-black font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50 mb-10"
+          className="w-full bg-white hover:bg-white/80 text-black font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50 mb-10"
         >
           {savingPrefs ? 'Salvando...' : 'Salvar Preferências'}
         </button>
