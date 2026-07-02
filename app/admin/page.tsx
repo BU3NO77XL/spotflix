@@ -236,7 +236,7 @@ export default function AdminPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
-          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5 border-l-4 border-blue-500">
+          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5">
             <div className="flex items-center gap-2 sm:gap-3">
               <Film className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 shrink-0" />
               <div>
@@ -245,7 +245,7 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5 border-l-4 border-purple-500">
+          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5">
             <div className="flex items-center gap-2 sm:gap-3">
               <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 shrink-0" />
               <div>
@@ -254,7 +254,7 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5 border-l-4 border-yellow-500">
+          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5">
             <div className="flex items-center gap-2 sm:gap-3">
               <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 shrink-0" />
               <div>
@@ -263,7 +263,7 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5 border-l-4 border-red-500">
+          <div className="bg-[#1a1a1a] rounded-xl p-3 sm:p-5">
             <div className="flex items-center gap-2 sm:gap-3">
               <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" />
               <div>
