@@ -17,7 +17,8 @@ export default function Top10Carousel({ movies, onMovieClick }: Top10CarouselPro
     return (
         <BaseCarousel 
             title="Top 10 Hoje"
-            scrollContainerClassName="pt-2 pb-6 md:pt-3 md:pb-7 lg:pt-4 lg:pb-10"
+            gap="sm"
+            scrollContainerClassName="pt-2 pb-6 md:pt-3 md:pb-7 lg:pt-4 lg:pb-10 -ml-8 sm:-ml-12 lg:-ml-[48px] gap-0"
             arrowBottomClass="bottom-0"
         >
             {top10Movies.map((movie, index) => (
@@ -29,6 +30,7 @@ export default function Top10Carousel({ movies, onMovieClick }: Top10CarouselPro
                     index={index}
                 />
             ))}
+            <div className="w-4 sm:w-6 lg:w-6 flex-shrink-0" />
         </BaseCarousel>
     );
 }
