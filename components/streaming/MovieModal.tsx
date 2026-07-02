@@ -317,7 +317,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     }}
                                     initial={{ opacity: 1, filter: 'blur(18px)' }}
                                     animate={{ opacity: 1, filter: 'blur(0px)' }}
-                                    transition={{ duration: 1.2, ease: easeOutQuint }}
+                                    transition={{ duration: 2.2, ease: easeOutQuint }}
                                 />
                             )}
 
@@ -335,7 +335,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     }}
                                     initial={{ opacity: 0.4, filter: 'blur(18px)' }}
                                     animate={{ opacity: 0.4, filter: 'blur(0px)' }}
-                                    transition={{ duration: 1.2, ease: easeOutQuint }}
+                                    transition={{ duration: 2.2, ease: easeOutQuint }}
                                 />
                             )}
 

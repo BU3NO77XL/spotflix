@@ -33,9 +33,9 @@ export const modalStagger = {
 };
 
 export const modalSlideUp = {
-    initial: { opacity: 0, y: 18 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.4, ease: easeOutQuint },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.35, ease: easeOutQuint },
 };
 
 export const imageReveal = {
