@@ -157,6 +157,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
         setIsOnNetflix(false);
         setShowRatingTooltip(false);
         setUserDataLoaded(false);
+        setCurrentRating(null);
         // Popula body imediatamente com o que temos — sem skeleton
         setDetailGenres(movie.genre || []);
         setDetails({

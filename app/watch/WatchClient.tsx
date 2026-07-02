@@ -640,6 +640,9 @@ function WatchContent() {
 
         const tmdbIdNum = Number(movie.tmdb_id);
 
+        // Reseta rating ao trocar de filme/série
+        setCurrentRating(null);
+
         // Match — usa dados locais que já temos para cálculo imediato
         const matchParams = new URLSearchParams({
             userId: String(userId),
