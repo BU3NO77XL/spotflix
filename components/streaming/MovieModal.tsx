@@ -6,7 +6,7 @@ import { X, Play, Plus, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { calcMatch } from '@/lib/match';
-import { overlayFade, imageReveal, easeOutQuint, movieModalContent, fadeIn, slideUpFade, staggerContainer, modalStagger, modalSlideUp } from '@/lib/motion';
+import { overlayFade, easeOutQuint, movieModalContent, fadeIn, slideUpFade, staggerContainer, modalStagger, modalSlideUp } from '@/lib/motion';
 import { TMDBService } from './TMDBIntegration';
 import RatingTooltip from '@/components/ui/RatingTooltip';
 import RatingParticles from '@/components/ui/RatingParticles';
@@ -285,7 +285,21 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                         <div className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
                         >
                         <div className="relative h-[478px] w-full overflow-hidden">
-                            {/* Backdrop Image Layer + Gradients */}
+                            {/* Glow Bloom Overlay – fades out as blur clears */}
+                            {bgUrl && (
+                                <motion.div
+                                    className="absolute inset-0 z-[3] pointer-events-none"
+                                    initial={{ opacity: 0.55 }}
+                                    animate={{ opacity: 0 }}
+                                    transition={{ duration: 1.0, ease: 'easeOut' }}
+                                    style={{
+                                        background: 'radial-gradient(circle at 50% 40%, rgba(255,245,230,0.25) 0%, rgba(200,220,255,0.10) 40%, transparent 72%)',
+                                        mixBlendMode: 'overlay',
+                                    }}
+                                />
+                            )}
+
+                            {/* Backdrop Image Layer + Gradients (starts blurry, clears) */}
                             {bgUrl && (
                                 <motion.div
                                     className="absolute inset-0"
@@ -301,23 +315,29 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         backgroundPosition: 'center top',
                                         backgroundRepeat: 'no-repeat',
                                     }}
-                                    {...imageReveal}
+                                    initial={{ opacity: 1, filter: 'blur(18px)' }}
+                                    animate={{ opacity: 1, filter: 'blur(0px)' }}
+                                    transition={{ duration: 1.2, ease: easeOutQuint }}
                                 />
                             )}
 
-                            {/* Separate Layer for Screen Blending */}
-                            <motion.div
-                                className="absolute inset-0 mix-blend-screen opacity-[0.4]"
-                                style={{
-                                    backgroundImage: bgUrl ? `
-                                        linear-gradient(90deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.24) 68%, rgba(0, 0, 0, 0.58) 100%),
-                                        url("${bgUrl}")
-                                    ` : 'none',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center top',
-                                }}
-                                {...imageReveal}
-                            />
+                            {/* Separate Layer for Screen Blending (blurry sync) */}
+                            {bgUrl && (
+                                <motion.div
+                                    className="absolute inset-0 mix-blend-screen"
+                                    style={{
+                                        backgroundImage: `
+                                            linear-gradient(90deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.24) 68%, rgba(0, 0, 0, 0.58) 100%),
+                                            url("${bgUrl}")
+                                        `,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center top',
+                                    }}
+                                    initial={{ opacity: 0.4, filter: 'blur(18px)' }}
+                                    animate={{ opacity: 0.4, filter: 'blur(0px)' }}
+                                    transition={{ duration: 1.2, ease: easeOutQuint }}
+                                />
+                            )}
 
                             {/* Full Backdrop Overlay */}
                             <div className="absolute inset-0 bg-black/55 z-10" />
