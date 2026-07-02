@@ -353,25 +353,22 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                 <X className="w-5 h-5" strokeWidth={2.2} />
                             </button>
 
-                            {/* Title Shadow Layer — só renderiza quando não está carregando e não há logo */}
-                            <AnimatePresence>
-                                {!logoLoading && !logoUrl && (
-                                    <motion.div
-                                        key="title-shadow"
-                                        initial={{ opacity: 0, y: 14 }}
-                                        animate={{ opacity: 0.34, y: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.45, ease: easeOutQuint }}
-                                        className="absolute left-6 md:left-12 bottom-[108px] z-10 select-none pointer-events-none blur-[8px] transform-gpu"
-                                    >
-                                        <h1 className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-black">
-                                            {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
-                                        </h1>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            {/* Title Shadow Layer — visível desde o início quando não há logo */}
+                            {!logoUrl && (
+                                <motion.div
+                                    key="title-shadow"
+                                    initial={{ opacity: 0, y: 14 }}
+                                    animate={{ opacity: 0.34, y: 0 }}
+                                    transition={{ duration: 0.6, ease: easeOutQuint }}
+                                    className="absolute left-6 md:left-12 bottom-[108px] z-10 select-none pointer-events-none blur-[8px] transform-gpu"
+                                >
+                                    <h1 className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-black">
+                                        {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
+                                    </h1>
+                                </motion.div>
+                            )}
 
-                            {/* Main Title Area */}
+                            {/* Main Title Area — texto aparece imediatamente, crossfade para logo se disponível */}
                             <div className="absolute left-6 md:left-12 bottom-[108px] z-20">
                                 {isOnNetflix && (
                                     <div className="flex items-center gap-2 mb-4 opacity-[0.74]">
@@ -382,30 +379,28 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     </div>
                                 )}
                                 
-                                {/* Aguarda resolução do logo antes de exibir qualquer título */}
                                 <AnimatePresence mode="wait">
-                                    {!logoLoading && (
-                                        logoUrl ? (
-                                            <motion.img
-                                                key="logo-img"
-                                                src={`https://image.tmdb.org/t/p/original${logoUrl}`}
-                                                alt={movie.title}
-                                                className="h-20 md:h-32 object-contain filter drop-shadow-2xl max-w-[80vw] md:max-w-none"
-                                                initial={{ opacity: 0, y: 14 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.45, ease: easeOutQuint }}
-                                            />
-                                        ) : (
-                                            <motion.h1
-                                                key="logo-text"
-                                                className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-white max-w-[80vw] md:max-w-none"
-                                                initial={{ opacity: 0, y: 14 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                                            >
-                                                {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
-                                            </motion.h1>
-                                        )
+                                    {logoUrl ? (
+                                        <motion.img
+                                            key="logo-img"
+                                            src={`https://image.tmdb.org/t/p/original${logoUrl}`}
+                                            alt={movie.title}
+                                            className="h-20 md:h-32 object-contain filter drop-shadow-2xl max-w-[80vw] md:max-w-none"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.5, ease: easeOutQuint }}
+                                        />
+                                    ) : (
+                                        <motion.h1
+                                            key="logo-text"
+                                            className="text-[42px] md:text-[74px] font-[800] leading-[0.92] tracking-[-0.04em] uppercase text-white max-w-[80vw] md:max-w-none"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.5, ease: easeOutQuint }}
+                                        >
+                                            {displayTitle.map((line, i) => <span key={i} className="block">{line}</span>)}
+                                        </motion.h1>
                                     )}
                                 </AnimatePresence>
                             </div>
