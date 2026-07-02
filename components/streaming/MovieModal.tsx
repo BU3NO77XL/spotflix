@@ -285,15 +285,15 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                         <div className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
                         >
                         <div className="relative h-[478px] w-full overflow-hidden">
-                            {/* Glow Bloom Overlay – brilho intenso que fadeia conforme blur clareia */}
+                            {/* Glow Bloom Overlay – brilho no canto superior esquerdo que fadeia conforme blur clareia */}
                             {bgUrl && (
                                 <motion.div
                                     className="absolute inset-0 z-[3] pointer-events-none"
-                                    initial={{ opacity: 0.85 }}
+                                    initial={{ opacity: 0.95 }}
                                     animate={{ opacity: 0 }}
-                                    transition={{ duration: 1.4, ease: 'easeOut' }}
+                                    transition={{ duration: 1.6, ease: 'easeOut' }}
                                     style={{
-                                        background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.18) 35%, rgba(180,210,255,0.08) 55%, transparent 75%)',
+                                        background: 'radial-gradient(circle at 16% 22%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.20) 28%, rgba(180,210,255,0.10) 45%, transparent 68%)',
                                         mixBlendMode: 'screen',
                                     }}
                                 />
@@ -340,7 +340,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             )}
 
                             {/* Full Backdrop Overlay */}
-                            <div className="absolute inset-0 bg-black/55 z-10" />
+                            <div className="absolute inset-0 bg-black/35 z-10" />
 
                             {/* Bottom Fade */}
                             <div className="absolute inset-x-0 bottom-0 h-[180px] bg-linear-to-t from-[#181818] via-[#181818]/94 to-transparent z-10" />
