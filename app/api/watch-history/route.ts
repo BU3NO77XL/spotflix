@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       progress_percent: progressPercent ?? 0,
       watched_at: new Date().toISOString(),
     }, {
-      onConflict: 'profile_id,tmdb_id,media_type',
+      onConflict: 'profile_id,tmdb_id,season_number,episode_number,media_type',
       ignoreDuplicates: false,
     })
     .select()
