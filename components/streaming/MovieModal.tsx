@@ -285,16 +285,16 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                         <div className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
                         >
                         <div className="relative h-[478px] w-full overflow-hidden">
-                            {/* Glow Bloom Overlay – fades out as blur clears */}
+                            {/* Glow Bloom Overlay – brilho intenso que fadeia conforme blur clareia */}
                             {bgUrl && (
                                 <motion.div
                                     className="absolute inset-0 z-[3] pointer-events-none"
-                                    initial={{ opacity: 0.55 }}
+                                    initial={{ opacity: 0.85 }}
                                     animate={{ opacity: 0 }}
-                                    transition={{ duration: 1.0, ease: 'easeOut' }}
+                                    transition={{ duration: 1.4, ease: 'easeOut' }}
                                     style={{
-                                        background: 'radial-gradient(circle at 50% 40%, rgba(255,245,230,0.25) 0%, rgba(200,220,255,0.10) 40%, transparent 72%)',
-                                        mixBlendMode: 'overlay',
+                                        background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.18) 35%, rgba(180,210,255,0.08) 55%, transparent 75%)',
+                                        mixBlendMode: 'screen',
                                     }}
                                 />
                             )}
@@ -530,14 +530,11 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         key="body-content"
                                         variants={modalStagger}
                                     >
-                            <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
+                            <motion.div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12" variants={modalSlideUp}>
                                 {/* Left Column: Summary */}
                                 <div className="space-y-5">
                                     {/* Meta row */}
-                                    <motion.div
-                                        className="flex flex-wrap items-center gap-2 text-base"
-                                        variants={modalSlideUp}
-                                    >
+                                    <div className="flex flex-wrap items-center gap-2 text-base">
                                         {matchPercentage != null
                                             ? <span className="text-[#46d369] font-bold">{matchPercentage}% Match</span>
                                             : <span className="text-[#46d369] font-bold">{movie.score ? `${Math.round(movie.score * 10)}% Match` : '--% Match'}</span>
@@ -562,14 +559,11 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                             <path d="M28.8 0C32 1.6 32 14.4 28.8 16H29.6C33.6 13.6 33.6 2.4 29.6 0L28.8 0Z" fill="#BCBCBC"/>
                                             <path d="M32 0C35.2 1.6 35.2 14.4 32 16H32.8C36.8 13.6 36.8 2.4 32.8 0L32 0Z" fill="#BCBCBC"/>
                                         </svg>
-                                    </motion.div>
+                                    </div>
 
                                     {/* Top 10 Badge */}
                                     {movie.rank && movie.rank <= 10 && (
-                                        <motion.div
-                                            className="flex items-center"
-                                            variants={modalSlideUp}
-                                        >
+                                        <div className="flex items-center">
                                             <svg width="245" height="30" viewBox="0 0 245 30" fill="none" aria-label={`#${movie.rank} em ${movie.type === 'series' ? 'Séries' : 'Filmes'} hoje`}>
                                                 <rect y="1.0957" width="27.8086" height="27.8086" rx="3.47608" fill="#F50723"/>
                                                 <path d="M7.72649 13.7028H6.16834V8.3974H4.05576V7.04955H9.83908V8.3974H7.72649V13.7028Z" fill="white"/>
@@ -578,22 +572,16 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                                 <text x="9" y="24" fill="white" fontSize="13" fontWeight="900" fontFamily="'Netflix Sans'">{movie.rank}</text>
                                                 <text x="35" y="21" fill="white" fontSize="17" fontWeight="400" fontFamily="'Netflix Sans'">#{movie.rank} em {movie.type === 'series' ? 'Séries' : 'Filmes'} hoje</text>
                                             </svg>
-                                        </motion.div>
+                                        </div>
                                     )}
 
-                                    <motion.p
-                                        className="text-white text-[16px] leading-[26px] font-normal"
-                                        variants={modalSlideUp}
-                                    >
+                                    <p className="text-white text-[16px] leading-[26px] font-normal">
                                         {details?.overview || movie.synopsis}
-                                    </motion.p>
+                                    </p>
                                 </div>
 
                                 {/* Right Column: Meta */}
-                                <motion.div
-                                    className="space-y-3.5 text-sm leading-5"
-                                    variants={modalSlideUp}
-                                >
+                                <div className="space-y-3.5 text-sm leading-5">
                                     <div className="flex flex-wrap gap-1">
                                         <span className="text-[#777777]">Elenco:</span>
                                         <span className="text-white">{cast.map(c => c.name).join(', ') || 'Informação indisponível'}</span>
@@ -602,8 +590,8 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                         <span className="text-[#777777]">Gêneros:</span>
                                         <span className="text-white">{detailGenres.length > 0 ? detailGenres.join(', ') : movie.genre?.join(', ') || 'Filmes, Séries'}</span>
                                     </div>
-                                </motion.div>
-                            </div>
+                                </div>
+                            </motion.div>
 
                             {/* More Like This */}
                             <motion.div
