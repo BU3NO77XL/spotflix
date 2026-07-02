@@ -272,8 +272,6 @@ function WatchContent() {
     const [showRightEpisodeArrow, setShowRightEpisodeArrow] = useState(true);
     const [showLeftCollectionArrow, setShowLeftCollectionArrow] = useState(false);
     const [showRightCollectionArrow, setShowRightCollectionArrow] = useState(false);
-    // Ref para dados da coleção ao navegar entre itens (evita loading ao clicar em poster)
-    const pendingNavigationRef = useRef<{ id: number; title: string; poster_path: string; release_date: string } | null>(null);
     const [showLeftTrailersArrow, setShowLeftTrailersArrow] = useState(false);
     const [showRightTrailersArrow, setShowRightTrailersArrow] = useState(false);
     const [selectedModalMovie, setSelectedModalMovie] = useState<Movie | null>(null);
@@ -281,20 +279,6 @@ function WatchContent() {
     const [listParticlesPos, setListParticlesPos] = useState<{ x: number; y: number } | null>(null);
     const ratingBtnRef = useRef<HTMLButtonElement>(null);
     const listBtnRef = useRef<HTMLButtonElement>(null);
-    const prevInWatchlist = useRef(isInWatchlist);
-    const addJustTriggered = useRef(false);
-
-    useEffect(() => {
-        if (prevInWatchlist.current === false && isInWatchlist === true && addJustTriggered.current) {
-            addJustTriggered.current = false;
-            const el = listBtnRef.current;
-            if (el) {
-                const r = el.getBoundingClientRect();
-                setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-            }
-        }
-        prevInWatchlist.current = isInWatchlist;
-    }, [isInWatchlist]);
     // Estado para backdrops rotativos
     const [backdrops, setBackdrops] = useState<string[]>([]);
     const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
@@ -336,8 +320,6 @@ function WatchContent() {
     const trailersScrollRef = useRef<HTMLDivElement>(null);
     const creatorScrollRef = useRef<HTMLDivElement>(null);
     const creatorPauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    // Guarda dados do item clicado na coleção para renderização instantânea
-    const pendingNavRef = useRef<{ id: number; title: string; poster_path: string; release_date: string } | null>(null);
     const handleEpisodeScroll = () => {
         if (episodesScrollRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = episodesScrollRef.current;
@@ -587,35 +569,6 @@ function WatchContent() {
             };
         },
         enabled: !!tmdbId,
-        staleTime: 1000 * 60 * 30, // 30 minutos
-        gcTime: 1000 * 60 * 60, // 1 hora
-        // Renderização instantânea ao navegar entre itens da mesma coleção
-        initialData: () => {
-            const nav = pendingNavRef.current;
-            if (nav?.id === Number(tmdbId)) {
-                pendingNavRef.current = null;
-                return {
-                    id: `tmdb-${nav.id}`,
-                    title: nav.title,
-                    type: 'movie' as const,
-                    year: nav.release_date ? new Date(nav.release_date).getFullYear() : new Date().getFullYear(),
-                    rating: 'NR',
-                    duration: '',
-                    genre: [],
-                    synopsis: '',
-                    cast: [],
-                    director: '',
-                    poster_url: nav.poster_path ? `https://image.tmdb.org/t/p/w500${nav.poster_path}` : '',
-                    backdrop_url: '',
-                    score: 0,
-                    tmdb_id: nav.id,
-                    category: 'trending' as const,
-                };
-            }
-            return undefined;
-        },
-        // Forçar stale imediatamente para buscar dados reais em background
-        initialDataUpdatedAt: 0,
     });
 
     // Override direto do filme para navegação instantânea entre similares
@@ -626,6 +579,20 @@ function WatchContent() {
     const movie = movieRaw ? { ...movieRaw, type: (mediaType as 'movie' | 'series') || movieRaw.type } : null;
     const watchlistTmdbIds = new Set(watchlistData.items.map((i: any) => i.tmdb_id));
     const isInWatchlist = movie && movie.tmdb_id ? watchlistTmdbIds.has(Number(movie.tmdb_id)) : false;
+    const prevInWatchlist = useRef(isInWatchlist);
+    const addJustTriggered = useRef(false);
+
+    useEffect(() => {
+        if (prevInWatchlist.current === false && isInWatchlist === true && addJustTriggered.current) {
+            addJustTriggered.current = false;
+            const el = listBtnRef.current;
+            if (el) {
+                const r = el.getBoundingClientRect();
+                setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+            }
+        }
+        prevInWatchlist.current = isInWatchlist;
+    }, [isInWatchlist]);
 
     const { currentRating, setCurrentRating, handleRatingAction } = useRatingAction(
         userId,
@@ -750,7 +717,7 @@ function WatchContent() {
         fetchSeriesDetails();
     }, [movie?.id, movie?.type, movie?.tmdb_id, updatedSeriesDetails]);
 
-    // Resetar logos e coleção quando mudar de filme/série
+    // Resetar todos os dados do filme/série anterior quando mudar
     useEffect(() => {
         setLogos([]);
         setIsLogoReady(false);
@@ -758,10 +725,40 @@ function WatchContent() {
         setCollection(null);
         setMovieDetails(null);
         setSeriesDetails(null);
+        setSeasonDetails(null);
+        setSelectedSeason(1);
+        setSelectedEpisode(1);
         setSimilarMovies([]);
         setTrailers([]);
         setCreatorSeries([]);
         setCreatorInfo(null);
+        setKeywords([]);
+        setWatchMatch(null);
+        setSavedHistory(null);
+        setShowShareModal(false);
+        setShowRatingTooltip(false);
+        setIsSynopsisExpanded(false);
+        setShowLeftCreatorArrow(false);
+        setShowRightCreatorArrow(false);
+        setActiveCreatorBackdrop(0);
+        setSelectedCreatorIndex(0);
+        setIsCreatorPaused(false);
+        setShowLeftEpisodeArrow(false);
+        setShowRightEpisodeArrow(true);
+        setShowLeftCollectionArrow(false);
+        setShowRightCollectionArrow(false);
+        setShowLeftTrailersArrow(false);
+        setShowRightTrailersArrow(false);
+        setSelectedModalMovie(null);
+        setRatingParticlesPos(null);
+        setListParticlesPos(null);
+        setLocalMovieOverride(null);
+        addJustTriggered.current = false;
+        prevInWatchlist.current = false;
+        if (creatorPauseTimeoutRef.current) {
+            clearTimeout(creatorPauseTimeoutRef.current);
+            creatorPauseTimeoutRef.current = null;
+        }
     }, [movieId, tmdbId]);
 
     // Query rápida só para logos — resolve antes dos outros detalhes
