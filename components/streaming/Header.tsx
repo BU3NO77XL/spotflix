@@ -273,14 +273,14 @@ const Header = memo(function Header() {
                                                     )}
                                                 </div>
                                                 <div className="py-2">
-                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => { setUserDropdownOpen(false); router.push('/profile'); }}>
+                                                    <Link href="/profile" className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
                                                         <span aria-hidden>{renderUserIcon('Perfil')}</span>
                                                         <span>Perfil</span>
-                                                    </button>
-                                                    <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => { setUserDropdownOpen(false); router.push('/settings'); }}>
+                                                    </Link>
+                                                    <Link href="/settings" className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
                                                         <span aria-hidden>{renderUserIcon('Configurações')}</span>
                                                         <span>Configurações</span>
-                                                    </button>
+                                                    </Link>
                                                     <button className="w-full px-4 py-2.5 text-left text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3" onClick={() => setUserDropdownOpen(false)}>
                                                         <span aria-hidden>{renderUserIcon('Planos')}</span>
                                                         <span>Planos</span>

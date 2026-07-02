@@ -63,6 +63,18 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const ratingBtnRef = useRef<HTMLButtonElement>(null);
     const listBtnRef = useRef<HTMLButtonElement>(null);
     const [userId, setUserId] = useState<number | null>(null);
+    const prevInWatchlist = useRef(isInWatchlist);
+
+    useEffect(() => {
+        if (prevInWatchlist.current === false && isInWatchlist === true) {
+            const el = listBtnRef.current;
+            if (el) {
+                const r = el.getBoundingClientRect();
+                setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+            }
+        }
+        prevInWatchlist.current = isInWatchlist;
+    }, [isInWatchlist]);
 
     // Ref para cancelar fetches ao fechar o modal antes de completar
     const abortRef = useRef<AbortController | null>(null);
@@ -246,7 +258,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
         <>
         <AnimatePresence>
         {isOpen && (
-            <div className="fixed inset-0 z-50">
+            <div key={movie.tmdb_id ?? movie.id} className="fixed inset-0 z-50">
                     {/* Overlay with Radial Gradient */}
                     <motion.div
                         key="overlay"
@@ -391,11 +403,6 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                             if (isInWatchlist && onRemoveFromList) {
                                                 onRemoveFromList(movie);
                                             } else {
-                                                const el = listBtnRef.current;
-                                                if (el) {
-                                                    const r = el.getBoundingClientRect();
-                                                    setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-                                                }
                                                 requestAnimationFrame(() => { handleAddToListGuarded(movie); });
                                             }
                                         }}
