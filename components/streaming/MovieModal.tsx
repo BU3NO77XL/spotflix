@@ -285,15 +285,15 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                         <div className="relative w-full max-w-[850px] bg-[#181818] rounded-lg shadow-[0_28px_80px_rgba(0,0,0,0.65)] overflow-hidden my-8"
                         >
                         <div className="relative h-[478px] w-full overflow-hidden">
-                            {/* Glow Bloom Overlay – brilho no canto superior esquerdo que fadeia conforme blur clareia */}
+                            {/* Glow Bloom Overlay – brilho intenso no canto superior esquerdo que fadeia conforme blur clareia */}
                             {bgUrl && (
                                 <motion.div
                                     className="absolute inset-0 z-[3] pointer-events-none"
-                                    initial={{ opacity: 0.95 }}
+                                    initial={{ opacity: 1 }}
                                     animate={{ opacity: 0 }}
-                                    transition={{ duration: 1.6, ease: 'easeOut' }}
+                                    transition={{ duration: 2.4, ease: 'easeOut' }}
                                     style={{
-                                        background: 'radial-gradient(circle at 16% 22%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.20) 28%, rgba(180,210,255,0.10) 45%, transparent 68%)',
+                                        background: 'radial-gradient(circle at 16% 22%, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.35) 25%, rgba(220,235,255,0.15) 42%, transparent 65%)',
                                         mixBlendMode: 'screen',
                                     }}
                                 />
