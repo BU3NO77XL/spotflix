@@ -20,13 +20,13 @@
 }
 @font-face {
   font-family: 'Netflix Sans';
-  font-weight: 700;
+  font-weight: 500;
   font-display: swap;
   src: url('/fonts/NetflixSans_W_Md.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Netflix Sans';
-  font-weight: 800;
+  font-weight: 700;
   font-display: swap;
   src: url('/fonts/NetflixSans_W_Bd.woff2') format('woff2');
 }
