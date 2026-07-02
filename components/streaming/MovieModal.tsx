@@ -64,9 +64,11 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
     const listBtnRef = useRef<HTMLButtonElement>(null);
     const [userId, setUserId] = useState<number | null>(null);
     const prevInWatchlist = useRef(isInWatchlist);
+    const addJustTriggered = useRef(false);
 
     useEffect(() => {
-        if (prevInWatchlist.current === false && isInWatchlist === true) {
+        if (prevInWatchlist.current === false && isInWatchlist === true && addJustTriggered.current) {
+            addJustTriggered.current = false;
             const el = listBtnRef.current;
             if (el) {
                 const r = el.getBoundingClientRect();
@@ -403,6 +405,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                             if (isInWatchlist && onRemoveFromList) {
                                                 onRemoveFromList(movie);
                                             } else {
+                                                addJustTriggered.current = true;
                                                 requestAnimationFrame(() => { handleAddToListGuarded(movie); });
                                             }
                                         }}

@@ -281,6 +281,20 @@ function WatchContent() {
     const [listParticlesPos, setListParticlesPos] = useState<{ x: number; y: number } | null>(null);
     const ratingBtnRef = useRef<HTMLButtonElement>(null);
     const listBtnRef = useRef<HTMLButtonElement>(null);
+    const prevInWatchlist = useRef(isInWatchlist);
+    const addJustTriggered = useRef(false);
+
+    useEffect(() => {
+        if (prevInWatchlist.current === false && isInWatchlist === true && addJustTriggered.current) {
+            addJustTriggered.current = false;
+            const el = listBtnRef.current;
+            if (el) {
+                const r = el.getBoundingClientRect();
+                setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+            }
+        }
+        prevInWatchlist.current = isInWatchlist;
+    }, [isInWatchlist]);
     // Estado para backdrops rotativos
     const [backdrops, setBackdrops] = useState<string[]>([]);
     const [currentBackdropIndex, setCurrentBackdropIndex] = useState(0);
@@ -1330,12 +1344,8 @@ function WatchContent() {
                                         if (isInWatchlist) {
                                             removeFromListMutation.mutate();
                                         } else {
-                                            const el = listBtnRef.current;
-                                            if (el) {
-                                                const r = el.getBoundingClientRect();
-                                                setListParticlesPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-                                            }
-                                            requestAnimationFrame(() => { addToListMutation.mutate(); });
+                                            addJustTriggered.current = true;
+                                            addToListMutation.mutate();
                                         }
                                     }}
                                     className={`bg-[#2a2a2a]/60 hover:bg-[#444444] border-2 border-[#ffffff]/70
