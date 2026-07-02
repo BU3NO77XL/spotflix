@@ -28,32 +28,30 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
       onClick={() => onClick(movie)}
       className={cn(
         "group relative shrink-0 cursor-pointer",
-        "h-[145px] md:h-[145px] lg:h-[185px] xl:h-[230px]",
+        "h-[110px] md:h-[110px] lg:h-[145px] xl:h-[185px]",
         isTenth
-          ? "w-[228px] lg:w-[289px] xl:w-[359px]"
+          ? "w-[181px] lg:w-[234px] xl:w-[297px]"
           : isFirst
-          ? "w-[181px] lg:w-[232px] xl:w-[291px]"
-          : "w-[199px] lg:w-[255px] xl:w-[320px]"
+          ? "w-[143px] lg:w-[184px] xl:w-[233px]"
+          : "w-[160px] lg:w-[206px] xl:w-[260px]"
       )}
     >
       <div
         className={cn(
           "absolute left-0 top-0 overflow-hidden select-none pointer-events-none flex items-center justify-end",
-          "h-[145px] md:h-[145px] lg:h-[185px] xl:h-[230px]",
+"h-[130px] md:h-[130px] lg:h-[170px] xl:h-[215px]",
           isTenth
-            ? "w-[158px] lg:w-[198px] xl:w-[243px]"
+            ? "w-[146px] lg:w-[191px] xl:w-[242px]"
             : isFirst
-            ? "w-[112px] lg:w-[143px] xl:w-[178px]"
-            : "w-[120px] lg:w-[153px] xl:w-[190px]"
+            ? "w-[101px] lg:w-[132px] xl:w-[167px]"
+            : "w-[107px] lg:w-[140px] xl:w-[177px]"
         )}
         style={{ zIndex: -1 }}
       >
         <span
           className={cn(
             "font-bold text-transparent text-right leading-none",
-            isTenth
-              ? "text-[172px] lg:text-[219px] xl:text-[272px]"
-              : "text-[189px] lg:text-[241px] xl:text-[299px]"
+            isTenth ? "text-[135px] lg:text-[175px] xl:text-[220px] tracking-[-0.06em]" : "text-[150px] lg:text-[195px] xl:text-[245px]"
           )}
           style={{
             WebkitTextStroke: '6px #666',
@@ -66,12 +64,13 @@ export default function Top10Card({ movie, rank, onClick, index }: Top10CardProp
 
       <div className={cn(
         "relative z-10 rounded-sm sm:rounded-md overflow-hidden bg-[#222] transition-all duration-300 group-hover:z-30",
+        "top-[14px] lg:top-[17px] xl:top-[21px]",
         isTenth
-          ? "ml-[123px] lg:ml-[154px] xl:ml-[189px]"
+          ? "ml-[106px] lg:ml-[139px] xl:ml-[177px]"
           : isFirst
-          ? "ml-[76px] lg:ml-[97px] xl:ml-[121px]"
-          : "ml-[94px] lg:ml-[120px] xl:ml-[150px]",
-        "w-[105px] h-[145px] md:w-[105px] md:h-[145px] lg:w-[135px] lg:h-[185px] xl:w-[170px] xl:h-[230px]"
+          ? "ml-[68px] lg:ml-[89px] xl:ml-[113px]"
+          : "ml-[85px] lg:ml-[111px] xl:ml-[140px]",
+        "w-[75px] h-[110px] md:w-[75px] md:h-[110px] lg:w-[95px] lg:h-[145px] xl:w-[120px] xl:h-[185px]"
       )}>
         <img
           src={movie.poster_url || undefined}
