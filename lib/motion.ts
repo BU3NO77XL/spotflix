@@ -22,10 +22,20 @@ export const overlayFade = {
 };
 
 export const movieModalContent = {
-    initial: { opacity: 0, y: 24 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+    transition: { duration: 0.15, ease: easeOutQuint },
+};
+
+export const modalStagger = {
+    animate: { transition: { staggerChildren: 0.07, delayChildren: 0.12 } },
+};
+
+export const modalSlideUp = {
+    initial: { opacity: 0, y: 18 },
     animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 12 },
-    transition: { duration: 0.45, ease: easeOutQuint },
+    transition: { duration: 0.4, ease: easeOutQuint },
 };
 
 export const imageReveal = {

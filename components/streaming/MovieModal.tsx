@@ -6,7 +6,7 @@ import { X, Play, Plus, Check, Star } from 'lucide-react';
 import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { calcMatch } from '@/lib/match';
-import { overlayFade, imageReveal, easeOutQuint, movieModalContent, fadeIn, slideUpFade, staggerContainer } from '@/lib/motion';
+import { overlayFade, imageReveal, easeOutQuint, movieModalContent, fadeIn, slideUpFade, staggerContainer, modalStagger, modalSlideUp } from '@/lib/motion';
 import { TMDBService } from './TMDBIntegration';
 import RatingTooltip from '@/components/ui/RatingTooltip';
 import RatingParticles from '@/components/ui/RatingParticles';
@@ -508,6 +508,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                 {(
                                     <motion.div
                                         key="body-content"
+                                        variants={modalStagger}
                                     >
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-12">
                                 {/* Left Column: Summary */}
@@ -515,9 +516,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     {/* Meta row */}
                                     <motion.div
                                         className="flex flex-wrap items-center gap-2 text-base"
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3, delay: 0.05, ease: easeOutQuint }}
+                                        variants={modalSlideUp}
                                     >
                                         {matchPercentage != null
                                             ? <span className="text-[#46d369] font-bold">{matchPercentage}% Match</span>
@@ -549,9 +548,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     {movie.rank && movie.rank <= 10 && (
                                         <motion.div
                                             className="flex items-center"
-                                            initial={{ opacity: 0, y: 12 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, delay: 0.1, ease: easeOutQuint }}
+                                            variants={modalSlideUp}
                                         >
                                             <svg width="245" height="30" viewBox="0 0 245 30" fill="none" aria-label={`#${movie.rank} em ${movie.type === 'series' ? 'Séries' : 'Filmes'} hoje`}>
                                                 <rect y="1.0957" width="27.8086" height="27.8086" rx="3.47608" fill="#F50723"/>
@@ -566,9 +563,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
 
                                     <motion.p
                                         className="text-white text-[16px] leading-[26px] font-normal"
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3, delay: 0.15, ease: easeOutQuint }}
+                                        variants={modalSlideUp}
                                     >
                                         {details?.overview || movie.synopsis}
                                     </motion.p>
@@ -577,9 +572,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                 {/* Right Column: Meta */}
                                 <motion.div
                                     className="space-y-3.5 text-sm leading-5"
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: 0.2, ease: easeOutQuint }}
+                                    variants={modalSlideUp}
                                 >
                                     <div className="flex flex-wrap gap-1">
                                         <span className="text-[#777777]">Elenco:</span>
@@ -595,9 +588,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             {/* More Like This */}
                             <motion.div
                                 className="mt-12"
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: 0.3, ease: easeOutQuint }}
+                                variants={modalSlideUp}
                             >
                                 <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Títulos semelhantes</h3>
                                 <AnimatePresence mode="popLayout">
@@ -704,9 +695,7 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                             {trailers.length > 0 && (
                                 <motion.div
                                     className="mt-12"
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: 0.35, ease: easeOutQuint }}
+                                    variants={modalSlideUp}
                                 >
                                     <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Trailers e mais</h3>
                                     <div className="flex gap-[33px]">
