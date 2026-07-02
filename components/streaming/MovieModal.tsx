@@ -291,7 +291,11 @@ export default function MovieModal({ movie, isOpen, onClose, onWatch, onAddToLis
                                     animate={{ opacity: 0 }}
                                     transition={{ duration: 2.4, ease: 'easeOut' }}
                                     style={{
-                                        background: 'radial-gradient(circle at 16% 22%, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.35) 25%, rgba(220,235,255,0.15) 42%, transparent 65%)',
+                                        background: `
+                                            radial-gradient(circle at 16% 22%, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.35) 25%, rgba(220,235,255,0.15) 42%, transparent 65%),
+                                            radial-gradient(circle at 84% 18%, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.22) 22%, rgba(220,235,255,0.10) 38%, transparent 60%),
+                                            radial-gradient(circle at 85% 80%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.18) 20%, rgba(220,235,255,0.08) 35%, transparent 58%)
+                                        `,
                                         mixBlendMode: 'screen',
                                     }}
                                 />
